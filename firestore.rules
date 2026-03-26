@@ -106,7 +106,7 @@ service cloud.firestore {
 
     function isValidWallet(data) {
       return data.keys().hasAll(['id', 'owner_id', 'wallet_type', 'balance', 'currency']) &&
-             data.owner_id is string &&
+             (data.owner_id is string || data.owner_id == null) &&
              data.balance is number && data.balance >= 0 &&
              data.wallet_type in ['USER_MAIN', 'ESCROW_CONSTITUTION', 'CONTRIBUTION_POOL', 'GROUP_MINI_FUND', 'GLOBAL_FUND'];
     }
@@ -154,7 +154,9 @@ service cloud.firestore {
     match /wallets/{walletId} {
       allow read: if isAuthenticated() && (isOwner(resource.data.owner_id) || isAdmin() || resource.data.wallet_type != 'USER_MAIN');
       allow create: if isAuthenticated() && isValidWallet(request.resource.data) && 
-                    (isOwner(request.resource.data.owner_id) || isAdmin());
+                    (isOwner(request.resource.data.owner_id) || 
+                     request.resource.data.owner_id == null || 
+                     isAdmin());
       allow update: if isAuthenticated() && isValidWallet(request.resource.data) && 
                     (isOwner(resource.data.owner_id) || isAdmin());
     }
@@ -188,7 +190,10 @@ service cloud.firestore {
     match /transactions/{transactionId} {
       // Allow listing if filtered by user_id
       allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid || isAdmin());
-      allow create: if isAuthenticated() && (request.resource.data.user_id == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && 
+                    (request.resource.data.user_id == request.auth.uid || 
+                     request.resource.data.user_id == null || 
+                     isAdmin());
     }
 
     match /payments/{paymentId} {
