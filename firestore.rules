@@ -1,0 +1,217 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: profiles
+    // Document ID: userId
+    // Fields:
+    //   - id: string (required)
+    //   - email: string (required)
+    //   - full_name: string
+    //   - score_afiya: number (required)
+    //   - tier: string (required)
+    //   - status: string
+    //   - deposit_coefficient: number
+    //   - retention_coefficient: number
+    //   - kyc_status: string
+    //   - last_activity_at: timestamp
+    //   - created_at: timestamp (required)
+    //
+    // Collection: wallets
+    // Document ID: walletId
+    // Fields:
+    //   - id: string (required)
+    //   - owner_id: string (required)
+    //   - group_id: string (optional)
+    //   - wallet_type: string (required)
+    //   - balance: number (required)
+    //   - currency: string (required)
+    //
+    // Collection: tontine_groups
+    // Document ID: groupId
+    // Fields:
+    //   - id: string (required)
+    //   - name: string (required)
+    //   - admin_id: string (required)
+    //   - contribution_amount: number (required)
+    //   - currency: string (required)
+    //   - frequency: string (required)
+    //   - target_members: number (required)
+    //   - status: string
+    //   - created_at: timestamp
+    //
+    // Collection: transactions
+    // Document ID: transactionId
+    // Fields:
+    //   - id: string (required)
+    //   - type: string (required)
+    //   - amount: number (required)
+    //   - currency: string (required)
+    //   - user_id: string (optional)
+    //   - group_id: string (optional)
+    //   - status: string (required)
+    //   - created_at: timestamp (required)
+    //
+    // Collection: payments
+    // Document ID: paymentId
+    // Fields:
+    //   - id: string (required)
+    //   - cycle_id: string (required)
+    //   - member_id: string (required)
+    //   - amount: number (required)
+    //   - status: string (required)
+    //   - paid_at: timestamp
+    //
+    // Collection: notifications
+    // Document ID: notificationId
+    // Fields:
+    //   - id: string (required)
+    //   - user_id: string (required)
+    //   - title: string (required)
+    //   - message: string (required)
+    //   - type: string (required)
+    //   - read: boolean (required)
+    //   - created_at: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "jespere20000@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidProfile(data) {
+      return data.keys().hasAll(['id', 'email', 'score_afiya', 'tier', 'created_at']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.score_afiya is number && data.score_afiya >= 0 && data.score_afiya <= 100 &&
+             data.tier in ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM'];
+    }
+
+    function isValidWallet(data) {
+      return data.keys().hasAll(['id', 'owner_id', 'wallet_type', 'balance', 'currency']) &&
+             data.owner_id is string &&
+             data.balance is number && data.balance >= 0 &&
+             data.wallet_type in ['USER_MAIN', 'ESCROW_CONSTITUTION', 'CONTRIBUTION_POOL', 'GROUP_MINI_FUND', 'GLOBAL_FUND'];
+    }
+
+    function isValidGroup(data) {
+      return data.keys().hasAll(['id', 'name', 'admin_id', 'contribution_amount', 'currency', 'frequency', 'target_members', 'created_at']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.contribution_amount is number && data.contribution_amount > 0 &&
+             data.frequency in ['WEEKLY', 'MONTHLY', 'QUARTERLY'];
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['id', 'type', 'amount', 'currency', 'status', 'created_at']) &&
+             data.amount is number && data.amount >= 0 &&
+             data.type in ['DEPOSIT', 'WITHDRAWAL', 'CONTRIBUTION', 'PAYOUT', 'CAUTION', 'PENALTY', 'REFUND', 'MINI_FUND_CONTRIB', 'GLOBAL_FUND_CONTRIB', 'GLOBAL_FUND_USAGE', 'DEPOSIT_SEIZURE'];
+    }
+
+    function isValidPayment(data) {
+      return data.keys().hasAll(['id', 'cycle_id', 'member_id', 'amount', 'status']) &&
+             data.amount is number && data.amount >= 0 &&
+             data.status in ['PENDING', 'SUCCESS', 'FAILED'];
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll(['id', 'user_id', 'title', 'message', 'type', 'read', 'created_at']) &&
+             data.user_id is string &&
+             data.type in ['PAYMENT_DUE', 'PAYOUT_RECEIVED', 'GROUP_START', 'GROUP_CANCELLED', 'SYSTEM'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /profiles/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidProfile(request.resource.data) &&
+                    request.resource.data.score_afiya == 50 &&
+                    request.resource.data.tier == "BRONZE";
+      allow update: if isOwner(userId) && 
+                    request.resource.data.score_afiya == resource.data.score_afiya &&
+                    request.resource.data.tier == resource.data.tier;
+      allow update: if isAdmin();
+    }
+
+    match /wallets/{walletId} {
+      allow read: if isAuthenticated() && (isOwner(resource.data.owner_id) || isAdmin() || resource.data.wallet_type != 'USER_MAIN');
+      allow create: if isAuthenticated() && isValidWallet(request.resource.data) && 
+                    (isOwner(request.resource.data.owner_id) || isAdmin());
+      allow update: if isAuthenticated() && isValidWallet(request.resource.data) && 
+                    (isOwner(resource.data.owner_id) || isAdmin());
+    }
+
+    match /tontine_groups/{groupId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidGroup(request.resource.data) && 
+                    request.resource.data.admin_id == request.auth.uid;
+      allow update: if isAuthenticated() && isValidGroup(request.resource.data) && 
+                    (resource.data.admin_id == request.auth.uid || isAdmin());
+    }
+
+    match /tontine_members/{memberId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.user_id == request.auth.uid;
+      allow update, delete: if isAuthenticated() && (resource.data.user_id == request.auth.uid || isAdmin() || get(/databases/$(database)/documents/tontine_groups/$(resource.data.group_id)).data.admin_id == request.auth.uid);
+    }
+
+    match /cycles/{cycleId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && (isAdmin() || get(/databases/$(database)/documents/tontine_groups/$(request.resource.data.group_id)).data.admin_id == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    match /messages/{messageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.user_id == request.auth.uid;
+      allow update, delete: if isAuthenticated() && (resource.data.user_id == request.auth.uid || isAdmin());
+    }
+
+    match /transactions/{transactionId} {
+      // Allow listing if filtered by user_id
+      allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && (request.resource.data.user_id == request.auth.uid || isAdmin());
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidPayment(request.resource.data);
+      allow update: if isAuthenticated() && isValidPayment(request.resource.data) && 
+                    (get(/databases/$(database)/documents/tontine_members/$(resource.data.member_id)).data.user_id == request.auth.uid || isAdmin());
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.user_id == request.auth.uid || isAdmin());
+    }
+
+    match /events/{eventId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+    }
+
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,204 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "Profile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "description": "User email" },
+        "full_name": { "type": "string", "description": "Prénom + Nom" },
+        "score_afiya": { "type": "number", "description": "0-100, initial: 50" },
+        "tier": { "type": "string", "enum": ["BRONZE", "SILVER", "GOLD", "PLATINUM"], "description": "Initial: BRONZE" },
+        "status": { "type": "string", "enum": ["ACTIVE", "RESTRICTED", "BANNED", "PENDING_REVIEW"] },
+        "deposit_coefficient": { "type": "number", "description": "Calculé depuis le tier" },
+        "retention_coefficient": { "type": "number", "description": "Calculé depuis le tier" },
+        "kyc_status": { "type": "string", "enum": ["APPROVED", "PENDING", "REJECTED"] },
+        "last_activity_at": { "type": "string", "format": "date-time" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "email", "score_afiya", "tier", "created_at"]
+    },
+    "Wallet": {
+      "title": "Wallet",
+      "description": "Financial wallet for user or group",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Wallet ID" },
+        "owner_id": { "type": "string", "description": "UID Firebase" },
+        "group_id": { "type": "string", "description": "Group ID (null for user wallets)" },
+        "wallet_type": { "type": "string", "enum": ["USER_MAIN", "ESCROW_CONSTITUTION", "CONTRIBUTION_POOL", "GROUP_MINI_FUND", "GLOBAL_FUND"] },
+        "balance": { "type": "number", "description": "En FCFA (XOF)" },
+        "currency": { "type": "string", "description": "XOF" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "owner_id", "wallet_type", "balance", "currency"]
+    },
+    "TontineGroup": {
+      "title": "TontineGroup",
+      "description": "A tontine group",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "admin_id": { "type": "string" },
+        "contribution_amount": { "type": "number" },
+        "currency": { "type": "string" },
+        "frequency": { "type": "string", "enum": ["WEEKLY", "MONTHLY", "QUARTERLY"] },
+        "target_members": { "type": "number" },
+        "start_threshold": { "type": "number" },
+        "draw_mode": { "type": "string", "enum": ["RANDOM", "SCORE_WEIGHTED"] },
+        "status": { "type": "string", "enum": ["DRAFT", "FORMING", "WAITING_VOTE", "ACTIVE", "COMPLETED", "CANCELLED"] },
+        "invitation_code": { "type": "string" },
+        "constitution_deadline": { "type": "string", "format": "date-time" },
+        "current_cycle": { "type": "number" },
+        "total_cycles": { "type": "number" },
+        "started_at": { "type": "string", "format": "date-time" },
+        "protection_mode_active": { "type": "boolean" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "admin_id", "contribution_amount", "currency", "frequency", "target_members", "created_at"]
+    },
+    "TontineMember": {
+      "title": "TontineMember",
+      "description": "Membership in a tontine group",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "group_id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "draw_position": { "type": "number" },
+        "initial_deposit": { "type": "number" },
+        "adjusted_deposit": { "type": "number" },
+        "deposit_differential": { "type": "number" },
+        "deposit_differential_paid": { "type": "boolean" },
+        "current_deposit_balance": { "type": "number" },
+        "status": { "type": "string", "enum": ["PENDING_PAYMENT", "ACTIVE", "RESTRICTED", "BANNED", "COMPLETED"] },
+        "cycles_completed": { "type": "number" },
+        "cycles_with_delay": { "type": "number" },
+        "cycles_defaulted": { "type": "number" },
+        "is_admin": { "type": "boolean" },
+        "swap_eligible": { "type": "boolean" },
+        "score_at_join": { "type": "number" },
+        "tier_at_join": { "type": "string" },
+        "retention_amount": { "type": "number" },
+        "retention_applied": { "type": "boolean" },
+        "joined_at": { "type": "string", "format": "date-time" },
+        "received_payout_at": { "type": "string", "format": "date-time" },
+        "has_seen_draw": { "type": "boolean" }
+      },
+      "required": ["id", "group_id", "user_id", "status", "joined_at"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "A financial transaction",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["DEPOSIT", "WITHDRAWAL", "CONTRIBUTION", "PAYOUT", "CAUTION", "PENALTY", "REFUND", "MINI_FUND_CONTRIB", "GLOBAL_FUND_CONTRIB", "GLOBAL_FUND_USAGE", "DEPOSIT_SEIZURE"] },
+        "amount": { "type": "number" },
+        "currency": { "type": "string" },
+        "from_wallet_id": { "type": "string" },
+        "to_wallet_id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "group_id": { "type": "string" },
+        "member_id": { "type": "string" },
+        "status": { "type": "string", "enum": ["SUCCESS", "FAILED", "PENDING"] },
+        "description": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "type", "amount", "currency", "status", "created_at"]
+    },
+    "Cycle": {
+      "title": "Cycle",
+      "description": "A tontine cycle",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "group_id": { "type": "string" },
+        "cycle_number": { "type": "number" },
+        "beneficiary_member_id": { "type": "string" },
+        "start_date": { "type": "string", "format": "date-time" },
+        "payment_due_date": { "type": "string", "format": "date-time" },
+        "default_date": { "type": "string", "format": "date-time" },
+        "expected_total": { "type": "number" },
+        "actual_total": { "type": "number" },
+        "payout_date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["PENDING", "ACTIVE", "COMPLETED", "DEFAULTED"] }
+      },
+      "required": ["id", "group_id", "cycle_number", "beneficiary_member_id", "start_date", "status"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "A contribution payment for a cycle",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "cycle_id": { "type": "string" },
+        "member_id": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["PENDING", "SUCCESS", "FAILED"] },
+        "paid_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "cycle_id", "member_id", "amount", "status"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User notification",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["PAYMENT_DUE", "PAYOUT_RECEIVED", "GROUP_START", "GROUP_CANCELLED", "SYSTEM"] },
+        "read": { "type": "boolean" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "user_id", "title", "message", "type", "read", "created_at"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "System event",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "event_type": { "type": "string" },
+        "user_id": { "type": "string" },
+        "group_id": { "type": "string" },
+        "member_id": { "type": "string" },
+        "previous_state": { "type": "string" },
+        "new_state": { "type": "string" },
+        "event_data": { "type": "object" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "event_type", "created_at"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Chat message",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "group_id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "text": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "group_id", "user_id", "text", "created_at"]
+    }
+  },
+  "firestore": {
+    "/profiles/{userId}": { "schema": "Profile", "description": "User profiles" },
+    "/wallets/{walletId}": { "schema": "Wallet", "description": "Wallets" },
+    "/tontine_groups/{groupId}": { "schema": "TontineGroup", "description": "Tontine groups" },
+    "/tontine_members/{memberId}": { "schema": "TontineMember", "description": "Members of a tontine group" },
+    "/transactions/{transactionId}": { "schema": "Transaction", "description": "Global transactions" },
+    "/cycles/{cycleId}": { "schema": "Cycle", "description": "Cycles of a tontine group" },
+    "/payments/{paymentId}": { "schema": "Payment", "description": "Contribution payments" },
+    "/notifications/{notificationId}": { "schema": "Notification", "description": "User notifications" },
+    "/events/{eventId}": { "schema": "Event", "description": "System events" },
+    "/messages/{messageId}": { "schema": "Message", "description": "Group chat messages" }
+  }
+}
