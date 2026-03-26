@@ -48,6 +48,7 @@ export function Kyc() {
       await updateProfile(user.uid, {
         full_name: `${formData.firstName} ${formData.lastName}`.trim(),
         email: formData.email,
+        kyc_status: 'APPROVED'
       });
 
       navigate('/wallet');

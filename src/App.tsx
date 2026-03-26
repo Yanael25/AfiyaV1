@@ -5,7 +5,7 @@
 
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, doc, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from './lib/firebase';
 import { Splash } from './screens/auth/Splash';
@@ -97,7 +97,8 @@ export default function App() {
         
         if (querySnapshot.empty) {
           console.log('Initializing Global Fund Wallet...');
-          await addDoc(walletsRef, {
+          const globalFundRef = doc(db, 'wallets', 'global_fund_main');
+          await setDoc(globalFundRef, {
             id: 'global_fund_main',
             owner_id: 'SYSTEM',
             group_id: null,

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { User, Shield, Settings, HelpCircle, LogOut, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '@/src/lib/firebase';
+import { auth } from '../../lib/firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
-import { getUserProfile } from '@/src/services/userService';
+import { getUserProfile } from '../../services/userService';
 
 export function Profile() {
   const navigate = useNavigate();

@@ -194,7 +194,6 @@ export function GroupDetail() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'DRAFT': return <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">BROUILLON</span>;
       case 'FORMING': return <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">EN CONSTITUTION</span>;
       case 'ACTIVE': return <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">ACTIF</span>;
       case 'COMPLETED': return <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">TERMINÉ</span>;

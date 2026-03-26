@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
-import { formatXOF } from '@/src/lib/utils';
-import { auth } from '@/src/lib/firebase';
-import { getGroupMembers, payDepositDifferential } from '@/src/services/tontineService';
+import { formatXOF } from '../../lib/utils';
+import { auth } from '../../lib/firebase';
+import { getGroupMembers, payDepositDifferential } from '../../services/tontineService';
 
 export function AdjustDeposit() {
   const navigate = useNavigate();

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, Calendar, Coins, Clock } from 'lucide-react';
-import { formatXOF, getTierLimits, getTierCoeff } from '@/src/lib/utils';
-import { auth } from '@/src/lib/firebase';
-import { getUserProfile } from '@/src/services/userService';
-import { createTontineGroup } from '@/src/services/tontineService';
+import { formatXOF, getTierLimits, getTierCoeff } from '../../lib/utils';
+import { auth } from '../../lib/firebase';
+import { getUserProfile } from '../../services/userService';
+import { createTontineGroup } from '../../services/tontineService';
 import { Timestamp } from 'firebase/firestore';
 
 export function CreateGroup() {
@@ -95,6 +95,7 @@ export function CreateGroup() {
         contribution_amount: contribution,
         target_members: members,
         currency: 'XOF',
+        constitution_deadline: Timestamp.fromDate(new Date(formData.constitution_deadline)),
       }, user.uid);
       
       // Navigate to group detail
@@ -237,7 +238,7 @@ export function CreateGroup() {
           {loading ? (
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : (
-            'Continuer vers le paiement'
+            'Créer et activer le Cercle'
           )}
         </button>
       </div>

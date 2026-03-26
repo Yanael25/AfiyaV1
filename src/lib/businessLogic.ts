@@ -275,6 +275,82 @@ export const start_tontine_group = async (groupId: string) => {
       updated_at: now
     });
 
+    const walletsRef = collection(db, 'wallets');
+    
+    const escrowQuery = query(walletsRef, where('group_id', '==', groupId), where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1));
+    const escrowSnapshot = await getDocs(escrowQuery);
+    const escrowDoc = escrowSnapshot.docs[0];
+    
+    const contribPoolQuery = query(walletsRef, where('group_id', '==', groupId), where('wallet_type', '==', 'CONTRIBUTION_POOL'), limit(1));
+    const contribPoolSnapshot = await getDocs(contribPoolQuery);
+    const contribPoolDoc = contribPoolSnapshot.docs[0];
+    
+    const miniFundQuery = query(walletsRef, where('group_id', '==', groupId), where('wallet_type', '==', 'GROUP_MINI_FUND'), limit(1));
+    const miniFundSnapshot = await getDocs(miniFundQuery);
+    const miniFundDoc = miniFundSnapshot.docs[0];
+    
+    const globalFundQuery = query(walletsRef, where('wallet_type', '==', 'GLOBAL_FUND'), limit(1));
+    const globalFundSnapshot = await getDocs(globalFundQuery);
+    const globalFundDoc = globalFundSnapshot.docs[0];
+
+    const totalContributions = groupData.contribution_amount * totalMembers;
+    const totalMiniAmount = Math.round(groupData.contribution_amount * 0.01) * totalMembers;
+    const totalGlobalAmount = Math.round(groupData.contribution_amount * 0.03) * totalMembers;
+    const totalContribAmount = totalContributions - totalMiniAmount - totalGlobalAmount;
+
+    transaction.update(escrowDoc.ref, { balance: escrowDoc.data().balance - totalContributions });
+    transaction.update(contribPoolDoc.ref, { balance: contribPoolDoc.data().balance + totalContribAmount });
+    transaction.update(miniFundDoc.ref, { balance: miniFundDoc.data().balance + totalMiniAmount });
+    transaction.update(globalFundDoc.ref, { balance: globalFundDoc.data().balance + totalGlobalAmount });
+
+    const txSplit1 = doc(collection(db, 'transactions'));
+    transaction.set(txSplit1, {
+      id: txSplit1.id,
+      type: 'CONTRIBUTION',
+      amount: totalContribAmount,
+      currency: 'XOF',
+      from_wallet_id: escrowDoc.id,
+      to_wallet_id: contribPoolDoc.id,
+      user_id: null,
+      group_id: groupId,
+      member_id: null,
+      status: 'SUCCESS',
+      description: `Transfert 1ère cotisation (Pool) - Groupe ${groupData.name}`,
+      created_at: Timestamp.now()
+    });
+
+    const txSplit2 = doc(collection(db, 'transactions'));
+    transaction.set(txSplit2, {
+      id: txSplit2.id,
+      type: 'MINI_FUND_CONTRIB',
+      amount: totalMiniAmount,
+      currency: 'XOF',
+      from_wallet_id: escrowDoc.id,
+      to_wallet_id: miniFundDoc.id,
+      user_id: null,
+      group_id: groupId,
+      member_id: null,
+      status: 'SUCCESS',
+      description: `Transfert 1ère cotisation (Mini-fonds) - Groupe ${groupData.name}`,
+      created_at: Timestamp.now()
+    });
+
+    const txSplit3 = doc(collection(db, 'transactions'));
+    transaction.set(txSplit3, {
+      id: txSplit3.id,
+      type: 'GLOBAL_FUND_CONTRIB',
+      amount: totalGlobalAmount,
+      currency: 'XOF',
+      from_wallet_id: escrowDoc.id,
+      to_wallet_id: globalFundDoc.id,
+      user_id: null,
+      group_id: groupId,
+      member_id: null,
+      status: 'SUCCESS',
+      description: `Transfert 1ère cotisation (Fonds Global) - Groupe ${groupData.name}`,
+      created_at: Timestamp.now()
+    });
+
     const cycleRef = doc(collection(db, 'cycles'));
     
     const startDate = new Date();

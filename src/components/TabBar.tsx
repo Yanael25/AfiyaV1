@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { Wallet, Users, Briefcase, User } from 'lucide-react';
-import { cn } from '@/src/lib/utils';
-import { auth } from '@/src/lib/firebase';
+import { cn } from '../lib/utils';
+import { auth } from '../lib/firebase';
 
 export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
   const tabs = [

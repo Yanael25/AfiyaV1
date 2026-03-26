@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Key } from 'lucide-react';
-import { formatXOF, getTierCoeff } from '@/src/lib/utils';
-import { auth } from '@/src/lib/firebase';
-import { getUserProfile } from '@/src/services/userService';
-import { getGroupByCode, joinTontineGroup, getGroupMembers, payJoinFees } from '@/src/services/tontineService';
+import { formatXOF, getTierCoeff } from '../../lib/utils';
+import { auth } from '../../lib/firebase';
+import { getUserProfile } from '../../services/userService';
+import { getGroupByCode, joinTontineGroup, getGroupMembers } from '../../services/tontineService';
 
 export function JoinGroup() {
   const navigate = useNavigate();
@@ -55,7 +55,6 @@ export function JoinGroup() {
       if (!user) throw new Error("Utilisateur non connecté");
 
       const memberId = await joinTontineGroup(groupInfo.id, user.uid);
-      await payJoinFees(memberId, user.uid);
       
       // Navigate to group detail
       navigate(`/group/${groupInfo.id}`);
