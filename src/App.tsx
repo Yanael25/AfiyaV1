@@ -21,6 +21,7 @@ import { GroupDetail } from './screens/group/GroupDetail';
 import { CreateGroup } from './screens/group/CreateGroup';
 import { JoinGroup } from './screens/group/JoinGroup';
 import { AdjustDeposit } from './screens/group/AdjustDeposit';
+import { AdminDashboard } from './screens/admin/AdminDashboard';
 import { TabBar } from './components/TabBar';
 
 import { StatusBar } from './components/StatusBar';
@@ -144,6 +145,7 @@ export default function App() {
           <Route path="/group/:id/adjust-deposit" element={<AdjustDeposit />} />
           <Route path="/group/create" element={<CreateGroup />} />
           <Route path="/group/join" element={<JoinGroup />} />
+          <Route path="/admin" element={<AdminDashboard />} />
         </Route>
       </Routes>
     </BrowserRouter>
