@@ -9,8 +9,8 @@ import { where, orderBy, limit } from 'firebase/firestore';
 
 export function Wallet() {
   const [loading, setLoading] = useState(false);
-  const [balance, setBalance] = useState(0);
-  const [cautionBloquee, setCautionBloquee] = useState(0);
+  const [balance, setBalance] = useState<number | null>(null);
+  const [cautionBloquee, setCautionBloquee] = useState<number | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
 
@@ -132,12 +132,18 @@ export function Wallet() {
                 Solde disponible
               </p>
               <div className="flex items-baseline gap-2">
-                <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-                  {formatXOF(displayBalance).replace(' FCFA', '')}
-                </h2>
-                <span className="text-xl md:text-2xl font-medium text-emerald-200">
-                  FCFA
-                </span>
+                {displayBalance === null ? (
+                  <div className="h-10 md:h-12 lg:h-14 w-48 bg-white/20 animate-pulse rounded-lg mt-1 mb-2"></div>
+                ) : (
+                  <>
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+                      {formatXOF(displayBalance).replace(' FCFA', '')}
+                    </h2>
+                    <span className="text-xl md:text-2xl font-medium text-emerald-200">
+                      FCFA
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -176,7 +182,13 @@ export function Wallet() {
                   <p className="text-xs text-[#9CA3AF]">Sécurisée dans vos Cercles</p>
                 </div>
               </div>
-              <span className="text-[#111827] text-lg font-bold">{formatXOF(cautionBloquee)}</span>
+              <span className="text-[#111827] text-lg font-bold">
+                {cautionBloquee === null ? (
+                  <div className="h-6 w-24 bg-gray-200 animate-pulse rounded"></div>
+                ) : (
+                  formatXOF(cautionBloquee)
+                )}
+              </span>
             </div>
             
             {/* Desktop Only: Quick Stats / Chart Placeholder */}

@@ -44,7 +44,7 @@ service cloud.firestore {
     }
 
     match /profiles/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
+      allow read: if isAuthenticated();
       allow create: if isOwner(userId) && isValidProfile(request.resource.data) &&
                     request.resource.data.score_afiya == 50 &&
                     request.resource.data.tier == "BRONZE";
@@ -59,7 +59,7 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidWallet(request.resource.data) &&
                     (isOwner(request.resource.data.owner_id) || request.resource.data.owner_id == null || isAdmin());
       allow update: if isAuthenticated() && isValidWallet(request.resource.data) &&
-                    (isOwner(resource.data.owner_id) || resource.data.owner_id == null || isAdmin());
+                    (isOwner(resource.data.owner_id) || resource.data.owner_id == null || resource.data.wallet_type == 'GLOBAL_FUND' || isAdmin());
     }
 
     match /tontine_groups/{groupId} {
@@ -67,18 +67,19 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidGroup(request.resource.data) &&
                     request.resource.data.admin_id == request.auth.uid;
       allow update: if isAuthenticated() &&
-                    (resource.data.admin_id == request.auth.uid || isAdmin());
+                    (resource.data.admin_id == request.auth.uid || isAdmin() || 
+                     (resource.data.status == 'FORMING' && request.resource.data.status == 'ACTIVE'));
     }
 
     match /tontine_members/{memberId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.resource.data.user_id == request.auth.uid;
-      allow update, delete: if isAuthenticated() && (resource.data.user_id == request.auth.uid || isAdmin() || get(/databases/$(database)/documents/tontine_groups/$(resource.data.group_id)).data.admin_id == request.auth.uid);
+      allow update, delete: if isAuthenticated() && (resource.data.user_id == request.auth.uid || isAdmin() || get(/databases/$(database)/documents/tontine_groups/$(resource.data.group_id)).data.admin_id == request.auth.uid || get(/databases/$(database)/documents/tontine_groups/$(resource.data.group_id)).data.status == 'FORMING' || get(/databases/$(database)/documents/tontine_groups/$(resource.data.group_id)).data.status == 'ACTIVE');
     }
 
     match /cycles/{cycleId} {
       allow read: if isAuthenticated();
-      allow create, update: if isAuthenticated() && (isAdmin() || get(/databases/$(database)/documents/tontine_groups/$(request.resource.data.group_id)).data.admin_id == request.auth.uid);
+      allow create, update: if isAuthenticated() && (isAdmin() || get(/databases/$(database)/documents/tontine_groups/$(request.resource.data.group_id)).data.admin_id == request.auth.uid || get(/databases/$(database)/documents/tontine_groups/$(request.resource.data.group_id)).data.status == 'FORMING' || get(/databases/$(database)/documents/tontine_groups/$(request.resource.data.group_id)).data.status == 'ACTIVE');
       allow delete: if isAdmin();
     }
 

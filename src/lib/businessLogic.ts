@@ -220,6 +220,28 @@ export const start_tontine_group = async (groupId: string) => {
   const membersSnap = await getDocs(membersQ);
   const members = membersSnap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
 
+  const walletsRef = collection(db, 'wallets');
+  
+  const escrowQuery = query(walletsRef, where('group_id', '==', groupId), where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1));
+  const escrowSnapshot = await getDocs(escrowQuery);
+  if (escrowSnapshot.empty) throw new Error("Portefeuille de caution introuvable");
+  const escrowDocRef = escrowSnapshot.docs[0].ref;
+  
+  const contribPoolQuery = query(walletsRef, where('group_id', '==', groupId), where('wallet_type', '==', 'CONTRIBUTION_POOL'), limit(1));
+  const contribPoolSnapshot = await getDocs(contribPoolQuery);
+  if (contribPoolSnapshot.empty) throw new Error("Portefeuille de contribution introuvable");
+  const contribPoolDocRef = contribPoolSnapshot.docs[0].ref;
+  
+  const miniFundQuery = query(walletsRef, where('group_id', '==', groupId), where('wallet_type', '==', 'GROUP_MINI_FUND'), limit(1));
+  const miniFundSnapshot = await getDocs(miniFundQuery);
+  if (miniFundSnapshot.empty) throw new Error("Mini-fonds introuvable");
+  const miniFundDocRef = miniFundSnapshot.docs[0].ref;
+  
+  const globalFundQuery = query(walletsRef, where('wallet_type', '==', 'GLOBAL_FUND'), limit(1));
+  const globalFundSnapshot = await getDocs(globalFundQuery);
+  if (globalFundSnapshot.empty) throw new Error("Fonds global introuvable");
+  const globalFundDocRef = globalFundSnapshot.docs[0].ref;
+
   return await runTransaction(db, async (transaction) => {
     const groupDoc = await transaction.get(groupRef);
     if (!groupDoc.exists()) throw new Error("Groupe introuvable");
@@ -233,6 +255,11 @@ export const start_tontine_group = async (groupId: string) => {
       throw new Error("Le groupe n'est pas encore complet.");
     }
 
+    const escrowDoc = await transaction.get(escrowDocRef);
+    const contribPoolDoc = await transaction.get(contribPoolDocRef);
+    const miniFundDoc = await transaction.get(miniFundDocRef);
+    const globalFundDoc = await transaction.get(globalFundDocRef);
+
     const shuffledMembers = [...members].sort(() => Math.random() - 0.5);
     const totalMembers = shuffledMembers.length;
 
@@ -241,6 +268,7 @@ export const start_tontine_group = async (groupId: string) => {
 
     shuffledMembers.forEach((member, index) => {
       const position = index + 1;
+      member.draw_position = position;
       if (position === 1) firstBeneficiaryId = member.id;
 
       const posRatio = position / totalMembers;
@@ -275,33 +303,15 @@ export const start_tontine_group = async (groupId: string) => {
       updated_at: now
     });
 
-    const walletsRef = collection(db, 'wallets');
-    
-    const escrowQuery = query(walletsRef, where('group_id', '==', groupId), where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1));
-    const escrowSnapshot = await getDocs(escrowQuery);
-    const escrowDoc = escrowSnapshot.docs[0];
-    
-    const contribPoolQuery = query(walletsRef, where('group_id', '==', groupId), where('wallet_type', '==', 'CONTRIBUTION_POOL'), limit(1));
-    const contribPoolSnapshot = await getDocs(contribPoolQuery);
-    const contribPoolDoc = contribPoolSnapshot.docs[0];
-    
-    const miniFundQuery = query(walletsRef, where('group_id', '==', groupId), where('wallet_type', '==', 'GROUP_MINI_FUND'), limit(1));
-    const miniFundSnapshot = await getDocs(miniFundQuery);
-    const miniFundDoc = miniFundSnapshot.docs[0];
-    
-    const globalFundQuery = query(walletsRef, where('wallet_type', '==', 'GLOBAL_FUND'), limit(1));
-    const globalFundSnapshot = await getDocs(globalFundQuery);
-    const globalFundDoc = globalFundSnapshot.docs[0];
-
     const totalContributions = groupData.contribution_amount * totalMembers;
     const totalMiniAmount = Math.round(groupData.contribution_amount * 0.01) * totalMembers;
     const totalGlobalAmount = Math.round(groupData.contribution_amount * 0.03) * totalMembers;
     const totalContribAmount = totalContributions - totalMiniAmount - totalGlobalAmount;
 
-    transaction.update(escrowDoc.ref, { balance: escrowDoc.data().balance - totalContributions });
-    transaction.update(contribPoolDoc.ref, { balance: contribPoolDoc.data().balance + totalContribAmount });
-    transaction.update(miniFundDoc.ref, { balance: miniFundDoc.data().balance + totalMiniAmount });
-    transaction.update(globalFundDoc.ref, { balance: globalFundDoc.data().balance + totalGlobalAmount });
+    transaction.update(escrowDocRef, { balance: escrowDoc.data()!.balance - totalContributions });
+    transaction.update(contribPoolDocRef, { balance: contribPoolDoc.data()!.balance + totalContribAmount });
+    transaction.update(miniFundDocRef, { balance: miniFundDoc.data()!.balance + totalMiniAmount });
+    transaction.update(globalFundDocRef, { balance: globalFundDoc.data()!.balance + totalGlobalAmount });
 
     const txSplit1 = doc(collection(db, 'transactions'));
     transaction.set(txSplit1, {
@@ -309,8 +319,8 @@ export const start_tontine_group = async (groupId: string) => {
       type: 'CONTRIBUTION',
       amount: totalContribAmount,
       currency: 'XOF',
-      from_wallet_id: escrowDoc.id,
-      to_wallet_id: contribPoolDoc.id,
+      from_wallet_id: escrowDocRef.id,
+      to_wallet_id: contribPoolDocRef.id,
       user_id: null,
       group_id: groupId,
       member_id: null,
@@ -325,8 +335,8 @@ export const start_tontine_group = async (groupId: string) => {
       type: 'MINI_FUND_CONTRIB',
       amount: totalMiniAmount,
       currency: 'XOF',
-      from_wallet_id: escrowDoc.id,
-      to_wallet_id: miniFundDoc.id,
+      from_wallet_id: escrowDocRef.id,
+      to_wallet_id: miniFundDocRef.id,
       user_id: null,
       group_id: groupId,
       member_id: null,
@@ -341,8 +351,8 @@ export const start_tontine_group = async (groupId: string) => {
       type: 'GLOBAL_FUND_CONTRIB',
       amount: totalGlobalAmount,
       currency: 'XOF',
-      from_wallet_id: escrowDoc.id,
-      to_wallet_id: globalFundDoc.id,
+      from_wallet_id: escrowDocRef.id,
+      to_wallet_id: globalFundDocRef.id,
       user_id: null,
       group_id: groupId,
       member_id: null,
@@ -401,49 +411,61 @@ export const start_tontine_group = async (groupId: string) => {
 };
 
 export const process_contribution_payment = async (memberId: string, cycleId: string) => {
+  const memberRef = doc(db, 'tontine_members', memberId);
+  const memberDocSnap = await getDoc(memberRef);
+  if (!memberDocSnap.exists()) throw new Error('Member not found');
+  const memberData = memberDocSnap.data();
+
+  const groupRef = doc(db, 'tontine_groups', memberData.group_id);
+  const groupDocSnap = await getDoc(groupRef);
+  if (!groupDocSnap.exists()) throw new Error('Group not found');
+  const groupData = groupDocSnap.data();
+
+  const walletsRef = collection(db, 'wallets');
+  
+  const userWalletQuery = query(walletsRef, where('owner_id', '==', memberData.user_id), where('wallet_type', '==', 'USER_MAIN'), limit(1));
+  const userWalletSnapshot = await getDocs(userWalletQuery);
+  if (userWalletSnapshot.empty) throw new Error('User main wallet not found');
+  const userWalletDocRef = userWalletSnapshot.docs[0].ref;
+
+  const contribPoolQuery = query(walletsRef, where('group_id', '==', groupData.id), where('wallet_type', '==', 'CONTRIBUTION_POOL'), limit(1));
+  const contribPoolSnapshot = await getDocs(contribPoolQuery);
+  if (contribPoolSnapshot.empty) throw new Error('Contribution pool not found');
+  const contribPoolDocRef = contribPoolSnapshot.docs[0].ref;
+
+  const miniFundQuery = query(walletsRef, where('group_id', '==', groupData.id), where('wallet_type', '==', 'GROUP_MINI_FUND'), limit(1));
+  const miniFundSnapshot = await getDocs(miniFundQuery);
+  if (miniFundSnapshot.empty) throw new Error('Group mini fund not found');
+  const miniFundDocRef = miniFundSnapshot.docs[0].ref;
+
+  const globalFundQuery = query(walletsRef, where('wallet_type', '==', 'GLOBAL_FUND'), limit(1));
+  const globalFundSnapshot = await getDocs(globalFundQuery);
+  if (globalFundSnapshot.empty) throw new Error('Global fund not found');
+  const globalFundDocRef = globalFundSnapshot.docs[0].ref;
+
+  const paymentsQuery = query(collection(db, 'payments'), where('cycle_id', '==', cycleId), where('member_id', '==', memberId), limit(1));
+  const paymentsSnapshot = await getDocs(paymentsQuery);
+  const paymentDocRef = paymentsSnapshot.empty ? null : paymentsSnapshot.docs[0].ref;
+
   return await runTransaction(db, async (t) => {
-    const memberRef = doc(db, 'tontine_members', memberId);
     const memberDoc = await t.get(memberRef);
     if (!memberDoc.exists()) throw new Error('Member not found');
     const member = memberDoc.data();
 
-    const groupRef = doc(db, 'tontine_groups', member.group_id);
     const groupDoc = await t.get(groupRef);
     if (!groupDoc.exists()) throw new Error('Group not found');
     const group = groupDoc.data();
 
-    const walletsRef = collection(db, 'wallets');
-    
-    // User Main Wallet
-    const userWalletQuery = query(walletsRef, where('owner_id', '==', member.user_id), where('wallet_type', '==', 'USER_MAIN'), limit(1));
-    const userWalletSnapshot = await getDocs(userWalletQuery);
-    if (userWalletSnapshot.empty) throw new Error('User main wallet not found');
-    const userWalletDoc = userWalletSnapshot.docs[0];
-    const userWalletRef = userWalletDoc.ref;
+    const userWalletDoc = await t.get(userWalletDocRef);
     const userWallet = userWalletDoc.data();
 
-    // Contribution Pool
-    const contribPoolQuery = query(walletsRef, where('group_id', '==', groupDoc.id), where('wallet_type', '==', 'CONTRIBUTION_POOL'), limit(1));
-    const contribPoolSnapshot = await getDocs(contribPoolQuery);
-    if (contribPoolSnapshot.empty) throw new Error('Contribution pool not found');
-    const contribPoolDoc = contribPoolSnapshot.docs[0];
-    const contribPoolRef = contribPoolDoc.ref;
+    const contribPoolDoc = await t.get(contribPoolDocRef);
     const contribPool = contribPoolDoc.data();
 
-    // Group Mini Fund
-    const miniFundQuery = query(walletsRef, where('group_id', '==', groupDoc.id), where('wallet_type', '==', 'GROUP_MINI_FUND'), limit(1));
-    const miniFundSnapshot = await getDocs(miniFundQuery);
-    if (miniFundSnapshot.empty) throw new Error('Group mini fund not found');
-    const miniFundDoc = miniFundSnapshot.docs[0];
-    const miniFundRef = miniFundDoc.ref;
+    const miniFundDoc = await t.get(miniFundDocRef);
     const miniFund = miniFundDoc.data();
 
-    // Global Fund
-    const globalFundQuery = query(walletsRef, where('wallet_type', '==', 'GLOBAL_FUND'), limit(1));
-    const globalFundSnapshot = await getDocs(globalFundQuery);
-    if (globalFundSnapshot.empty) throw new Error('Global fund not found');
-    const globalFundDoc = globalFundSnapshot.docs[0];
-    const globalFundRef = globalFundDoc.ref;
+    const globalFundDoc = await t.get(globalFundDocRef);
     const globalFund = globalFundDoc.data();
 
     const amount = group.contribution_amount;
@@ -451,20 +473,20 @@ export const process_contribution_payment = async (memberId: string, cycleId: st
     const globalAmount = Math.round(amount * 0.03);
     const contribAmount = amount - miniAmount - globalAmount;
 
-    if (userWallet.balance < amount) throw new Error("Solde insuffisant");
+    if (!userWallet || userWallet.balance < amount) throw new Error("Solde insuffisant");
 
-    t.update(userWalletRef, { balance: userWallet.balance - amount });
-    t.update(contribPoolRef, { balance: contribPool.balance + contribAmount });
-    t.update(miniFundRef, { balance: miniFund.balance + miniAmount });
-    t.update(globalFundRef, { balance: globalFund.balance + globalAmount });
+    t.update(userWalletDocRef, { balance: userWallet.balance - amount });
+    t.update(contribPoolDocRef, { balance: contribPool!.balance + contribAmount });
+    t.update(miniFundDocRef, { balance: miniFund!.balance + miniAmount });
+    t.update(globalFundDocRef, { balance: globalFund!.balance + globalAmount });
 
     const txRef1 = doc(collection(db, 'transactions'));
     t.set(txRef1, {
       type: 'CONTRIBUTION',
       amount: contribAmount,
       currency: 'XOF',
-      from_wallet_id: userWalletDoc.id,
-      to_wallet_id: contribPoolDoc.id,
+      from_wallet_id: userWalletDocRef.id,
+      to_wallet_id: contribPoolDocRef.id,
       user_id: member.user_id,
       group_id: groupDoc.id,
       member_id: memberId,
@@ -478,8 +500,8 @@ export const process_contribution_payment = async (memberId: string, cycleId: st
       type: 'MINI_FUND_CONTRIB',
       amount: miniAmount,
       currency: 'XOF',
-      from_wallet_id: userWalletDoc.id,
-      to_wallet_id: miniFundDoc.id,
+      from_wallet_id: userWalletDocRef.id,
+      to_wallet_id: miniFundDocRef.id,
       user_id: member.user_id,
       group_id: groupDoc.id,
       member_id: memberId,
@@ -493,8 +515,8 @@ export const process_contribution_payment = async (memberId: string, cycleId: st
       type: 'GLOBAL_FUND_CONTRIB',
       amount: globalAmount,
       currency: 'XOF',
-      from_wallet_id: userWalletDoc.id,
-      to_wallet_id: globalFundDoc.id,
+      from_wallet_id: userWalletDocRef.id,
+      to_wallet_id: globalFundDocRef.id,
       user_id: member.user_id,
       group_id: groupDoc.id,
       member_id: memberId,
@@ -503,11 +525,8 @@ export const process_contribution_payment = async (memberId: string, cycleId: st
       created_at: Timestamp.now()
     });
 
-    const paymentsQuery = query(collection(db, 'payments'), where('cycle_id', '==', cycleId), where('member_id', '==', memberId), limit(1));
-    const paymentsSnapshot = await getDocs(paymentsQuery);
-    if (!paymentsSnapshot.empty) {
-      const paymentDoc = paymentsSnapshot.docs[0];
-      t.update(paymentDoc.ref, {
+    if (paymentDocRef) {
+      t.update(paymentDocRef, {
         status: 'SUCCESS',
         paid_at: Timestamp.now()
       });
@@ -520,13 +539,37 @@ export const process_contribution_payment = async (memberId: string, cycleId: st
 };
 
 export const payout_to_beneficiary = async (cycleId: string) => {
+  const cycleRef = doc(db, 'cycles', cycleId);
+  const cycleDocSnap = await getDoc(cycleRef);
+  if (!cycleDocSnap.exists()) throw new Error('Cycle not found');
+  const cycleData = cycleDocSnap.data();
+
+  const beneficiaryRef = doc(db, 'tontine_members', cycleData.beneficiary_member_id);
+  const beneficiaryDocSnap = await getDoc(beneficiaryRef);
+  if (!beneficiaryDocSnap.exists()) throw new Error('Beneficiary not found');
+  const beneficiaryData = beneficiaryDocSnap.data();
+
+  const membersQuery = query(collection(db, 'tontine_members'), where('group_id', '==', cycleData.group_id));
+  const membersSnapshot = await getDocs(membersQuery);
+  const totalMembers = membersSnapshot.size;
+
+  const walletsRef = collection(db, 'wallets');
+  
+  const contribPoolQuery = query(walletsRef, where('group_id', '==', cycleData.group_id), where('wallet_type', '==', 'CONTRIBUTION_POOL'), limit(1));
+  const contribPoolSnapshot = await getDocs(contribPoolQuery);
+  if (contribPoolSnapshot.empty) throw new Error('Contribution pool not found');
+  const contribPoolDocRef = contribPoolSnapshot.docs[0].ref;
+
+  const beneficiaryWalletQuery = query(walletsRef, where('owner_id', '==', beneficiaryData.user_id), where('wallet_type', '==', 'USER_MAIN'), limit(1));
+  const beneficiaryWalletSnapshot = await getDocs(beneficiaryWalletQuery);
+  if (beneficiaryWalletSnapshot.empty) throw new Error('Beneficiary main wallet not found');
+  const beneficiaryWalletDocRef = beneficiaryWalletSnapshot.docs[0].ref;
+
   return await runTransaction(db, async (t) => {
-    const cycleRef = doc(db, 'cycles', cycleId);
     const cycleDoc = await t.get(cycleRef);
     if (!cycleDoc.exists()) throw new Error('Cycle not found');
     const cycle = cycleDoc.data();
 
-    const beneficiaryRef = doc(db, 'tontine_members', cycle.beneficiary_member_id);
     const beneficiaryDoc = await t.get(beneficiaryRef);
     if (!beneficiaryDoc.exists()) throw new Error('Beneficiary not found');
     const beneficiary = beneficiaryDoc.data();
@@ -541,24 +584,10 @@ export const payout_to_beneficiary = async (cycleId: string) => {
     if (!groupDoc.exists()) throw new Error('Group not found');
     const group = groupDoc.data();
 
-    const membersQuery = query(collection(db, 'tontine_members'), where('group_id', '==', cycle.group_id));
-    const membersSnapshot = await getDocs(membersQuery);
-    const totalMembers = membersSnapshot.size;
-
-    const walletsRef = collection(db, 'wallets');
-    
-    const contribPoolQuery = query(walletsRef, where('group_id', '==', cycle.group_id), where('wallet_type', '==', 'CONTRIBUTION_POOL'), limit(1));
-    const contribPoolSnapshot = await getDocs(contribPoolQuery);
-    if (contribPoolSnapshot.empty) throw new Error('Contribution pool not found');
-    const contribPoolDoc = contribPoolSnapshot.docs[0];
-    const contribPoolRef = contribPoolDoc.ref;
+    const contribPoolDoc = await t.get(contribPoolDocRef);
     const contribPool = contribPoolDoc.data();
 
-    const beneficiaryWalletQuery = query(walletsRef, where('owner_id', '==', beneficiary.user_id), where('wallet_type', '==', 'USER_MAIN'), limit(1));
-    const beneficiaryWalletSnapshot = await getDocs(beneficiaryWalletQuery);
-    if (beneficiaryWalletSnapshot.empty) throw new Error('Beneficiary main wallet not found');
-    const beneficiaryWalletDoc = beneficiaryWalletSnapshot.docs[0];
-    const beneficiaryWalletRef = beneficiaryWalletDoc.ref;
+    const beneficiaryWalletDoc = await t.get(beneficiaryWalletDocRef);
     const beneficiaryWallet = beneficiaryWalletDoc.data();
 
     const grossPayout = cycle.expected_total;
@@ -572,8 +601,8 @@ export const payout_to_beneficiary = async (cycleId: string) => {
     const retentionAmount = Math.round(group.contribution_amount * baseTaux * retentionCoeff);
     const netPayout = grossPayout - retentionAmount;
 
-    t.update(contribPoolRef, { balance: contribPool.balance - netPayout });
-    t.update(beneficiaryWalletRef, { balance: beneficiaryWallet.balance + netPayout });
+    t.update(contribPoolDocRef, { balance: contribPool!.balance - netPayout });
+    t.update(beneficiaryWalletDocRef, { balance: beneficiaryWallet!.balance + netPayout });
 
     t.update(beneficiaryRef, {
       retention_amount: retentionAmount,
@@ -646,8 +675,8 @@ export const payout_to_beneficiary = async (cycleId: string) => {
       type: 'PAYOUT',
       amount: netPayout,
       currency: 'XOF',
-      from_wallet_id: contribPoolDoc.id,
-      to_wallet_id: beneficiaryWalletDoc.id,
+      from_wallet_id: contribPoolDocRef.id,
+      to_wallet_id: beneficiaryWalletDocRef.id,
       user_id: beneficiary.user_id,
       group_id: groupDoc.id,
       member_id: beneficiaryDoc.id,
@@ -671,49 +700,57 @@ export const payout_to_beneficiary = async (cycleId: string) => {
 };
 
 export const handle_member_default = async (memberId: string, cycleId: string) => {
+  const memberRef = doc(db, 'tontine_members', memberId);
+  const memberDocSnap = await getDoc(memberRef);
+  if (!memberDocSnap.exists()) throw new Error('Member not found');
+  const memberData = memberDocSnap.data();
+
+  const groupRef = doc(db, 'tontine_groups', memberData.group_id);
+  const groupDocSnap = await getDoc(groupRef);
+  if (!groupDocSnap.exists()) throw new Error('Group not found');
+  const groupData = groupDocSnap.data();
+
+  const walletsRef = collection(db, 'wallets');
+  
+  const escrowQuery = query(walletsRef, where('group_id', '==', groupData.id), where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1));
+  const escrowSnapshot = await getDocs(escrowQuery);
+  if (escrowSnapshot.empty) throw new Error('Escrow constitution not found');
+  const escrowDocRef = escrowSnapshot.docs[0].ref;
+
+  const contribPoolQuery = query(walletsRef, where('group_id', '==', groupData.id), where('wallet_type', '==', 'CONTRIBUTION_POOL'), limit(1));
+  const contribPoolSnapshot = await getDocs(contribPoolQuery);
+  if (contribPoolSnapshot.empty) throw new Error('Contribution pool not found');
+  const contribPoolDocRef = contribPoolSnapshot.docs[0].ref;
+
+  const miniFundQuery = query(walletsRef, where('group_id', '==', groupData.id), where('wallet_type', '==', 'GROUP_MINI_FUND'), limit(1));
+  const miniFundSnapshot = await getDocs(miniFundQuery);
+  if (miniFundSnapshot.empty) throw new Error('Group mini fund not found');
+  const miniFundDocRef = miniFundSnapshot.docs[0].ref;
+
+  const globalFundQuery = query(walletsRef, where('wallet_type', '==', 'GLOBAL_FUND'), limit(1));
+  const globalFundSnapshot = await getDocs(globalFundQuery);
+  if (globalFundSnapshot.empty) throw new Error('Global fund not found');
+  const globalFundDocRef = globalFundSnapshot.docs[0].ref;
+
   return await runTransaction(db, async (t) => {
-    const memberRef = doc(db, 'tontine_members', memberId);
     const memberDoc = await t.get(memberRef);
     if (!memberDoc.exists()) throw new Error('Member not found');
     const member = memberDoc.data();
 
-    const groupRef = doc(db, 'tontine_groups', member.group_id);
     const groupDoc = await t.get(groupRef);
     if (!groupDoc.exists()) throw new Error('Group not found');
     const group = groupDoc.data();
 
-    const walletsRef = collection(db, 'wallets');
-    
-    // Escrow Constitution (Caution)
-    const escrowQuery = query(walletsRef, where('group_id', '==', groupDoc.id), where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1));
-    const escrowSnapshot = await getDocs(escrowQuery);
-    if (escrowSnapshot.empty) throw new Error('Escrow constitution not found');
-    const escrowDoc = escrowSnapshot.docs[0];
-    const escrowRef = escrowDoc.ref;
+    const escrowDoc = await t.get(escrowDocRef);
     const escrow = escrowDoc.data();
 
-    // Contribution Pool
-    const contribPoolQuery = query(walletsRef, where('group_id', '==', groupDoc.id), where('wallet_type', '==', 'CONTRIBUTION_POOL'), limit(1));
-    const contribPoolSnapshot = await getDocs(contribPoolQuery);
-    if (contribPoolSnapshot.empty) throw new Error('Contribution pool not found');
-    const contribPoolDoc = contribPoolSnapshot.docs[0];
-    const contribPoolRef = contribPoolDoc.ref;
+    const contribPoolDoc = await t.get(contribPoolDocRef);
     const contribPool = contribPoolDoc.data();
 
-    // Group Mini Fund
-    const miniFundQuery = query(walletsRef, where('group_id', '==', groupDoc.id), where('wallet_type', '==', 'GROUP_MINI_FUND'), limit(1));
-    const miniFundSnapshot = await getDocs(miniFundQuery);
-    if (miniFundSnapshot.empty) throw new Error('Group mini fund not found');
-    const miniFundDoc = miniFundSnapshot.docs[0];
-    const miniFundRef = miniFundDoc.ref;
+    const miniFundDoc = await t.get(miniFundDocRef);
     const miniFund = miniFundDoc.data();
 
-    // Global Fund
-    const globalFundQuery = query(walletsRef, where('wallet_type', '==', 'GLOBAL_FUND'), limit(1));
-    const globalFundSnapshot = await getDocs(globalFundQuery);
-    if (globalFundSnapshot.empty) throw new Error('Global fund not found');
-    const globalFundDoc = globalFundSnapshot.docs[0];
-    const globalFundRef = globalFundDoc.ref;
+    const globalFundDoc = await t.get(globalFundDocRef);
     const globalFund = globalFundDoc.data();
 
     const amountNeeded = group.contribution_amount;
@@ -724,7 +761,7 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
     const cautionAmount = member.adjusted_deposit || member.initial_deposit;
     const amountFromCaution = Math.min(cautionAmount, remainingNeeded);
     
-    t.update(escrowRef, { balance: escrow.balance - amountFromCaution });
+    t.update(escrowDocRef, { balance: escrow!.balance - amountFromCaution });
     totalToContribPool += amountFromCaution;
     
     const txRef1 = doc(collection(db, 'transactions'));
@@ -732,8 +769,8 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
       type: 'DEPOSIT_SEIZURE',
       amount: amountFromCaution,
       currency: 'XOF',
-      from_wallet_id: escrowDoc.id,
-      to_wallet_id: contribPoolDoc.id,
+      from_wallet_id: escrowDocRef.id,
+      to_wallet_id: contribPoolDocRef.id,
       user_id: member.user_id,
       group_id: groupDoc.id,
       member_id: memberId,
@@ -746,8 +783,8 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
 
     // Couche 2: Mini-fonds
     if (remainingNeeded > 0) {
-      const amountFromMiniFund = Math.min(miniFund.balance, remainingNeeded);
-      t.update(miniFundRef, { balance: miniFund.balance - amountFromMiniFund });
+      const amountFromMiniFund = Math.min(miniFund!.balance, remainingNeeded);
+      t.update(miniFundDocRef, { balance: miniFund!.balance - amountFromMiniFund });
       totalToContribPool += amountFromMiniFund;
       
       const txRef2 = doc(collection(db, 'transactions'));
@@ -755,8 +792,8 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
         type: 'MINI_FUND_CONTRIB',
         amount: amountFromMiniFund,
         currency: 'XOF',
-        from_wallet_id: miniFundDoc.id,
-        to_wallet_id: contribPoolDoc.id,
+        from_wallet_id: miniFundDocRef.id,
+        to_wallet_id: contribPoolDocRef.id,
         user_id: null,
         group_id: groupDoc.id,
         member_id: null,
@@ -770,8 +807,8 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
 
     // Couche 3: Fonds Global
     if (remainingNeeded > 0) {
-      const amountFromGlobalFund = Math.min(globalFund.balance, remainingNeeded);
-      t.update(globalFundRef, { balance: globalFund.balance - amountFromGlobalFund });
+      const amountFromGlobalFund = Math.min(globalFund!.balance, remainingNeeded);
+      t.update(globalFundDocRef, { balance: globalFund!.balance - amountFromGlobalFund });
       totalToContribPool += amountFromGlobalFund;
       
       const txRef3 = doc(collection(db, 'transactions'));
@@ -779,8 +816,8 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
         type: 'GLOBAL_FUND_USAGE',
         amount: amountFromGlobalFund,
         currency: 'XOF',
-        from_wallet_id: globalFundDoc.id,
-        to_wallet_id: contribPoolDoc.id,
+        from_wallet_id: globalFundDocRef.id,
+        to_wallet_id: contribPoolDocRef.id,
         user_id: null,
         group_id: groupDoc.id,
         member_id: null,
@@ -793,7 +830,7 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
     }
 
     // Mise à jour finale du pool de contribution
-    t.update(contribPoolRef, { balance: contribPool.balance + totalToContribPool });
+    t.update(contribPoolDocRef, { balance: contribPool!.balance + totalToContribPool });
 
     if (remainingNeeded > 0) {
       throw new Error('Échec critique: Fonds insuffisants pour couvrir le défaut');
@@ -812,57 +849,65 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
 };
 
 export const restore_member_account = async (memberId: string) => {
+  const memberRef = doc(db, 'tontine_members', memberId);
+  const memberDocSnap = await getDoc(memberRef);
+  if (!memberDocSnap.exists()) throw new Error('Member not found');
+  const memberData = memberDocSnap.data();
+
+  const groupRef = doc(db, 'tontine_groups', memberData.group_id);
+  const groupDocSnap = await getDoc(groupRef);
+  if (!groupDocSnap.exists()) throw new Error('Group not found');
+  const groupData = groupDocSnap.data();
+
+  const walletsRef = collection(db, 'wallets');
+  
+  const userWalletQuery = query(walletsRef, where('owner_id', '==', memberData.user_id), where('wallet_type', '==', 'USER_MAIN'), limit(1));
+  const userWalletSnapshot = await getDocs(userWalletQuery);
+  if (userWalletSnapshot.empty) throw new Error('User main wallet not found');
+  const userWalletDocRef = userWalletSnapshot.docs[0].ref;
+
+  const escrowQuery = query(walletsRef, where('group_id', '==', groupData.id), where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1));
+  const escrowSnapshot = await getDocs(escrowQuery);
+  if (escrowSnapshot.empty) throw new Error('Escrow constitution not found');
+  const escrowDocRef = escrowSnapshot.docs[0].ref;
+
+  const contribPoolQuery = query(walletsRef, where('group_id', '==', groupData.id), where('wallet_type', '==', 'CONTRIBUTION_POOL'), limit(1));
+  const contribPoolSnapshot = await getDocs(contribPoolQuery);
+  if (contribPoolSnapshot.empty) throw new Error('Contribution pool not found');
+  const contribPoolDocRef = contribPoolSnapshot.docs[0].ref;
+
+  const globalFundQuery = query(walletsRef, where('wallet_type', '==', 'GLOBAL_FUND'), limit(1));
+  const globalFundSnapshot = await getDocs(globalFundQuery);
+  if (globalFundSnapshot.empty) throw new Error('Global fund not found');
+  const globalFundDocRef = globalFundSnapshot.docs[0].ref;
+
+  const miniFundQuery = query(walletsRef, where('group_id', '==', groupData.id), where('wallet_type', '==', 'GROUP_MINI_FUND'), limit(1));
+  const miniFundSnapshot = await getDocs(miniFundQuery);
+  if (miniFundSnapshot.empty) throw new Error('Group mini fund not found');
+  const miniFundDocRef = miniFundSnapshot.docs[0].ref;
+
   return await runTransaction(db, async (t) => {
-    const memberRef = doc(db, 'tontine_members', memberId);
     const memberDoc = await t.get(memberRef);
     if (!memberDoc.exists()) throw new Error('Member not found');
     const member = memberDoc.data();
 
-    const groupRef = doc(db, 'tontine_groups', member.group_id);
     const groupDoc = await t.get(groupRef);
     if (!groupDoc.exists()) throw new Error('Group not found');
     const group = groupDoc.data();
 
-    const walletsRef = collection(db, 'wallets');
-    
-    // User Main Wallet
-    const userWalletQuery = query(walletsRef, where('owner_id', '==', member.user_id), where('wallet_type', '==', 'USER_MAIN'), limit(1));
-    const userWalletSnapshot = await getDocs(userWalletQuery);
-    if (userWalletSnapshot.empty) throw new Error('User main wallet not found');
-    const userWalletDoc = userWalletSnapshot.docs[0];
-    const userWalletRef = userWalletDoc.ref;
+    const userWalletDoc = await t.get(userWalletDocRef);
     const userWallet = userWalletDoc.data();
 
-    // Escrow Constitution
-    const escrowQuery = query(walletsRef, where('group_id', '==', groupDoc.id), where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1));
-    const escrowSnapshot = await getDocs(escrowQuery);
-    if (escrowSnapshot.empty) throw new Error('Escrow constitution not found');
-    const escrowDoc = escrowSnapshot.docs[0];
-    const escrowRef = escrowDoc.ref;
+    const escrowDoc = await t.get(escrowDocRef);
     const escrow = escrowDoc.data();
 
-    // Contribution Pool
-    const contribPoolQuery = query(walletsRef, where('group_id', '==', groupDoc.id), where('wallet_type', '==', 'CONTRIBUTION_POOL'), limit(1));
-    const contribPoolSnapshot = await getDocs(contribPoolQuery);
-    if (contribPoolSnapshot.empty) throw new Error('Contribution pool not found');
-    const contribPoolDoc = contribPoolSnapshot.docs[0];
-    const contribPoolRef = contribPoolDoc.ref;
+    const contribPoolDoc = await t.get(contribPoolDocRef);
     const contribPool = contribPoolDoc.data();
 
-    // Global Fund
-    const globalFundQuery = query(walletsRef, where('wallet_type', '==', 'GLOBAL_FUND'), limit(1));
-    const globalFundSnapshot = await getDocs(globalFundQuery);
-    if (globalFundSnapshot.empty) throw new Error('Global fund not found');
-    const globalFundDoc = globalFundSnapshot.docs[0];
-    const globalFundRef = globalFundDoc.ref;
+    const globalFundDoc = await t.get(globalFundDocRef);
     const globalFund = globalFundDoc.data();
 
-    // Group Mini Fund
-    const miniFundQuery = query(walletsRef, where('group_id', '==', groupDoc.id), where('wallet_type', '==', 'GROUP_MINI_FUND'), limit(1));
-    const miniFundSnapshot = await getDocs(miniFundQuery);
-    if (miniFundSnapshot.empty) throw new Error('Group mini fund not found');
-    const miniFundDoc = miniFundSnapshot.docs[0];
-    const miniFundRef = miniFundDoc.ref;
+    const miniFundDoc = await t.get(miniFundDocRef);
     const miniFund = miniFundDoc.data();
 
     const cautionAmount = member.adjusted_deposit || member.initial_deposit;
@@ -874,21 +919,21 @@ export const restore_member_account = async (memberId: string) => {
     const globalAmount = Math.round(contributionAmount * 0.03);
     const contribAmount = contributionAmount - miniAmount - globalAmount;
 
-    if (userWallet.balance < totalToPay) throw new Error("Solde insuffisant pour le rétablissement");
+    if (!userWallet || userWallet.balance < totalToPay) throw new Error("Solde insuffisant pour le rétablissement");
 
-    t.update(userWalletRef, { balance: userWallet.balance - totalToPay });
-    t.update(escrowRef, { balance: escrow.balance + cautionAmount });
-    t.update(contribPoolRef, { balance: contribPool.balance + contribAmount });
-    t.update(miniFundRef, { balance: miniFund.balance + miniAmount });
-    t.update(globalFundRef, { balance: globalFund.balance + penaltyAmount + globalAmount });
+    t.update(userWalletDocRef, { balance: userWallet.balance - totalToPay });
+    t.update(escrowDocRef, { balance: escrow!.balance + cautionAmount });
+    t.update(contribPoolDocRef, { balance: contribPool!.balance + contribAmount });
+    t.update(miniFundDocRef, { balance: miniFund!.balance + miniAmount });
+    t.update(globalFundDocRef, { balance: globalFund!.balance + penaltyAmount + globalAmount });
 
     const txRef1 = doc(collection(db, 'transactions'));
     t.set(txRef1, {
       type: 'CAUTION',
       amount: cautionAmount,
       currency: 'XOF',
-      from_wallet_id: userWalletDoc.id,
-      to_wallet_id: escrowDoc.id,
+      from_wallet_id: userWalletDocRef.id,
+      to_wallet_id: escrowDocRef.id,
       user_id: member.user_id,
       group_id: groupDoc.id,
       member_id: memberId,
@@ -902,8 +947,8 @@ export const restore_member_account = async (memberId: string) => {
       type: 'CONTRIBUTION',
       amount: contribAmount,
       currency: 'XOF',
-      from_wallet_id: userWalletDoc.id,
-      to_wallet_id: contribPoolDoc.id,
+      from_wallet_id: userWalletDocRef.id,
+      to_wallet_id: contribPoolDocRef.id,
       user_id: member.user_id,
       group_id: groupDoc.id,
       member_id: memberId,
@@ -917,8 +962,8 @@ export const restore_member_account = async (memberId: string) => {
       type: 'MINI_FUND_CONTRIB',
       amount: miniAmount,
       currency: 'XOF',
-      from_wallet_id: userWalletDoc.id,
-      to_wallet_id: miniFundDoc.id,
+      from_wallet_id: userWalletDocRef.id,
+      to_wallet_id: miniFundDocRef.id,
       user_id: member.user_id,
       group_id: groupDoc.id,
       member_id: memberId,
@@ -932,8 +977,8 @@ export const restore_member_account = async (memberId: string) => {
       type: 'GLOBAL_FUND_CONTRIB',
       amount: globalAmount,
       currency: 'XOF',
-      from_wallet_id: userWalletDoc.id,
-      to_wallet_id: globalFundDoc.id,
+      from_wallet_id: userWalletDocRef.id,
+      to_wallet_id: globalFundDocRef.id,
       user_id: member.user_id,
       group_id: groupDoc.id,
       member_id: memberId,
@@ -947,8 +992,8 @@ export const restore_member_account = async (memberId: string) => {
       type: 'PENALTY',
       amount: penaltyAmount,
       currency: 'XOF',
-      from_wallet_id: userWalletDoc.id,
-      to_wallet_id: globalFundDoc.id,
+      from_wallet_id: userWalletDocRef.id,
+      to_wallet_id: globalFundDocRef.id,
       user_id: member.user_id,
       group_id: groupDoc.id,
       member_id: memberId,

@@ -4,9 +4,9 @@ import { X, Users, Calendar, Info, Share2, AlertCircle, Send, MessageCircle, Clo
 import { formatXOF } from '../../lib/utils';
 import { auth } from '../../lib/firebase';
 import { getUserProfile } from '../../services/userService';
+import { subscribeToDocument, subscribeToCollection } from '../../lib/firestore';
+import { where } from 'firebase/firestore';
 import { 
-  getTontineGroup, 
-  getGroupMembers, 
   subscribeToGroupMessages, 
   sendGroupMessage,
   updateMember,
@@ -118,65 +118,102 @@ export function GroupDetail() {
   }, [successMessage]);
 
   useEffect(() => {
-    if (id) {
-      loadGroupDetails();
-      const unsubscribe = subscribeToGroupMessages(id, (msgs) => {
-        setMessages(msgs);
-      });
-      return () => unsubscribe();
-    }
-  }, [id]);
-
-  const loadGroupDetails = async () => {
     if (!id) return;
-    setLoading(true);
-    try {
-      const user = auth.currentUser;
-      if (!user) return;
+    const user = auth.currentUser;
+    if (!user) return;
 
-      const g = await getTontineGroup(id);
+    setLoading(true);
+
+    const unsubGroup = subscribeToDocument<TontineGroup>('tontine_groups', id, (g) => {
       if (!g) {
         navigate('/tontines');
         return;
       }
+      setGroup(prev => ({
+        ...prev,
+        ...g,
+        is_admin: g.admin_id === user.uid
+      }));
+    });
 
-      const members = await getGroupMembers(id);
+    const unsubMembers = subscribeToCollection<TontineMember>('tontine_members', [where('group_id', '==', id)], async (members) => {
       const currentMember = members.find(m => m.user_id === user.uid);
       
-      setGroup({
-        ...g,
-        members_count: members.length,
-        is_admin: g.admin_id === user.uid
-      });
-
       if (currentMember) {
         setMemberInfo(currentMember);
-        
-        if (g.status === 'ACTIVE') {
-          const cycle = await getActiveCycle(id);
-          setActiveCycle(cycle);
-          if (cycle) {
-            const payment = await getMemberPayment(cycle.id, currentMember.id);
-            setUserPayment(payment);
-          }
-        }
       }
 
-      const enrichedMembers = members.map((m) => {
+      const enrichedMembers = await Promise.all(members.map(async (m) => {
+        let name = m.member_name;
+        let tier = m.member_tier || m.tier_at_join || 'BRONZE';
+        
+        if (!name) {
+          try {
+            const profile = await getUserProfile(m.user_id);
+            if (profile) {
+              name = profile.full_name || profile.email || 'Utilisateur';
+              tier = profile.tier;
+            }
+          } catch (e) {
+            console.error('Error fetching profile for member', m.user_id, e);
+          }
+        }
+
         return {
           ...m,
-          name: m.member_name || 'Utilisateur',
-          tier: m.member_tier || m.tier_at_join || 'BRONZE',
+          name: name || 'Utilisateur',
+          tier: tier,
           role: m.is_admin ? 'Admin' : 'Membre'
         };
-      });
+      }));
       setMembersList(enrichedMembers);
+      setLoading(false);
+    });
+
+    const unsubMessages = subscribeToGroupMessages(id, (msgs) => {
+      setMessages(msgs);
+    });
+
+    return () => {
+      unsubGroup();
+      unsubMembers();
+      unsubMessages();
+    };
+  }, [id]);
+
+  const fetchCycleData = async () => {
+    if (!group || !memberInfo) return;
+    try {
+      const cycle = await getActiveCycle(group.id);
+      setActiveCycle(cycle);
+      if (cycle) {
+        const payment = await getMemberPayment(cycle.id, memberInfo.id);
+        setUserPayment(payment);
+      }
     } catch (e) {
       console.error(e);
-    } finally {
-      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (group?.status === 'ACTIVE' && memberInfo) {
+      fetchCycleData();
+    }
+  }, [group?.status, memberInfo?.id]);
+
+  // Auto-start group if full and in FORMING status
+  useEffect(() => {
+    if (group?.status === 'FORMING' && membersList.length > 0 && membersList.length >= group.target_members) {
+      const autoStart = async () => {
+        try {
+          await start_tontine_group(group.id);
+        } catch (e) {
+          console.error('Auto-start failed:', e);
+        }
+      };
+      autoStart();
+    }
+  }, [group?.status, membersList.length, group?.target_members, group?.id]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !id) return;
@@ -208,7 +245,6 @@ export function GroupDetail() {
     setError(null);
     try {
       await start_tontine_group(id);
-      await loadGroupDetails();
     } catch (e: any) {
       console.error(e);
       setError(e.message || 'Erreur lors du démarrage du groupe');
@@ -233,7 +269,6 @@ export function GroupDetail() {
     setError(null);
     try {
       await payDepositDifferential(memberInfo.id, auth.currentUser.uid);
-      await loadGroupDetails();
     } catch (e: any) {
       console.error(e);
       setError(e.message || 'Erreur lors du paiement du différentiel');
@@ -248,7 +283,7 @@ export function GroupDetail() {
     setError(null);
     try {
       await process_contribution_payment(memberInfo.id, activeCycle.id);
-      await loadGroupDetails();
+      await fetchCycleData();
     } catch (e: any) {
       console.error(e);
       setError(e.message || 'Erreur lors du paiement de la cotisation');
@@ -299,7 +334,7 @@ export function GroupDetail() {
                 <div className="flex items-center gap-2 mt-0.5">
                   {getStatusBadge(group.status)}
                   <span className="text-[#9CA3AF] text-xs flex items-center gap-1">
-                    <Users size={12} /> {group.members_count}/{group.target_members}
+                    <Users size={12} /> {membersList.length}/{group.target_members}
                   </span>
                 </div>
               </div>
@@ -444,7 +479,7 @@ export function GroupDetail() {
 
               {/* Members List */}
               <div>
-                <h2 className="text-[#111827] font-semibold text-lg mb-4">Membres ({group.members_count})</h2>
+                <h2 className="text-[#111827] font-semibold text-lg mb-4">Membres ({membersList.length})</h2>
                 <div className="bg-white rounded-2xl shadow-sm border border-[#E5E7EB] overflow-hidden">
                   {membersList.map((member) => (
                     <div key={member.id} className="flex items-center justify-between p-4 border-b border-[#E5E7EB] last:border-0">
@@ -534,13 +569,13 @@ export function GroupDetail() {
             <button
               onClick={handleStartGroup}
               className="w-full bg-[#047857] text-white h-14 rounded-xl font-semibold text-lg disabled:opacity-50 transition-colors"
-              disabled={group.members_count < group.target_members || loading}
+              disabled={membersList.length < group.target_members || loading}
             >
               {loading ? 'Démarrage...' : 'Démarrer le Cercle'}
             </button>
-            {group.members_count < group.target_members && (
+            {membersList.length < group.target_members && (
               <p className="text-center text-xs text-[#9CA3AF] mt-3">
-                En attente de {group.target_members - group.members_count} membres pour démarrer
+                En attente de {group.target_members - membersList.length} membres pour démarrer
               </p>
             )}
           </div>

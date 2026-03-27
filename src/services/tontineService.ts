@@ -475,6 +475,20 @@ export const joinTontineGroup = async (groupId: string, userId: string) => {
     });
   });
 
+  // Vérifier si le groupe est maintenant complet
+  const allMembersQuery = query(
+    collection(db, 'tontine_members'),
+    where('group_id', '==', groupId),
+    where('status', '==', 'ACTIVE')
+  );
+  const allMembersSnap = await getDocs(allMembersQuery);
+  const activeCount = allMembersSnap.size;
+
+  if (activeCount >= group.target_members) {
+    // Déclencher le démarrage automatique après la transaction
+    setTimeout(() => start_tontine_group(groupId), 500);
+  }
+
   return memberId;
 };
 
