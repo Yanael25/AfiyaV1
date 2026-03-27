@@ -148,6 +148,7 @@ export function CreateGroup() {
                   type="number"
                   value={formData.contribution_amount}
                   onChange={e => setFormData({...formData, contribution_amount: e.target.value})}
+                  onWheel={e => (e.target as HTMLInputElement).blur()}
                   placeholder="10000"
                   className="w-full border border-[#E5E7EB] rounded-xl h-12 pl-11 pr-4 text-[#111827] focus:border-[#047857] outline-none font-bold" 
                 />

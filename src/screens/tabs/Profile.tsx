@@ -177,6 +177,18 @@ export function Profile() {
 
           {/* Bloc 3 — Menu */}
           <div className="bg-white rounded-2xl shadow-sm border border-[#E5E7EB] overflow-hidden">
+            {auth.currentUser?.email === 'jespere20000@gmail.com' && (
+              <button 
+                onClick={() => navigate('/admin')}
+                className="w-full flex items-center justify-between p-4 border-b border-[#E5E7EB] bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Shield size={20} className="text-[#047857]" />
+                  <span className="text-[#047857] font-bold">Dashboard Admin</span>
+                </div>
+                <ChevronRight size={20} className="text-[#047857]" />
+              </button>
+            )}
             {[
               { icon: User, label: 'Informations personnelles' },
               { icon: Shield, label: 'Sécurité & Mot de passe' },

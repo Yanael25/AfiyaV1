@@ -73,7 +73,7 @@ export function JoinGroup() {
         </button>
       </div>
       
-      <div className="flex-1 px-6 pt-4">
+      <div className="flex-1 overflow-y-auto px-6 pt-4">
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 mb-6">
             {error}
@@ -126,7 +126,7 @@ export function JoinGroup() {
         )}
       </div>
 
-      <div className="p-6 pb-12">
+      <div className="p-6 pb-12 bg-white border-t border-[#E5E7EB]">
         {!groupInfo ? (
           <button
             onClick={handleSearch}

@@ -162,15 +162,14 @@ export function GroupDetail() {
         }
       }
 
-      const enrichedMembers = await Promise.all(members.map(async (m) => {
-        const p = await getUserProfile(m.user_id);
+      const enrichedMembers = members.map((m) => {
         return {
           ...m,
-          name: p?.full_name || 'Utilisateur',
-          tier: p?.tier || 'BRONZE',
+          name: m.member_name || 'Utilisateur',
+          tier: m.member_tier || m.tier_at_join || 'BRONZE',
           role: m.is_admin ? 'Admin' : 'Membre'
         };
-      }));
+      });
       setMembersList(enrichedMembers);
     } catch (e) {
       console.error(e);

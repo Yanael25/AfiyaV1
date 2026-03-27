@@ -113,6 +113,8 @@ export interface TontineMember {
   swap_eligible: boolean;
   score_at_join: number;
   tier_at_join: string;
+  member_name?: string;
+  member_tier?: string;
   retention_amount: number;
   retention_applied: boolean;
   joined_at: any;
@@ -218,6 +220,8 @@ export const createTontineGroup = async (groupData: Omit<TontineGroup, 'id' | 'c
       swap_eligible: false,
       score_at_join: profile.score_afiya,
       tier_at_join: profile.tier,
+      member_name: profile.full_name,
+      member_tier: profile.tier,
       retention_amount: 0,
       retention_applied: false,
       joined_at: Timestamp.now(),
@@ -428,6 +432,8 @@ export const joinTontineGroup = async (groupId: string, userId: string) => {
       swap_eligible: false,
       score_at_join: profile.score_afiya,
       tier_at_join: profile.tier,
+      member_name: profile.full_name,
+      member_tier: profile.tier,
       retention_amount: 0,
       retention_applied: false,
       joined_at: serverTimestamp(),
