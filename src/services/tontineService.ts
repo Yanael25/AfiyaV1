@@ -617,3 +617,33 @@ export const getUserGroups = async (userId: string): Promise<(TontineGroup & { m
     return [];
   }
 };
+
+export const add_dev_funds = async (userId: string, amount: number) => {
+  const userWalletQuery = query(collection(db, 'wallets'), where('owner_id', '==', userId), where('wallet_type', '==', 'USER_MAIN'), limit(1));
+  const userWalletSnap = await getDocs(userWalletQuery);
+  if (userWalletSnap.empty) throw new Error('Portefeuille principal introuvable');
+  const userWalletRef = userWalletSnap.docs[0].ref;
+
+  await runTransaction(db, async (transaction) => {
+    const userWalletDoc = await transaction.get(userWalletRef);
+    const userWallet = userWalletDoc.data();
+    
+    transaction.update(userWalletRef, { balance: userWallet!.balance + amount });
+
+    const txRef = doc(collection(db, 'transactions'));
+    transaction.set(txRef, {
+      id: txRef.id,
+      type: 'DEPOSIT',
+      amount: amount,
+      currency: 'XOF',
+      from_wallet_id: null,
+      to_wallet_id: userWalletDoc.id,
+      user_id: userId,
+      group_id: null,
+      member_id: null,
+      status: 'SUCCESS',
+      description: 'Injection de fonds DEV',
+      created_at: Timestamp.now()
+    });
+  });
+};

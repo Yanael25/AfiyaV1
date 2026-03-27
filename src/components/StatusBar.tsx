@@ -20,6 +20,9 @@ export function StatusBar() {
         {time}
       </div>
       <div className="flex items-center gap-2">
+        <div className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+          DEV
+        </div>
         <Signal size={16} strokeWidth={2.5} />
         <Wifi size={16} strokeWidth={2.5} />
         <Battery size={24} strokeWidth={2} className="opacity-90" />

@@ -842,7 +842,11 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
       cycles_defaulted: (member.cycles_defaulted || 0) + 1
     });
 
-    await update_score_afiya(member.user_id, 'DEFAULT_DECLARED', t);
+    if (newStatus === 'BANNED') {
+      await update_score_afiya(member.user_id, 'GLOBAL_FUND_USED', t);
+    } else {
+      await update_score_afiya(member.user_id, 'DEFAULT_DECLARED', t);
+    }
 
     return { success: true };
   });

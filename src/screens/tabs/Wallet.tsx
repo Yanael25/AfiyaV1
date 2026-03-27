@@ -3,7 +3,7 @@ import { ArrowUpRight, ArrowDownLeft, Plus, ArrowDownCircle, ArrowUpCircle, User
 import { formatXOF } from '../../lib/utils';
 import { auth } from '../../lib/firebase';
 import { getUserProfile, UserProfile } from '../../services/userService';
-import { subscribeToUserWallet, subscribeToUserCaution, Wallet as WalletType } from '../../services/tontineService';
+import { subscribeToUserWallet, subscribeToUserCaution, Wallet as WalletType, add_dev_funds } from '../../services/tontineService';
 import { subscribeToCollection } from '../../lib/firestore';
 import { where, orderBy, limit } from 'firebase/firestore';
 
@@ -94,6 +94,19 @@ export function Wallet() {
   const greeting = hour >= 18 ? 'Bonsoir' : 'Bonjour';
   const firstName = profile?.full_name?.split(' ')[0] || 'Utilisateur';
 
+  const handleAddDevFunds = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    setLoading(true);
+    try {
+      await add_dev_funds(user.uid, 100000);
+    } catch (error) {
+      console.error('Error adding dev funds:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex-1 bg-[#F8F9FA] h-full flex flex-col overflow-y-auto pb-24 lg:pb-6">
       {/* Top Header Section */}
@@ -108,6 +121,13 @@ export function Wallet() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <button 
+            onClick={handleAddDevFunds}
+            disabled={loading}
+            className="bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm hover:bg-yellow-500 transition-colors disabled:opacity-50"
+          >
+            +100K (DEV)
+          </button>
           <div className={`${getTierColor(profile?.tier || 'BRONZE')} px-3 py-1.5 rounded-full flex items-center gap-1 shadow-sm`}>
             <span className="text-xs font-bold tracking-wide">{profile?.tier || 'BRONZE'}</span>
           </div>
