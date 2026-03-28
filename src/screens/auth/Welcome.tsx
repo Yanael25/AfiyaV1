@@ -16,10 +16,10 @@ export function Welcome() {
           <div className="w-16 h-16 bg-[#047857] rounded-xl flex items-center justify-center mb-8">
             <span className="text-white text-2xl font-bold">A</span>
           </div>
-          <h1 className="text-[#1C1410] text-4xl font-bold mb-4 leading-tight">
+          <h1 className="text-2xl font-bold text-[#1C1410] mb-4 leading-tight">
             Votre épargne,<br />à votre façon.
           </h1>
-          <p className="text-[#7C6F5E] text-lg mb-12">
+          <p className="text-sm text-[#7C6F5E] mb-12">
             Rejoignez des Cercles de confiance ou épargnez dans les Afiya Pools en toute sécurité.
           </p>
         </motion.div>
@@ -28,7 +28,7 @@ export function Welcome() {
       <div className="p-6 pb-12">
         <button
           onClick={() => navigate('/login')}
-          className="w-full bg-[#047857] text-white h-14 rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 active:bg-[#059669] transition-colors"
+          className="w-full bg-[#047857] text-white h-14 rounded-2xl font-semibold flex items-center justify-center gap-2 hover:bg-[#059669] transition-colors"
         >
           Commencer
           <ArrowRight size={20} />

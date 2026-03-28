@@ -88,9 +88,9 @@ export function Profile() {
   return (
     <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full pb-24">
       {/* Bloc 1 — Identité */}
-      <div className="bg-white px-6 pt-12 pb-6 shadow-sm">
+      <div className="bg-white px-6 pt-12 pb-6 border-b border-[#E8E0D0]">
         <div className="max-w-2xl mx-auto w-full">
-          <h1 className="text-[#1C1410] text-2xl font-bold mb-6">Profil</h1>
+          <h1 className="text-[#1C1410] text-2xl font-semibold mb-6">Profil</h1>
           
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-[#047857] flex items-center justify-center">
@@ -133,9 +133,9 @@ export function Profile() {
           )}
 
           {/* Bloc 2 — Score Afiya */}
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8E0D0]">
+          <div className="bg-white p-5 rounded-2xl border border-[#E8E0D0]">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-[#1C1410] font-semibold">Score Afiya</h3>
+              <h3 className="text-[#1C1410] text-sm font-semibold">Score Afiya</h3>
               <span className="text-[#047857] font-bold text-sm">Niveau {profile.tier}</span>
             </div>
             <div className="flex items-end gap-2 mb-2">
@@ -176,15 +176,15 @@ export function Profile() {
           </div>
 
           {/* Bloc 3 — Menu */}
-          <div className="bg-white rounded-2xl shadow-sm border border-[#E8E0D0] overflow-hidden">
+          <div className="bg-white rounded-2xl border border-[#E8E0D0] overflow-hidden">
             {auth.currentUser?.email === 'jespere20000@gmail.com' && (
               <button 
                 onClick={() => navigate('/admin')}
-                className="w-full flex items-center justify-between p-4 border-b border-[#E8E0D0] bg-[#F5F0E8] hover:bg-[#E8E0D0] active:bg-[#DED2BE] transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[#F0EAE0] bg-[#F5F0E8] active:bg-[#E8E0D0] transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <Shield size={20} className="text-[#047857]" />
-                  <span className="text-[#047857] font-bold">Dashboard Admin</span>
+                  <span className="text-[#047857] font-bold text-sm">Dashboard Admin</span>
                 </div>
                 <ChevronRight size={20} className="text-[#047857]" />
               </button>
@@ -194,10 +194,10 @@ export function Profile() {
               { icon: Shield, label: 'Sécurité & Mot de passe' },
               { icon: HelpCircle, label: 'Aide & Support' },
             ].map((item, i) => (
-              <button key={i} className="w-full flex items-center justify-between p-4 border-b border-[#E8E0D0] last:border-0 hover:bg-[#F5F0E8] active:bg-[#E8E0D0] transition-colors">
+              <button key={i} className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[#F0EAE0] last:border-0 active:bg-[#F5F0E8] transition-colors">
                 <div className="flex items-center gap-3">
                   <item.icon size={20} className="text-[#7C6F5E]" />
-                  <span className="text-[#1C1410] font-medium">{item.label}</span>
+                  <span className="text-[#1C1410] font-semibold text-sm">{item.label}</span>
                 </div>
                 <ChevronRight size={20} className="text-[#7C6F5E]" />
               </button>
@@ -206,7 +206,7 @@ export function Profile() {
 
           <button 
             onClick={handleSignOut}
-            className="w-full flex items-center justify-center gap-2 p-4 text-[#C84C31] font-semibold bg-white rounded-2xl shadow-sm border border-[#E8E0D0] hover:bg-[#F5F0E8] active:bg-[#E8E0D0] transition-colors"
+            className="w-full flex items-center justify-center gap-2 p-4 text-[#C84C31] font-semibold bg-white rounded-2xl border border-[#E8E0D0] active:bg-[#F5F0E8] transition-colors"
           >
             <LogOut size={20} />
             Déconnexion

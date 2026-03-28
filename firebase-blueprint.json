@@ -27,7 +27,7 @@
         "id": { "type": "string", "description": "Wallet ID" },
         "owner_id": { "type": "string", "description": "UID Firebase" },
         "group_id": { "type": "string", "description": "Group ID (null for user wallets)" },
-        "wallet_type": { "type": "string", "enum": ["USER_MAIN", "ESCROW_CONSTITUTION", "CONTRIBUTION_POOL", "GROUP_MINI_FUND", "GLOBAL_FUND"] },
+        "wallet_type": { "type": "string", "enum": ["USER_MAIN", "USER_CERCLES", "USER_CAPITAL", "ESCROW_CONSTITUTION", "CONTRIBUTION_POOL", "GROUP_MINI_FUND", "GLOBAL_FUND"] },
         "balance": { "type": "number", "description": "En FCFA (XOF)" },
         "currency": { "type": "string", "description": "XOF" },
         "updated_at": { "type": "string", "format": "date-time" }

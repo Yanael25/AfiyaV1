@@ -45,14 +45,14 @@ export function Signup() {
       </div>
       
       <div className="flex-1 px-6 pt-4">
-        <div className="w-16 h-16 bg-[#047857] rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-[#047857]/20">
-          <span className="text-[#047857] font-bold text-3xl">A</span>
+        <div className="w-16 h-16 bg-[#047857] rounded-2xl flex items-center justify-center mb-8 shadow-sm">
+          <span className="text-white font-bold text-3xl">A</span>
         </div>
         
-        <h1 className="text-[#1C1410] text-3xl font-bold mb-2">
+        <h1 className="text-2xl font-bold text-[#1C1410] mb-2">
           Créer un compte
         </h1>
-        <p className="text-[#7C6F5E] text-base mb-8">
+        <p className="text-sm text-[#7C6F5E] mb-8">
           Rejoignez Afiya et commencez à épargner avec votre communauté.
         </p>
 
@@ -70,11 +70,11 @@ export function Signup() {
                 <Mail size={20} className="text-[#A39887]" />
               </div>
               <input 
-                type="email"
+                type="text"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="votre@email.com"
-                className="w-full border border-[#E8E0D0] rounded-xl h-12 pl-11 pr-4 text-[#1C1410] focus:border-[#047857] outline-none font-medium" 
+                placeholder="votre@email.com ou numéro (ex: 0100000000)"
+                className="w-full bg-white border border-[#E8E0D0] rounded-xl h-12 pl-11 pr-4 text-[#1C1410] focus:border-[#047857] outline-none font-medium" 
                 required
               />
             </div>
@@ -91,7 +91,7 @@ export function Signup() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full border border-[#E8E0D0] rounded-xl h-12 pl-11 pr-12 text-[#1C1410] focus:border-[#047857] outline-none font-medium" 
+                className="w-full bg-white border border-[#E8E0D0] rounded-xl h-12 pl-11 pr-12 text-[#1C1410] focus:border-[#047857] outline-none font-medium" 
                 required
               />
               <button 
@@ -110,7 +110,7 @@ export function Signup() {
           <button
             type="submit"
             disabled={loading || !email || !password}
-            className="w-full bg-[#047857] text-white h-14 rounded-2xl font-semibold text-lg hover:bg-[#059669] transition-colors disabled:opacity-50 mt-4"
+            className="w-full bg-[#047857] text-white h-14 rounded-2xl font-semibold hover:bg-[#059669] transition-colors disabled:opacity-50 mt-4"
           >
             {loading ? 'Création...' : "S'inscrire"}
           </button>

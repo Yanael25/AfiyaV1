@@ -61,9 +61,9 @@ export function Kyc() {
 
   return (
     <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full">
-      <div className="bg-white px-6 pt-12 pb-4 shadow-sm z-10">
-        <h1 className="text-[#1C1410] text-2xl font-bold">Complétez votre profil</h1>
-        <p className="text-[#7C6F5E] text-sm mt-1">Dernière étape avant de commencer</p>
+      <div className="bg-[#F5F0E8] px-6 pt-12 pb-4 z-10">
+        <h1 className="text-2xl font-bold text-[#1C1410]">Complétez votre profil</h1>
+        <p className="text-sm text-[#7C6F5E] mt-1">Dernière étape avant de commencer</p>
       </div>
 
       {error && (
@@ -79,23 +79,23 @@ export function Kyc() {
             <div className="w-8 h-8 rounded-full bg-[#ECFDF5] flex items-center justify-center text-[#047857]">
               <User size={18} />
             </div>
-            <h2 className="text-[#1C1410] font-semibold">Identité</h2>
+            <h2 className="text-sm font-semibold text-[#1C1410]">Identité</h2>
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-[#7C6F5E] mb-1 block">Prénom</label>
+              <label className="text-sm font-medium text-[#7C6F5E] mb-1 block">Prénom</label>
               <input 
                 value={formData.firstName}
                 onChange={e => setFormData({...formData, firstName: e.target.value})}
-                className="w-full border border-[#E8E0D0] rounded-xl h-12 px-4 text-[#1C1410] focus:border-[#047857] outline-none" 
+                className="w-full bg-white border border-[#E8E0D0] rounded-xl h-12 px-4 text-[#1C1410] focus:border-[#047857] outline-none" 
               />
             </div>
             <div>
-              <label className="text-sm text-[#7C6F5E] mb-1 block">Nom</label>
+              <label className="text-sm font-medium text-[#7C6F5E] mb-1 block">Nom</label>
               <input 
                 value={formData.lastName}
                 onChange={e => setFormData({...formData, lastName: e.target.value})}
-                className="w-full border border-[#E8E0D0] rounded-xl h-12 px-4 text-[#1C1410] focus:border-[#047857] outline-none" 
+                className="w-full bg-white border border-[#E8E0D0] rounded-xl h-12 px-4 text-[#1C1410] focus:border-[#047857] outline-none" 
               />
             </div>
           </div>
@@ -107,16 +107,16 @@ export function Kyc() {
             <div className="w-8 h-8 rounded-full bg-[#ECFDF5] flex items-center justify-center text-[#047857]">
               <MapPin size={18} />
             </div>
-            <h2 className="text-[#1C1410] font-semibold">Contact</h2>
+            <h2 className="text-sm font-semibold text-[#1C1410]">Contact</h2>
           </div>
           <div>
-            <label className="text-sm text-[#7C6F5E] mb-1 block">Email (Optionnel)</label>
+            <label className="text-sm font-medium text-[#7C6F5E] mb-1 block">Email (Optionnel)</label>
             <input 
               type="email"
               value={formData.email}
               onChange={e => setFormData({...formData, email: e.target.value})}
               placeholder="fifame@exemple.com"
-              className="w-full border border-[#E8E0D0] rounded-xl h-12 px-4 text-[#1C1410] focus:border-[#047857] outline-none" 
+              className="w-full bg-white border border-[#E8E0D0] rounded-xl h-12 px-4 text-[#1C1410] focus:border-[#047857] outline-none" 
             />
           </div>
         </div>
@@ -127,11 +127,11 @@ export function Kyc() {
             <div className="w-8 h-8 rounded-full bg-[#ECFDF5] flex items-center justify-center text-[#047857]">
               <Shield size={18} />
             </div>
-            <h2 className="text-[#1C1410] font-semibold">Sécurité</h2>
+            <h2 className="text-sm font-semibold text-[#1C1410]">Sécurité</h2>
           </div>
           <div className="flex items-start gap-3 bg-[#F5F0E8] p-3 rounded-xl">
             <CheckCircle2 size={20} className="text-[#047857] mt-0.5 shrink-0" />
-            <p className="text-xs text-[#7C6F5E] leading-relaxed">
+            <p className="text-xs font-normal text-[#7C6F5E] leading-relaxed">
               Vos données sont chiffrées et stockées en toute sécurité. Elles ne seront jamais partagées sans votre consentement.
             </p>
           </div>
@@ -142,7 +142,7 @@ export function Kyc() {
         <button
           onClick={handleSubmit}
           disabled={loading || !formData.firstName || !formData.lastName}
-          className="w-full bg-[#047857] text-white h-14 rounded-xl font-semibold text-lg hover:bg-[#059669] disabled:opacity-50 transition-colors"
+          className="w-full bg-[#047857] text-white h-14 rounded-2xl font-semibold hover:bg-[#059669] disabled:opacity-50 transition-colors"
         >
           {loading ? 'Création...' : 'Terminer'}
         </button>

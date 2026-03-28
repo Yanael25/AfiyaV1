@@ -29,7 +29,7 @@ import { StatusBar } from './components/StatusBar';
 function AuthContainer() {
   return (
     <div className="min-h-[100dvh] bg-[#F5F0E8] flex justify-center antialiased">
-      <div className="w-full max-w-md h-[100dvh] bg-[#F5F0E8] sm:shadow-2xl overflow-hidden relative flex flex-col">
+      <div className="w-full max-w-md h-[100dvh] bg-[#F5F0E8] sm:shadow-sm overflow-hidden relative flex flex-col">
         <div className="md:hidden">
           <StatusBar />
         </div>

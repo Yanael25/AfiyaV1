@@ -88,7 +88,7 @@ export interface Wallet {
   id: string;
   owner_id: string | null;
   group_id: string | null;
-  wallet_type: 'USER_MAIN' | 'ESCROW_CONSTITUTION' | 'CONTRIBUTION_POOL' | 
+  wallet_type: 'USER_MAIN' | 'USER_CERCLES' | 'USER_CAPITAL' | 'ESCROW_CONSTITUTION' | 'CONTRIBUTION_POOL' | 
                'GROUP_MINI_FUND' | 'GLOBAL_FUND';
   balance: number;
   currency: 'XOF';
@@ -287,6 +287,30 @@ export const subscribeToUserWallet = (userId: string, callback: (wallet: Wallet 
   });
 };
 
+export const subscribeToUserCerclesWallet = (
+  userId: string,
+  callback: (wallet: Wallet | null) => void
+) => {
+  return subscribeToCollection<Wallet>('wallets', [
+    where('owner_id', '==', userId),
+    where('wallet_type', '==', 'USER_CERCLES')
+  ], (wallets) => {
+    callback(wallets.length > 0 ? wallets[0] : null);
+  });
+};
+
+export const subscribeToUserCapitalWallet = (
+  userId: string,
+  callback: (wallet: Wallet | null) => void
+) => {
+  return subscribeToCollection<Wallet>('wallets', [
+    where('owner_id', '==', userId),
+    where('wallet_type', '==', 'USER_CAPITAL')
+  ], (wallets) => {
+    callback(wallets.length > 0 ? wallets[0] : null);
+  });
+};
+
 export const subscribeToUserCaution = (userId: string, callback: (total: number) => void) => {
   return subscribeToCollection<TontineMember>('tontine_members', [
     where('user_id', '==', userId)
@@ -318,6 +342,48 @@ export const createUserWallet = async (userId: string) => {
   };
   await createDocument('wallets', id, wallet);
   return id;
+};
+
+export const createUserWallets = async (userId: string) => {
+  const mainId = `wallet_user_${userId}`;
+  const cerclesId = `wallet_cercles_${userId}`;
+  const capitalId = `wallet_capital_${userId}`;
+
+  const mainWallet: Wallet = {
+    id: mainId,
+    owner_id: userId,
+    group_id: null,
+    wallet_type: 'USER_MAIN',
+    balance: 0,
+    currency: 'XOF',
+    updated_at: serverTimestamp()
+  };
+
+  const cerclesWallet: Wallet = {
+    id: cerclesId,
+    owner_id: userId,
+    group_id: null,
+    wallet_type: 'USER_CERCLES',
+    balance: 0,
+    currency: 'XOF',
+    updated_at: serverTimestamp()
+  };
+
+  const capitalWallet: Wallet = {
+    id: capitalId,
+    owner_id: userId,
+    group_id: null,
+    wallet_type: 'USER_CAPITAL',
+    balance: 0,
+    currency: 'XOF',
+    updated_at: serverTimestamp()
+  };
+
+  await createDocument('wallets', mainId, mainWallet);
+  await createDocument('wallets', cerclesId, cerclesWallet);
+  await createDocument('wallets', capitalId, capitalWallet);
+
+  return { mainId, cerclesId, capitalId };
 };
 
 export interface Message {
@@ -646,4 +712,71 @@ export const add_dev_funds = async (userId: string, amount: number) => {
       created_at: Timestamp.now()
     });
   });
+};
+
+export const getUpcomingCycleInfo = async (
+  userId: string,
+  groups: (TontineGroup & { members_count: number })[]
+): Promise<{
+  groupName: string;
+  type: 'À payer' | 'À recevoir';
+  amount: number;
+  dueDate: Date;
+} | null> => {
+
+  const now = new Date();
+  const limit72h = new Date(now.getTime() + 72 * 60 * 60 * 1000);
+  let closest: {
+    groupName: string;
+    type: 'À payer' | 'À recevoir';
+    amount: number;
+    dueDate: Date;
+  } | null = null;
+
+  for (const group of groups) {
+    if (group.status !== 'ACTIVE') continue;
+
+    // Récupérer le cycle actif du groupe
+    const cyclesSnap = await getDocs(query(
+      collection(db, 'cycles'),
+      where('group_id', '==', group.id),
+      where('status', '==', 'ACTIVE'),
+      limit(1)
+    ));
+    if (cyclesSnap.empty) continue;
+    const cycle = cyclesSnap.docs[0].data();
+
+    const dueDate = cycle.payment_due_date?.toDate?.();
+    if (!dueDate || dueDate > limit72h) continue;
+
+    // Vérifier si l'utilisateur est le bénéficiaire
+    const memberSnap = await getDocs(query(
+      collection(db, 'tontine_members'),
+      where('group_id', '==', group.id),
+      where('user_id', '==', userId),
+      limit(1)
+    ));
+    if (memberSnap.empty) continue;
+    const member = memberSnap.docs[0].data();
+
+    const isBeneficiary =
+      cycle.beneficiary_member_id === member.id;
+
+    const type = isBeneficiary ? 'À recevoir' : 'À payer';
+    const amount = isBeneficiary
+      ? cycle.expected_total
+      : group.contribution_amount;
+
+    // Garder uniquement le plus proche
+    if (!closest || dueDate < closest.dueDate) {
+      closest = {
+        groupName: group.name,
+        type,
+        amount,
+        dueDate
+      };
+    }
+  }
+
+  return closest;
 };

@@ -1,7 +1,5 @@
 import { NavLink } from 'react-router-dom';
 import { Home, CircleDot, Landmark, User } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { motion } from 'motion/react';
 
 export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
   const tabs = [
@@ -13,18 +11,17 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
 
   if (isSidebar) {
     return (
-      <div className="flex flex-col gap-2 px-4 py-6">
+      <div className="flex flex-col gap-2 px-4 py-6 bg-[#F5F0E8] h-full">
         {tabs.map((tab) => (
           <NavLink
             key={tab.to}
             to={tab.to}
             className={({ isActive }) =>
-              cn(
-                "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200",
-                isActive 
-                  ? "bg-[#047857] text-white font-semibold" 
-                  : "text-[#7C6F5E] hover:bg-[#F5F0E8] font-medium"
-              )
+              `flex items-center gap-4 px-4 py-2.5 transition-all duration-200 ${
+                isActive
+                  ? "bg-[#ECFDF5] text-[#047857] font-semibold rounded-xl"
+                  : "text-[#A39887] font-normal hover:bg-[#E8E0D0] rounded-xl"
+              }`
             }
           >
             {({ isActive }) => (
@@ -40,32 +37,27 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
   }
 
   return (
-    <div className="h-20 bg-white border-t border-[#E8E0D0] flex items-center justify-around px-4 pb-5 pt-2 relative z-50">
+    <div className="bg-[#F5F0E8] border-t border-[#E8E0D0]
+                     flex items-center justify-around
+                     px-4 py-3 pb-5">
       {tabs.map((tab) => (
         <NavLink
           key={tab.to}
           to={tab.to}
-          className="flex flex-col items-center gap-1 relative w-16 pt-1.5 pb-3"
+          className="flex flex-col items-center gap-1"
         >
           {({ isActive }) => (
             <>
-              {isActive && (
-                <motion.div
-                  layoutId="activePill"
-                  className="absolute inset-x-0 top-0 bottom-3 bg-[#047857] rounded-2xl z-0"
-                  transition={{ type: "spring", stiffness: 400, damping: 35 }}
-                />
-              )}
-              <tab.icon 
-                size={22} 
-                strokeWidth={isActive ? 2 : 1.5} 
-                color={isActive ? "#FFFFFF" : "#7C6F5E"} 
-                className="z-10"
+              <tab.icon
+                size={22}
+                strokeWidth={isActive ? 2 : 1.5}
+                color={isActive ? '#047857' : '#A39887'}
               />
-              <span className={cn(
-                "text-[10px] z-10", 
-                isActive ? "font-semibold text-white" : "font-medium text-[#7C6F5E]"
-              )}>
+              <span className={`text-[10px] tracking-wide
+                ${isActive
+                  ? 'font-semibold text-[#047857]'
+                  : 'font-normal text-[#A39887]'
+                }`}>
                 {tab.label}
               </span>
             </>

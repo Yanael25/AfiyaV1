@@ -10,6 +10,7 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { getDocument, createDocument, updateDocumentData } from '../lib/firestore';
+import { createUserWallets } from './tontineService';
 
 export interface UserProfile {
   id: string;
@@ -47,16 +48,8 @@ export const signUpWithEmail = async (email: string, pass: string) => {
     };
     await createDocument('profiles', user.uid, newProfile);
     
-    // Create initial wallet
-    await createDocument('wallets', `${user.uid}_main`, {
-      id: `${user.uid}_main`,
-      owner_id: user.uid,
-      group_id: null,
-      wallet_type: 'USER_MAIN',
-      balance: 0,
-      currency: 'XOF',
-      updated_at: serverTimestamp()
-    });
+    // Create initial wallets
+    await createUserWallets(user.uid);
     
     return user;
   } catch (error) {

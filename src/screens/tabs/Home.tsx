@@ -12,8 +12,11 @@ import { auth } from '../../lib/firebase';
 import { getUserProfile, UserProfile } from '../../services/userService';
 import {
   subscribeToUserWallet,
+  subscribeToUserCerclesWallet,
+  subscribeToUserCapitalWallet,
   subscribeToUserCaution,
-  getUserGroups
+  getUserGroups,
+  getUpcomingCycleInfo
 } from '../../services/tontineService';
 import { subscribeToCollection } from '../../lib/firestore';
 import { where, orderBy, limit } from 'firebase/firestore';
@@ -22,8 +25,16 @@ export function Home() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
+  const [balanceCercles, setBalanceCercles] = useState<number | null>(null);
+  const [balanceCapital, setBalanceCapital] = useState<number | null>(null);
   const [cautionBloquee, setCautionBloquee] = useState<number>(0);
   const [groups, setGroups] = useState<any[]>([]);
+  const [cycleInfo, setCycleInfo] = useState<{
+    groupName: string;
+    type: 'À payer' | 'À recevoir';
+    amount: number;
+    dueDate: Date;
+  } | null>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [activeCard, setActiveCard] = useState(0);
@@ -39,20 +50,30 @@ export function Home() {
       if (w) setBalance(w.balance);
     });
 
+    const unsubCercles = subscribeToUserCerclesWallet(
+      user.uid, w => { if (w) setBalanceCercles(w.balance); }
+    );
+
+    const unsubCapital = subscribeToUserCapitalWallet(
+      user.uid, w => { if (w) setBalanceCapital(w.balance); }
+    );
+
     const unsubCaution = subscribeToUserCaution(
       user.uid, setCautionBloquee
     );
 
-    getUserGroups(user.uid).then(data => {
-      setGroups(
-        data
+    getUserGroups(user.uid).then(async data => {
+      const filtered = data
           .filter(g =>
             g.status === 'ACTIVE' ||
             g.status === 'FORMING' ||
             g.status === 'WAITING_VOTE'
           )
-          .slice(0, 5)
-      );
+          .slice(0, 5);
+      setGroups(filtered);
+
+      const info = await getUpcomingCycleInfo(user.uid, filtered);
+      setCycleInfo(info);
     });
 
     const unsubTx = subscribeToCollection(
@@ -65,7 +86,13 @@ export function Home() {
       setTransactions
     );
 
-    return () => { unsubWallet(); unsubCaution(); unsubTx(); };
+    return () => {
+      unsubWallet();
+      unsubCercles();
+      unsubCapital();
+      unsubCaution();
+      unsubTx();
+    };
   }, [navigate]);
 
   const goToCard = (index: number) => {
@@ -106,47 +133,50 @@ export function Home() {
     });
   };
 
+  const cardWidth = typeof window !== 'undefined' ? window.innerWidth * 0.72 : 300;
+  const cardGap = 12;
+
   return (
     <div className="flex-1 bg-[#F5F0E8] overflow-y-auto pb-28">
-
       {/* ── BLOC 1 : HEADER ── */}
-      <div className="px-5 pt-12 pb-6 flex justify-between items-center bg-[#F5F0E8]">
+      <div className="flex justify-between items-center px-5 pt-12 pb-4">
         <div>
-          <p className="text-xs font-normal text-[#7C6F5E]">Bonjour,</p>
+          <p className="text-xs font-normal text-[#7C6F5E]">{greeting},</p>
           <p className="text-2xl font-bold text-[#1C1410]">{firstName}</p>
         </div>
         
         {/* Pill Score & Tier */}
         <motion.button
-          whileTap={{ scale: 0.95 }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => navigate('/profile')}
-          className="bg-white border border-[#E8E0D0] rounded-full pl-2 pr-3 py-1.5 flex items-center gap-2 shadow-sm"
+          className="bg-white border border-[#E8E0D0] rounded-full px-3 py-1.5 flex items-center gap-2 shadow-sm"
         >
-          <div className="w-6 h-6 rounded-full bg-[#047857] flex items-center justify-center">
-            <span className="text-[10px] font-bold text-white">{profile?.score_afiya || 50}</span>
-          </div>
-          <span className="text-xs font-medium text-[#1C1410]">
+          <span className="text-xs font-bold text-[#1C1410]">
+            {profile?.score_afiya || 50}/100
+          </span>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            profile?.tier === 'PLATINUM' ? 'bg-[#EDE9FE] text-[#5B21B6]' :
+            profile?.tier === 'GOLD' ? 'bg-[#FDF3DC] text-[#C47820]' :
+            profile?.tier === 'SILVER' ? 'bg-[#F1F5F9] text-[#475569]' :
+            'bg-[#F5E6D3] text-[#92400E]'
+          }`}>
             {profile?.tier || 'BRONZE'}
           </span>
+          <ChevronRight size={12} className="text-[#A39887]" />
         </motion.button>
       </div>
 
       {/* ── BLOC 2 : CARDS SWIPEABLES ── */}
       <div className="mt-5 pl-5 overflow-hidden">
-        <div
-          className="pl-5 overflow-visible"
-          style={{ paddingRight: 0 }}
-        >
+        <div className="overflow-visible">
           <motion.div
             className="flex"
-            style={{ gap: 12 }}
-            animate={{
-              x: -activeCard * ((typeof window !== 'undefined' ? window.innerWidth * 0.85 : 300) + 12)
-            }}
+            style={{ gap: cardGap }}
+            animate={{ x: -activeCard * (cardWidth + cardGap) }}
             transition={{ type: 'spring', stiffness: 300, damping: 35 }}
             drag="x"
             dragConstraints={{
-              left: -2 * ((typeof window !== 'undefined' ? window.innerWidth * 0.85 : 300) + 12),
+              left: -2 * (cardWidth + cardGap),
               right: 0
             }}
             dragElastic={0.05}
@@ -159,23 +189,14 @@ export function Home() {
           >
             {/* Card 0 — Solde */}
             <div
-              className="shrink-0 bg-[#047857] rounded-3xl
-                         p-5 text-white relative overflow-hidden
-                         flex flex-col justify-between"
-              style={{ width: typeof window !== 'undefined' ? window.innerWidth * 0.85 : 300, height: 200 }}
+              className="shrink-0 bg-[#047857] rounded-3xl p-5 text-white relative overflow-hidden flex flex-col justify-between"
+              style={{ width: cardWidth, height: 200 }}
             >
-              {/* ÉLÉMENT DÉCORATIF — cercle en arrière-plan */}
-              <div className="absolute -bottom-8 -right-8
-                               w-40 h-40 rounded-full
-                               bg-white/5 pointer-events-none" />
-              <div className="absolute -top-6 -left-6
-                               w-28 h-28 rounded-full
-                               bg-white/5 pointer-events-none" />
+              <div className="absolute -bottom-8 -right-8 w-40 h-40 rounded-full bg-white/[0.04] pointer-events-none" />
+              <div className="absolute -top-6 -left-6 w-28 h-28 rounded-full bg-white/[0.04] pointer-events-none" />
 
-              {/* Row 1 : label + œil */}
               <div className="flex justify-between items-center relative z-10">
-                <p className="text-[10px] font-semibold uppercase
-                               tracking-[0.15em] text-emerald-300">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-300">
                   Solde disponible
                 </p>
                 <button
@@ -190,35 +211,43 @@ export function Home() {
                 </button>
               </div>
 
-              {/* Row 2 : montant — hauteur fixe pour éviter layout shift */}
-              <div className="relative z-10" style={{ height: 56 }}>
+              <div className="relative z-10 flex-1 flex flex-col justify-center">
                 {balance === null ? (
-                  <div className="h-10 w-36 bg-white/20
-                                   animate-pulse rounded-lg mt-2" />
+                  <div className="h-10 w-36 bg-white/20 animate-pulse rounded-lg mt-2" />
                 ) : balanceVisible ? (
-                  <div className="flex items-baseline gap-2 mt-2">
-                    <span className="text-4xl font-extrabold
-                                      text-white tracking-tight leading-none">
-                      {new Intl.NumberFormat('fr-FR').format(balance)}
-                    </span>
-                    <span className="text-base font-semibold text-emerald-300">
-                      FCFA
-                    </span>
+                  <div>
+                    <div className="flex items-baseline mt-2">
+                      <span className="text-3xl font-semibold tracking-tight text-white">
+                        {new Intl.NumberFormat('fr-FR').format(balance)}
+                      </span>
+                      <span className="text-sm font-normal text-white/60 ml-1.5">
+                        FCFA
+                      </span>
+                    </div>
+                    <div className="flex items-baseline gap-1.5 mt-1">
+                      <span className="text-[10px] font-normal text-white/50 uppercase tracking-[0.12em]">
+                        À venir
+                      </span>
+                      <span className="text-sm font-medium text-white/70">
+                        {cycleInfo
+                          ? new Intl.NumberFormat('fr-FR').format(cycleInfo.amount) + ' FCFA'
+                          : '0 FCFA'
+                        }
+                      </span>
+                    </div>
                   </div>
                 ) : (
-                  <p className="text-3xl font-bold text-emerald-300
-                                 tracking-[0.3em] mt-2">
+                  <p className="text-3xl font-light text-white/60 tracking-[0.2em] mt-2">
                     ••••••
                   </p>
                 )}
               </div>
 
-              {/* Row 3 : compte numéro ou indicateur discret */}
-              <div className="flex justify-between items-center relative z-10">
-                <p className="text-[10px] text-emerald-300/70 font-medium">
-                  Compte principal
+              <div className="flex justify-between items-end relative z-10">
+                <p className="text-[10px] text-white/40 font-normal">
+                  {new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
                 </p>
-                <p className="text-[10px] text-emerald-300/70 font-medium">
+                <p className="text-[10px] text-emerald-300/60">
                   1 / 3
                 </p>
               </div>
@@ -226,109 +255,87 @@ export function Home() {
 
             {/* Card 1 — Cercles */}
             <div
-              className="shrink-0 bg-[#1C1410] rounded-3xl
-                         p-5 text-white relative overflow-hidden
-                         flex flex-col justify-between"
-              style={{ width: typeof window !== 'undefined' ? window.innerWidth * 0.85 : 300, height: 200 }}
+              className="shrink-0 bg-[#047857] rounded-3xl p-5 text-white relative overflow-hidden flex flex-col justify-between"
+              style={{ width: cardWidth, height: 200 }}
             >
-              <div className="absolute -bottom-8 -right-8
-                               w-40 h-40 rounded-full
-                               bg-white/5 pointer-events-none" />
+              <div className="absolute -bottom-8 -right-8 w-40 h-40 rounded-full bg-white/5 pointer-events-none" />
 
-              <p className="text-[10px] font-semibold uppercase
-                             tracking-[0.15em] text-[#A39887]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-300">
                 Mes Cercles
               </p>
 
-              <div className="bg-white/10 rounded-2xl px-4 py-3">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-xs font-normal text-[#A39887]">
-                      Caution bloquée
-                    </p>
-                    <p className="text-[10px] font-normal text-[#A39887] mt-0.5">
-                      Fonds de garantie
-                    </p>
-                  </div>
-                  <p className="text-4xl font-extrabold text-white">
-                    {new Intl.NumberFormat('fr-FR').format(cautionBloquee)}
-                  </p>
-                </div>
+              <div className="relative z-10 flex-1 flex flex-col justify-center">
+                {balanceCercles === null
+                  ? <div className="h-8 w-32 bg-white/20 animate-pulse rounded-lg" />
+                  : <>
+                      <div className="flex items-baseline mt-2">
+                        <span className="text-3xl font-semibold text-white tracking-tight">
+                          {new Intl.NumberFormat('fr-FR').format(balanceCercles)}
+                        </span>
+                        <span className="text-sm font-normal text-white/60 ml-1.5">
+                          FCFA
+                        </span>
+                      </div>
+                    </>
+                }
               </div>
 
-              {groups.length === 0 ? (
-                <div className="text-center">
-                  <p className="text-xs font-normal text-[#A39887] mb-2">
-                    Aucun Cercle actif
+              <div className="flex justify-between items-end relative z-10">
+                <div className="space-y-1">
+                  <p className="text-[10px] text-white/50">
+                    Caution · {new Intl.NumberFormat('fr-FR').format(cautionBloquee)} FCFA
                   </p>
-                  <button
-                    onPointerDown={e => e.stopPropagation()}
-                    onClick={() => navigate('/tontines')}
-                    className="bg-white text-[#1C1410] rounded-xl
-                                px-4 py-2 text-xs font-bold"
-                  >
-                    Créer ou rejoindre
-                  </button>
+                  {cycleInfo && (
+                    <p className="text-[10px] text-white/50">
+                      {cycleInfo.type === 'À recevoir' ? '+' : '-'}
+                      {new Intl.NumberFormat('fr-FR').format(cycleInfo.amount)} FCFA
+                      · {cycleInfo.dueDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                    </p>
+                  )}
                 </div>
-              ) : (
-                <div>
-                  <p className="text-sm font-medium text-white">
-                    {groups.length} Cercle{groups.length > 1 ? 's' : ''} actif{groups.length > 1 ? 's' : ''}
-                  </p>
-                  <p className="text-[10px] font-normal text-[#A39887] mt-0.5">
-                    Appuyez pour voir le détail →
-                  </p>
-                </div>
-              )}
+              </div>
             </div>
 
             {/* Card 2 — Capital */}
             <div
-              className="shrink-0 bg-[#064E3B] rounded-3xl
-                         p-5 text-white relative overflow-hidden
-                         flex flex-col justify-between"
-              style={{ width: typeof window !== 'undefined' ? window.innerWidth * 0.85 : 300, height: 200 }}
+              className="shrink-0 bg-[#047857] rounded-3xl p-5 text-white relative overflow-hidden flex flex-col justify-between"
+              style={{ width: cardWidth, height: 200 }}
             >
-              <div className="absolute -bottom-6 -right-6
-                               w-32 h-32 rounded-full
-                               bg-[#047857]/30 pointer-events-none" />
+              <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-[#047857]/30 pointer-events-none" />
 
               <div className="flex items-center gap-2">
-                <p className="text-[10px] font-semibold uppercase
-                               tracking-[0.15em] text-emerald-300">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-300">
                   Afiya Capital
                 </p>
-                <span className="bg-[#047857]/30 text-emerald-300
-                                  text-[8px] font-bold
-                                  px-2 py-0.5 rounded-full uppercase">
-                  Nouveau
-                </span>
               </div>
 
-              <p className="text-xl font-bold text-white leading-snug relative z-10">
-                Faites fructifier<br />votre épargne.
-              </p>
+              <div className="relative z-10 flex-1 flex flex-col justify-center">
+                {balanceCapital === null
+                  ? <div className="h-8 w-32 bg-white/20 animate-pulse rounded-lg" />
+                  : <>
+                      <div className="flex items-baseline mt-2">
+                        <span className="text-3xl font-semibold text-white tracking-tight">
+                          {new Intl.NumberFormat('fr-FR').format(balanceCapital)}
+                        </span>
+                        <span className="text-sm font-normal text-white/60 ml-1.5">
+                          FCFA
+                        </span>
+                      </div>
+                    </>
+                }
+              </div>
 
-              <div className="grid grid-cols-2 gap-2 relative z-10">
-                <div className="bg-white/8 rounded-xl p-2.5">
-                  <p className="text-xs font-semibold text-white">Afiya Immo</p>
-                  <p className="text-[10px] text-emerald-400/60 mt-0.5">
-                    Dès 5 000 FCFA
-                  </p>
-                </div>
-                <div className="bg-white/8 rounded-xl p-2.5">
-                  <p className="text-xs font-semibold text-white">Afiya Bourse</p>
-                  <p className="text-[10px] text-emerald-400/60 mt-0.5">
-                    Dès 1 000 FCFA
-                  </p>
-                </div>
+              <div className="flex justify-between items-end relative z-10">
+                <p className="text-[10px] text-white/50">
+                  Immo · Bourse · Obligations · PME
+                </p>
               </div>
             </div>
           </motion.div>
         </div>
 
         {/* Indicateurs de position */}
-        <div className="flex justify-center gap-1.5 mt-4 px-5">
+        <div className="flex justify-center gap-1.5 mt-4">
           {[0, 1, 2].map(i => (
             <button key={i} onClick={() => setActiveCard(i)}>
               <motion.div
@@ -354,15 +361,15 @@ export function Home() {
             <motion.button
               key={label}
               whileTap={{ scale: 0.94 }}
-              className="flex-1 bg-white rounded-2xl py-3
+              className="flex-1 bg-white rounded-2xl py-2.5
                          flex flex-col items-center gap-1.5
                          border border-[#E8E0D0]"
             >
-              <div className="w-8 h-8 rounded-xl bg-[#ECFDF5]
+              <div className="w-7 h-7 rounded-xl bg-[#ECFDF5]
                                flex items-center justify-center">
-                <Icon size={14} className="text-[#047857]" />
+                <Icon size={13} strokeWidth={1.5} className="text-[#047857]" />
               </div>
-              <span className="text-xs font-medium text-[#1C1410]">
+              <span className="text-[11px] font-normal text-[#7C6F5E]">
                 {label}
               </span>
             </motion.button>
@@ -373,7 +380,7 @@ export function Home() {
       {/* ── BLOC 4 : MES CERCLES ── */}
       <div className="px-5 mt-8">
         <div className="flex justify-between items-center mb-3">
-          <p className="text-2xl font-bold text-[#1C1410]">
+          <p className="text-sm font-semibold text-[#1C1410]">
             Mes Cercles
           </p>
           <button
@@ -398,11 +405,9 @@ export function Home() {
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate('/tontines')}
-              className="bg-[#047857] text-white
-                          rounded-xl px-5 py-2.5
-                          text-xs font-bold"
+              className="bg-transparent text-[#047857] text-xs font-medium underline underline-offset-2"
             >
-              Créer ou rejoindre un Cercle
+              Créer ou rejoindre →
             </motion.button>
           </div>
         ) : (
@@ -423,8 +428,8 @@ export function Home() {
                                  text-[#1C1410]">
                     {g.name}
                   </p>
-                  <p className="text-xs font-normal text-[#7C6F5E] mt-0.5">
-                    {formatXOF(g.contribution_amount)} / cycle
+                  <p className="text-sm font-semibold text-[#1C1410] mt-0.5">
+                    {formatXOF(g.contribution_amount)} <span className="text-xs font-normal text-[#7C6F5E]">/ cycle</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -452,7 +457,7 @@ export function Home() {
       {/* ── BLOC 5 : ACTIVITÉ RÉCENTE ── */}
       <div className="px-5 mt-8">
         <div className="flex justify-between items-center mb-3">
-          <p className="text-2xl font-bold text-[#1C1410]">
+          <p className="text-sm font-semibold text-[#1C1410]">
             Activité récente
           </p>
           <button
@@ -480,8 +485,8 @@ export function Home() {
             {transactions.map((tx, idx) => (
               <div
                 key={tx.id || idx}
-                className={`flex items-center gap-3
-                             px-4 py-3.5
+                className={`flex items-center gap-2
+                             px-3 py-3.5
                     ${idx < transactions.length - 1
                       ? 'border-b border-[#F0EAE0]'
                       : ''
@@ -502,14 +507,14 @@ export function Home() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium
-                                 text-[#1C1410] truncate">
+                                 text-[#1C1410] truncate max-w-[160px]">
                     {tx.description || tx.type}
                   </p>
                   <p className="text-xs font-normal text-[#7C6F5E] mt-0.5">
                     {formatDate(tx.created_at)}
                   </p>
                 </div>
-                <p className={`text-sm font-bold shrink-0
+                <p className={`text-sm font-semibold shrink-0
                   ${isCredit(tx.type)
                     ? 'text-[#047857]'
                     : 'text-[#1C1410]'
@@ -525,34 +530,33 @@ export function Home() {
 
       {/* ── BLOC 6 : AFIYA CAPITAL TEASER ── */}
       <div className="px-5 mt-8">
-        <motion.div
-          whileTap={{ scale: 0.99 }}
-          onClick={() => navigate('/patrimoine')}
-          className="bg-[#047857] rounded-3xl p-5
-                      flex justify-between items-center
-                      cursor-pointer relative overflow-hidden"
-        >
-          <div className="absolute top-0 right-0
-                           -mt-6 -mr-6 w-24 h-24
-                           bg-[#047857]/15 rounded-full
-                           blur-xl pointer-events-none" />
+        <div className="flex justify-between items-center mb-3">
+          <p className="text-sm font-semibold text-[#1C1410]">
+            Afiya Capital
+          </p>
+          <button
+            onClick={() => navigate('/patrimoine')}
+            className="text-xs font-medium text-[#047857]
+                        flex items-center gap-0.5"
+          >
+            Découvrir
+            <ChevronRight size={12} />
+          </button>
+        </div>
+
+        <div className="bg-white border border-[#E8E0D0] rounded-2xl p-4 flex justify-between items-center">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.15em]
-                           text-[#7C6F5E] mb-1">
-              Afiya Capital
-            </p>
-            <p className="text-sm font-bold text-white">
+            <p className="text-sm font-semibold text-[#1C1410]">
               Investissez dès 500 FCFA
             </p>
             <p className="text-xs font-normal text-[#7C6F5E] mt-0.5">
               Immobilier · Bourse · Obligations · PME
             </p>
           </div>
-          <div className="bg-[#047857] rounded-xl
-                           px-3 py-2 shrink-0">
-            <ChevronRight size={16} className="text-white" />
-          </div>
-        </motion.div>
+          <span className="bg-[#ECFDF5] text-[#047857] text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ml-2">
+            Bientôt disponible
+          </span>
+        </div>
       </div>
 
     </div>

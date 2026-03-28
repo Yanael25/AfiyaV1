@@ -560,9 +560,14 @@ export const payout_to_beneficiary = async (cycleId: string) => {
   if (contribPoolSnapshot.empty) throw new Error('Contribution pool not found');
   const contribPoolDocRef = contribPoolSnapshot.docs[0].ref;
 
-  const beneficiaryWalletQuery = query(walletsRef, where('owner_id', '==', beneficiaryData.user_id), where('wallet_type', '==', 'USER_MAIN'), limit(1));
+  const beneficiaryWalletQuery = query(
+    walletsRef,
+    where('owner_id', '==', beneficiaryData.user_id),
+    where('wallet_type', '==', 'USER_CERCLES'),
+    limit(1)
+  );
   const beneficiaryWalletSnapshot = await getDocs(beneficiaryWalletQuery);
-  if (beneficiaryWalletSnapshot.empty) throw new Error('Beneficiary main wallet not found');
+  if (beneficiaryWalletSnapshot.empty) throw new Error('Beneficiary cercles wallet not found');
   const beneficiaryWalletDocRef = beneficiaryWalletSnapshot.docs[0].ref;
 
   return await runTransaction(db, async (t) => {
@@ -1080,3 +1085,69 @@ export async function create_notification(userId: string, title: string, message
     console.error("Error creating notification:", error);
   }
 }
+
+export const transfer_cercles_to_main = async (
+  userId: string,
+  amount: number
+): Promise<{ success: boolean }> => {
+  return runTransaction(db, async (t) => {
+
+    const walletsRef = collection(db, 'wallets');
+
+    const cerclesQuery = query(
+      walletsRef,
+      where('owner_id', '==', userId),
+      where('wallet_type', '==', 'USER_CERCLES'),
+      limit(1)
+    );
+    const cerclesSnap = await getDocs(cerclesQuery);
+    if (cerclesSnap.empty)
+      throw new Error('Wallet Cercles introuvable');
+    const cerclesRef = cerclesSnap.docs[0].ref;
+
+    const mainQuery = query(
+      walletsRef,
+      where('owner_id', '==', userId),
+      where('wallet_type', '==', 'USER_MAIN'),
+      limit(1)
+    );
+    const mainSnap = await getDocs(mainQuery);
+    if (mainSnap.empty)
+      throw new Error('Wallet principal introuvable');
+    const mainRef = mainSnap.docs[0].ref;
+
+    const cerclesDoc = await t.get(cerclesRef);
+    const mainDoc = await t.get(mainRef);
+
+    const cercles = cerclesDoc.data();
+    const main = mainDoc.data();
+
+    if (!cercles || cercles.balance < amount)
+      throw new Error('Solde Cercles insuffisant');
+
+    t.update(cerclesRef, {
+      balance: cercles.balance - amount
+    });
+    t.update(mainRef, {
+      balance: main!.balance + amount
+    });
+
+    const txRef = doc(collection(db, 'transactions'));
+    t.set(txRef, {
+      id: txRef.id,
+      type: 'WITHDRAWAL',
+      amount,
+      currency: 'XOF',
+      from_wallet_id: cerclesSnap.docs[0].id,
+      to_wallet_id: mainSnap.docs[0].id,
+      user_id: userId,
+      group_id: null,
+      member_id: null,
+      status: 'SUCCESS',
+      description: 'Virement Cercles → Wallet principal',
+      created_at: Timestamp.now()
+    });
+
+    return { success: true };
+  });
+};
