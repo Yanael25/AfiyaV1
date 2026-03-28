@@ -14,7 +14,6 @@ import { Login } from './screens/auth/Login';
 import { Signup } from './screens/auth/Signup';
 import { Kyc } from './screens/auth/Kyc';
 import { Home } from './screens/tabs/Home';
-import { Wallet } from './screens/tabs/Wallet';
 import { Tontines } from './screens/tabs/Tontines';
 import { Patrimoine } from './screens/tabs/Patrimoine';
 import { Profile } from './screens/tabs/Profile';
@@ -142,7 +141,6 @@ export default function App() {
           </Route>
 
           {/* Sub-pages */}
-          <Route path="/wallet" element={<Wallet />} />
 
           {/* Group Flow */}
           <Route path="/group/:id" element={<GroupDetail />} />

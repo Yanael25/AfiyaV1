@@ -1,10 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Wallet as WalletIcon, Users, ArrowUpRight, ArrowDownLeft, Plus, Shield, Activity, ArrowDownCircle, ArrowUpCircle, Award, Globe, MinusCircle, RotateCcw } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  Eye, EyeOff,
+  ArrowDownLeft, ArrowUpRight, ArrowRight,
+  CircleDot, Building2, Landmark,
+  ChevronRight
+} from 'lucide-react';
 import { formatXOF } from '../../lib/utils';
 import { auth } from '../../lib/firebase';
 import { getUserProfile, UserProfile } from '../../services/userService';
-import { subscribeToUserWallet, getUserGroups } from '../../services/tontineService';
+import {
+  subscribeToUserWallet,
+  subscribeToUserCaution,
+  getUserGroups
+} from '../../services/tontineService';
 import { subscribeToCollection } from '../../lib/firestore';
 import { where, orderBy, limit } from 'firebase/firestore';
 
@@ -12,261 +22,647 @@ export function Home() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [cautionBloquee, setCautionBloquee] = useState<number>(0);
   const [groups, setGroups] = useState<any[]>([]);
-  const [loadingGroups, setLoadingGroups] = useState(true);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [balanceVisible, setBalanceVisible] = useState(true);
+  const [activeCard, setActiveCard] = useState(0);
+  const [dragDirection, setDragDirection] = useState(1);
 
   useEffect(() => {
     const user = auth.currentUser;
-    if (!user) return;
+    if (!user) { navigate('/welcome'); return; }
 
-    // Load profile
     getUserProfile(user.uid).then(setProfile);
 
-    // Subscribe to wallet
-    const unsubscribeWallet = subscribeToUserWallet(user.uid, (wallet) => {
-      if (wallet) setBalance(wallet.balance);
+    const unsubWallet = subscribeToUserWallet(user.uid, w => {
+      if (w) setBalance(w.balance);
     });
 
-    // Subscribe to transactions
-    const unsubscribeTxs = subscribeToCollection('transactions', [
-      where('user_id', '==', user.uid),
-      orderBy('created_at', 'desc'),
-      limit(5)
-    ], setTransactions);
+    const unsubCaution = subscribeToUserCaution(
+      user.uid, setCautionBloquee
+    );
 
-    // Load groups
-    getUserGroups(user.uid).then(userGroups => {
-      // Show active or forming groups on home page
-      setGroups(userGroups.filter(g => g.status === 'ACTIVE' || g.status === 'FORMING' || g.status === 'WAITING_VOTE').slice(0, 3));
-      setLoadingGroups(false);
+    getUserGroups(user.uid).then(data => {
+      setGroups(
+        data
+          .filter(g =>
+            g.status === 'ACTIVE' ||
+            g.status === 'FORMING' ||
+            g.status === 'WAITING_VOTE'
+          )
+          .slice(0, 5)
+      );
     });
 
-    return () => {
-      unsubscribeWallet();
-      unsubscribeTxs();
-    };
-  }, []);
+    const unsubTx = subscribeToCollection(
+      'transactions',
+      [
+        where('user_id', '==', user.uid),
+        orderBy('created_at', 'desc'),
+        limit(3)
+      ],
+      setTransactions
+    );
 
-  const hour = new Date().getHours();
-  const greeting = hour >= 18 ? 'Bonsoir' : 'Bonjour';
-  const firstName = profile?.full_name?.split(' ')[0] || 'Utilisateur';
+    return () => { unsubWallet(); unsubCaution(); unsubTx(); };
+  }, [navigate]);
 
-  const getTierColor = (tier: string) => {
-    switch (tier) {
-      case 'PLATINUM': return 'bg-[#EDE9FE] text-[#5B21B6]';
-      case 'GOLD': return 'bg-[#FDF3DC] text-[#C47820]';
-      case 'SILVER': return 'bg-[#F1F5F9] text-[#475569]';
-      default: return 'bg-[#F5E6D3] text-[#92400E]';
+  const goToCard = (index: number) => {
+    setDragDirection(index > activeCard ? 1 : -1);
+    setActiveCard(index);
+  };
+
+  const handleDragEnd = (_: any, info: any) => {
+    if (info.offset.x < -50 && activeCard < 2) {
+      setDragDirection(1);
+      setActiveCard(prev => prev + 1);
+    }
+    if (info.offset.x > 50 && activeCard > 0) {
+      setDragDirection(-1);
+      setActiveCard(prev => prev - 1);
     }
   };
 
-  const getTxIcon = (type: string) => {
-    switch (type) {
-      case 'DEPOSIT': return <ArrowDownCircle size={20} className="text-[#064E3B]" />;
-      case 'WITHDRAWAL': return <ArrowUpCircle size={20} className="text-[#7C6F5E]" />;
-      case 'CONTRIBUTION': return <Users size={20} className="text-[#064E3B]" />;
-      case 'PAYOUT': return <Award size={20} className="text-[#064E3B]" />;
-      case 'MINI_FUND_CONTRIB': return <Shield size={20} className="text-[#7C6F5E]" />;
-      case 'GLOBAL_FUND_CONTRIB': return <Globe size={20} className="text-[#7C6F5E]" />;
-      case 'PENALTY': return <MinusCircle size={20} className="text-[#92400E]" />;
-      case 'REFUND': return <RotateCcw size={20} className="text-[#064E3B]" />;
-      default: return <ArrowDownLeft size={20} className="text-[#064E3B]" />;
-    }
-  };
+  const firstName =
+    profile?.full_name?.split(' ')[0] || '';
 
-  const getTxColor = (type: string) => {
-    switch (type) {
-      case 'DEPOSIT': case 'PAYOUT': case 'REFUND': return 'text-[#064E3B]';
-      case 'WITHDRAWAL': case 'CONTRIBUTION': case 'MINI_FUND_CONTRIB': case 'GLOBAL_FUND_CONTRIB': case 'PENALTY': return 'text-[#141414]';
-      default: return 'text-[#141414]';
-    }
-  };
+  const greeting = (() => {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 12) return 'Bonjour';
+    if (h >= 12 && h < 18) return 'Bon après-midi';
+    if (h >= 18 && h < 22) return 'Bonsoir';
+    return 'Bonne nuit';
+  })();
 
-  const getTxBg = (type: string) => {
-    switch (type) {
-      case 'DEPOSIT': case 'PAYOUT': case 'REFUND': return 'bg-[#E8E0D0]';
-      case 'WITHDRAWAL': return 'bg-[#F5F0E8]';
-      case 'CONTRIBUTION': return 'bg-[#E8E0D0]';
-      case 'MINI_FUND_CONTRIB': return 'bg-[#F5F0E8]';
-      case 'GLOBAL_FUND_CONTRIB': case 'PENALTY': return 'bg-[#F5E6D3]';
-      default: return 'bg-[#F5F0E8]';
-    }
-  };
+  const isCredit = (type: string) =>
+    ['DEPOSIT','PAYOUT','REFUND'].includes(type);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'FORMING': return <span className="bg-[#FEF3C7] text-[#92400E] px-2 py-1 rounded text-[10px] font-bold">EN CONSTITUTION</span>;
-      case 'ACTIVE': return <span className="bg-[#E8F5E9] text-[#064E3B] px-2 py-1 rounded text-[10px] font-bold">ACTIF</span>;
-      case 'WAITING_VOTE': return <span className="bg-[#FEF3C7] text-[#92400E] px-2 py-1 rounded text-[10px] font-bold">VOTE EN COURS</span>;
-      default: return null;
-    }
+  const formatDate = (ts: any) => {
+    if (!ts) return '';
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString('fr-FR', {
+      day: '2-digit', month: 'short'
+    });
   };
 
   return (
-    <div className="flex-1 bg-[#F5F0E8] h-full flex flex-col overflow-y-auto pb-24 lg:pb-6">
-      {/* Top Header Section */}
-      <div className="px-6 md:px-8 lg:px-10 pt-6 pb-6 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center border border-[#E8E0D0] shadow-sm">
-            <span className="text-[#141414] font-bold text-lg">{firstName.charAt(0)}</span>
-          </div>
-          <div>
-            <p className="text-[#7C6F5E] text-sm">{greeting},</p>
-            <p className="text-[#141414] font-bold text-lg">{firstName}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className={`${getTierColor(profile?.tier || 'BRONZE')} px-3 py-1.5 rounded-full flex items-center gap-1 shadow-sm`}>
-            <span className="text-xs font-bold tracking-wide">{profile?.tier || 'BRONZE'}</span>
-          </div>
-        </div>
+    <div className="flex-1 bg-[#F5F0E8] overflow-y-auto pb-28">
+
+      {/* ── BLOC 1 : HEADER ── */}
+      <div className="px-5 pt-12 pb-2">
+        <p className="text-xs text-[#7C6F5E] font-normal">
+          {greeting},
+        </p>
+        <p className="text-2xl font-bold text-[#1C1410] mt-0.5">
+          {firstName}
+        </p>
+        {profile && (
+          <p className="text-xs text-[#7C6F5E] mt-1 font-normal">
+            Score Afiya&nbsp;·&nbsp;
+            {profile.score_afiya}/100&nbsp;·&nbsp;
+            {profile.tier}
+          </p>
+        )}
       </div>
 
-      <div className="px-6 md:px-8 lg:px-10 flex-1 flex flex-col gap-8">
-        
-        {/* Main Wallet Card */}
-        <div className="relative overflow-hidden bg-[#064E3B] rounded-[24px] p-6 md:p-8 text-white shadow-xl flex flex-col transition-all duration-300">
-          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
-          <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-32 h-32 bg-white/8 rounded-full blur-xl pointer-events-none"></div>
+      {/* ── BLOC 2 : CARDS SWIPEABLES ── */}
+      <div className="mt-5 px-5">
 
-          <div className="relative z-10 flex justify-between items-start mb-6">
-            <div>
-              <p className="text-emerald-300 text-sm font-medium mb-1 uppercase tracking-wider">
-                Solde disponible
-              </p>
-              <div className="flex items-baseline gap-2">
-                {balance === null ? (
-                  <div className="h-10 w-32 bg-white/20 animate-pulse rounded-lg mt-1"></div>
-                ) : (
-                  <>
-                    <h2 className="text-4xl font-extrabold text-white tracking-tight">
-                      {formatXOF(balance).replace(' FCFA', '')}
-                    </h2>
-                    <span className="text-xl font-medium text-emerald-200">
-                      FCFA
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-            <button 
-              onClick={() => navigate('/wallet')}
-              className="bg-white/10 hover:bg-white/20 p-3 rounded-xl backdrop-blur-sm transition-colors"
-            >
-              <WalletIcon size={24} className="text-white" />
-            </button>
-          </div>
-
-          <div className="relative z-10 grid grid-cols-2 gap-3">
-            <button 
-              onClick={() => navigate('/wallet')}
-              className="flex items-center justify-center gap-2 bg-white text-[#064E3B] hover:bg-gray-50 transition-colors rounded-xl py-3 font-semibold text-sm shadow-sm"
-            >
-              <ArrowUpRight size={18} />
-              <span>Dépôt / Retrait</span>
-            </button>
-            <button 
-              onClick={() => navigate('/tontines')}
-              className="flex items-center justify-center gap-2 bg-[#047857] text-white hover:bg-[#0369a1] transition-colors rounded-xl py-3 font-semibold text-sm shadow-sm"
-            >
-              <Users size={18} />
-              <span>Mes Cercles</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Active Groups Section */}
-        <div className="flex flex-col gap-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-[#141414] font-semibold text-lg">Mes Cercles</h2>
-            <button onClick={() => navigate('/tontines')} className="text-[#064E3B] text-sm font-medium hover:underline">Voir tout</button>
-          </div>
-          
-          {loadingGroups ? (
-            <div className="text-center py-4 text-[#A39887] text-sm">Chargement...</div>
-          ) : groups.length === 0 ? (
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#E8E0D0] text-center">
-              <div className="w-12 h-12 bg-[#F5F0E8] rounded-full flex items-center justify-center mx-auto mb-3">
-                <Users size={24} className="text-[#A39887]" />
-              </div>
-              <p className="text-[#7C6F5E] text-sm mb-4">Vous n'avez pas encore de cercle actif.</p>
-              <button 
-                onClick={() => navigate('/group/create')}
-                className="bg-[#064E3B] text-white px-4 py-2 rounded-xl text-sm font-semibold"
+        {/* Conteneur carte — hauteur fixe absolue */}
+        <div className="relative h-[220px] overflow-hidden rounded-3xl">
+          <AnimatePresence initial={false} custom={dragDirection}>
+            {activeCard === 0 && (
+              <motion.div
+                key="card-wallet"
+                custom={dragDirection}
+                variants={{
+                  enter: (d) => ({
+                    x: d > 0 ? '100%' : '-100%',
+                    opacity: 0
+                  }),
+                  center: { x: 0, opacity: 1 },
+                  exit: (d) => ({
+                    x: d > 0 ? '-100%' : '100%',
+                    opacity: 0
+                  })
+                }}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  x: { type: 'spring', stiffness: 300, damping: 30 },
+                  opacity: { duration: 0.15 }
+                }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.08}
+                onDragEnd={handleDragEnd}
+                className="absolute inset-0 bg-[#047857]
+                           rounded-3xl p-6 text-white
+                           flex flex-col justify-between
+                           cursor-grab active:cursor-grabbing
+                           select-none"
               >
-                Créer un cercle
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {groups.map((group) => (
-                <div 
-                  key={group.id}
-                  onClick={() => navigate(`/group/${group.id}`)}
-                  className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8E0D0] hover:shadow-md active:bg-[#F5F0E8] transition-all cursor-pointer flex flex-col justify-between"
-                >
-                  <div className="flex justify-between items-start mb-4">
+                {/* Row 1: label + eye */}
+                <div className="flex justify-between items-center">
+                  <p className="text-[10px] font-semibold
+                                 text-emerald-300 uppercase
+                                 tracking-[0.15em]">
+                    Solde disponible
+                  </p>
+                  <button
+                    onPointerDown={e => e.stopPropagation()}
+                    onClick={() =>
+                      setBalanceVisible(v => !v)
+                    }
+                    className="p-1 -mr-1 touch-none"
+                  >
+                    {balanceVisible
+                      ? <EyeOff size={15}
+                          className="text-emerald-300" />
+                      : <Eye size={15}
+                          className="text-emerald-300" />
+                    }
+                  </button>
+                </div>
+
+                {/* Row 2: montant — hauteur FIXE */}
+                <div className="h-14 flex items-center">
+                  {balance === null ? (
+                    <div className="h-9 w-40 bg-white/20
+                                     animate-pulse rounded-lg" />
+                  ) : balanceVisible ? (
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-extrabold
+                                        text-white tracking-tight
+                                        leading-none">
+                        {formatXOF(balance).replace(' FCFA','')}
+                      </span>
+                      <span className="text-base font-semibold
+                                        text-emerald-200">
+                        FCFA
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-3xl font-bold
+                                      text-emerald-300
+                                      tracking-[0.3em]">
+                      ••••••
+                    </span>
+                  )}
+                </div>
+
+                {/* Row 3: lien détail */}
+                <p className="text-[11px] text-emerald-300
+                               font-medium text-right">
+                  Carte 1 / 3 — glissez pour voir les autres →
+                </p>
+              </motion.div>
+            )}
+
+            {activeCard === 1 && (
+              <motion.div
+                key="card-cercles"
+                custom={dragDirection}
+                variants={{
+                  enter: (d) => ({
+                    x: d > 0 ? '100%' : '-100%', opacity: 0
+                  }),
+                  center: { x: 0, opacity: 1 },
+                  exit: (d) => ({
+                    x: d > 0 ? '-100%' : '100%', opacity: 0
+                  })
+                }}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  x: { type: 'spring', stiffness: 300, damping: 30 },
+                  opacity: { duration: 0.15 }
+                }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.08}
+                onDragEnd={handleDragEnd}
+                className="absolute inset-0 bg-[#047857]
+                           rounded-3xl p-6 text-white
+                           flex flex-col justify-between
+                           cursor-grab active:cursor-grabbing
+                           select-none"
+              >
+                <p className="text-[10px] font-semibold
+                               text-emerald-300 uppercase
+                               tracking-[0.15em]">
+                  Mes Cercles
+                </p>
+
+                {/* Caution bloquée */}
+                <div className="bg-white/10 rounded-2xl px-4 py-3">
+                  <div className="flex justify-between items-center">
                     <div>
-                      <h3 className="text-[#141414] font-bold text-base mb-1">{group.name}</h3>
-                      <p className="text-[#7C6F5E] text-xs">{group.members_count}/{group.target_members} membres</p>
+                      <p className="text-xs font-medium
+                                     text-emerald-200">
+                        Caution bloquée
+                      </p>
+                      <p className="text-[10px] text-emerald-300 mt-0.5">
+                        Fonds de garantie de vos Cercles
+                      </p>
                     </div>
-                    {getStatusBadge(group.status)}
-                  </div>
-                  
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-[#A39887] text-[10px] mb-0.5 uppercase tracking-wider font-semibold">Cotisation</p>
-                      <p className="text-[#141414] font-bold text-sm">{formatXOF(group.contribution_amount)}</p>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-[#F5F0E8] flex items-center justify-center group-hover:bg-[#E8E0D0] transition-colors">
-                      <ArrowRight size={16} className="text-[#7C6F5E]" />
-                    </div>
+                    <p className="text-base font-bold text-white">
+                      {formatXOF(cautionBloquee)}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Recent Transactions Section */}
-        <div className="flex flex-col bg-white rounded-[24px] shadow-sm border border-[#E8E0D0] p-6 mb-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-[#141414] font-semibold text-lg">Activité récente</h2>
-            <button onClick={() => navigate('/wallet')} className="text-[#064E3B] text-sm font-medium hover:underline">Voir tout</button>
-          </div>
-
-          <div className="space-y-5">
-            {transactions.length === 0 ? (
-              <div className="text-center py-8 text-[#A39887] text-sm">
-                Aucune transaction pour le moment.
-              </div>
-            ) : (
-              transactions.map((tx) => {
-                const isCredit = tx.type === 'DEPOSIT' || tx.type === 'PAYOUT' || tx.type === 'REFUND';
-                const date = tx.created_at?.toDate ? tx.created_at.toDate() : new Date(tx.created_at);
-                return (
-                  <div key={tx.id} className="flex items-center justify-between group">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${getTxBg(tx.type)}`}>
-                        {getTxIcon(tx.type)}
-                      </div>
-                      <div>
-                        <p className="text-[#141414] font-medium text-sm">{tx.description || tx.type}</p>
-                        <p className="text-[#A39887] text-xs mt-0.5">{date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
-                      </div>
-                    </div>
-                    <span className={`font-bold ${getTxColor(tx.type)}`}>
-                      {isCredit ? '+' : '-'}{formatXOF(tx.amount)}
-                    </span>
+                {/* Résumé groupes */}
+                {groups.length === 0 ? (
+                  <div className="text-center">
+                    <p className="text-sm text-emerald-200 mb-2">
+                      Aucun Cercle actif
+                    </p>
+                    <button
+                      onPointerDown={e => e.stopPropagation()}
+                      onClick={() => navigate('/tontines')}
+                      className="bg-white text-[#047857]
+                                  rounded-xl px-4 py-2
+                                  text-xs font-bold"
+                    >
+                      Créer ou rejoindre un Cercle
+                    </button>
                   </div>
-                );
-              })
+                ) : (
+                  <div className="space-y-2">
+                    {groups.slice(0, 2).map(g => (
+                      <div
+                        key={g.id}
+                        className="bg-white/10 rounded-xl
+                                    px-3 py-2.5
+                                    flex justify-between
+                                    items-center"
+                        onPointerDown={e => e.stopPropagation()}
+                        onClick={() => navigate(`/group/${g.id}`)}
+                      >
+                        <div>
+                          <p className="text-sm font-semibold
+                                         text-white truncate
+                                         max-w-[160px]">
+                            {g.name}
+                          </p>
+                          <p className="text-[10px]
+                                         text-emerald-300 mt-0.5">
+                            {formatXOF(g.contribution_amount)}
+                          </p>
+                        </div>
+                        <span className="text-[10px] font-semibold
+                                          px-2 py-0.5 rounded-full
+                                          bg-emerald-400/30
+                                          text-emerald-100">
+                          {g.status === 'ACTIVE'
+                            ? 'Actif'
+                            : g.status === 'FORMING'
+                            ? 'Formation'
+                            : 'Vote'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
             )}
-          </div>
+
+            {activeCard === 2 && (
+              <motion.div
+                key="card-capital"
+                custom={dragDirection}
+                variants={{
+                  enter: (d) => ({
+                    x: d > 0 ? '100%' : '-100%', opacity: 0
+                  }),
+                  center: { x: 0, opacity: 1 },
+                  exit: (d) => ({
+                    x: d > 0 ? '-100%' : '100%', opacity: 0
+                  })
+                }}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  x: { type: 'spring', stiffness: 300, damping: 30 },
+                  opacity: { duration: 0.15 }
+                }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.08}
+                onDragEnd={handleDragEnd}
+                className="absolute inset-0 bg-[#1C1410]
+                           rounded-3xl p-6 text-white
+                           flex flex-col justify-between
+                           cursor-grab active:cursor-grabbing
+                           select-none overflow-hidden"
+              >
+                <div className="absolute top-0 right-0
+                                 -mt-8 -mr-8 w-32 h-32
+                                 bg-[#047857]/20 rounded-full
+                                 blur-xl pointer-events-none" />
+
+                <div>
+                  <span className="text-[10px] font-semibold
+                                    text-[#7C6F5E] uppercase
+                                    tracking-[0.15em]">
+                    Afiya Capital
+                  </span>
+                  <span className="ml-2 text-[10px] font-semibold
+                                    text-emerald-400
+                                    bg-[#047857]/20
+                                    px-2 py-0.5 rounded-full">
+                    Bientôt
+                  </span>
+                </div>
+
+                <p className="text-xl font-bold text-white
+                               leading-snug">
+                  Investissez dans<br />
+                  l'économie béninoise.
+                </p>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-white/5 rounded-xl p-3">
+                    <Building2 size={14}
+                      className="text-[#047857] mb-1.5" />
+                    <p className="text-xs font-semibold text-white">
+                      Afiya Immo
+                    </p>
+                    <p className="text-[10px] text-[#7C6F5E] mt-0.5">
+                      Immobilier fractionné
+                    </p>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-3">
+                    <Landmark size={14}
+                      className="text-[#047857] mb-1.5" />
+                    <p className="text-xs font-semibold text-white">
+                      Afiya Bourse
+                    </p>
+                    <p className="text-[10px] text-[#7C6F5E] mt-0.5">
+                      Actions BRVM
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
+        {/* Indicateurs de position */}
+        <div className="flex justify-center gap-1.5 mt-4">
+          {[0, 1, 2].map(i => (
+            <button
+              key={i}
+              onClick={() => goToCard(i)}
+              className="transition-all duration-300"
+            >
+              <motion.div
+                animate={{
+                  width: i === activeCard ? 20 : 6,
+                  backgroundColor:
+                    i === activeCard ? '#047857' : '#CBD5E1'
+                }}
+                className="h-1.5 rounded-full"
+              />
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* ── BLOC 3 : ACTIONS RAPIDES ── */}
+      <div className="px-5 mt-6">
+        <div className="flex gap-3">
+          {[
+            {
+              icon: ArrowDownLeft,
+              label: 'Dépôt',
+              action: () => {}
+            },
+            {
+              icon: ArrowUpRight,
+              label: 'Retrait',
+              action: () => {}
+            },
+            {
+              icon: ArrowRight,
+              label: 'Envoyer',
+              action: () => {}
+            }
+          ].map(({ icon: Icon, label, action }) => (
+            <motion.button
+              key={label}
+              whileTap={{ scale: 0.95 }}
+              onClick={action}
+              className="flex-1 bg-white rounded-2xl
+                          py-4 flex flex-col items-center
+                          gap-2 border border-[#E8E0D0]
+                          shadow-sm"
+            >
+              <div className="w-9 h-9 rounded-xl
+                               bg-[#ECFDF5]
+                               flex items-center justify-center">
+                <Icon size={16} className="text-[#047857]" />
+              </div>
+              <span className="text-xs font-semibold
+                                text-[#1C1410]">
+                {label}
+              </span>
+            </motion.button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── BLOC 4 : MES CERCLES ── */}
+      <div className="px-5 mt-8">
+        <div className="flex justify-between items-center mb-3">
+          <p className="text-sm font-bold text-[#1C1410]">
+            Mes Cercles
+          </p>
+          <button
+            onClick={() => navigate('/tontines')}
+            className="text-xs font-medium text-[#047857]
+                        flex items-center gap-0.5"
+          >
+            Voir tout
+            <ChevronRight size={12} />
+          </button>
+        </div>
+
+        {groups.length === 0 ? (
+          <div className="bg-white rounded-2xl
+                           border border-[#E8E0D0]
+                           p-5 text-center">
+            <CircleDot size={22}
+              className="text-[#A39887] mx-auto mb-2" />
+            <p className="text-sm text-[#7C6F5E] mb-3">
+              Vous n'avez pas encore de Cercle actif.
+            </p>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate('/tontines')}
+              className="bg-[#047857] text-white
+                          rounded-xl px-5 py-2.5
+                          text-xs font-bold"
+            >
+              Créer ou rejoindre un Cercle
+            </motion.button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {groups.slice(0, 3).map(g => (
+              <motion.div
+                key={g.id}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => navigate(`/group/${g.id}`)}
+                className="bg-white rounded-2xl
+                            border border-[#E8E0D0]
+                            px-4 py-3.5
+                            flex justify-between
+                            items-center cursor-pointer"
+              >
+                <div>
+                  <p className="text-sm font-semibold
+                                 text-[#1C1410]">
+                    {g.name}
+                  </p>
+                  <p className="text-xs text-[#7C6F5E] mt-0.5">
+                    {formatXOF(g.contribution_amount)} / cycle
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-semibold
+                                     px-2 py-0.5 rounded-full
+                    ${g.status === 'ACTIVE'
+                      ? 'bg-[#ECFDF5] text-[#047857]'
+                      : g.status === 'FORMING'
+                      ? 'bg-amber-50 text-amber-700'
+                      : 'bg-blue-50 text-blue-700'
+                    }`}>
+                    {g.status === 'ACTIVE' ? 'Actif'
+                      : g.status === 'FORMING' ? 'Formation'
+                      : 'Vote'}
+                  </span>
+                  <ChevronRight size={14}
+                    className="text-[#A39887]" />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── BLOC 5 : ACTIVITÉ RÉCENTE ── */}
+      <div className="px-5 mt-8">
+        <div className="flex justify-between items-center mb-3">
+          <p className="text-sm font-bold text-[#1C1410]">
+            Activité récente
+          </p>
+          <button
+            onClick={() => {}}
+            className="text-xs font-medium text-[#047857]
+                        flex items-center gap-0.5"
+          >
+            Voir tout
+            <ChevronRight size={12} />
+          </button>
+        </div>
+
+        {transactions.length === 0 ? (
+          <div className="bg-white rounded-2xl
+                           border border-[#E8E0D0] p-5
+                           text-center">
+            <p className="text-sm text-[#7C6F5E]">
+              Aucune transaction pour l'instant.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl
+                           border border-[#E8E0D0]
+                           overflow-hidden">
+            {transactions.map((tx, idx) => (
+              <div
+                key={tx.id || idx}
+                className={`flex items-center gap-3
+                             px-4 py-3.5
+                    ${idx < transactions.length - 1
+                      ? 'border-b border-[#F0EAE0]'
+                      : ''
+                    }`}
+              >
+                <div className={`w-8 h-8 rounded-xl shrink-0
+                                  flex items-center justify-center
+                    ${isCredit(tx.type)
+                      ? 'bg-[#ECFDF5]'
+                      : 'bg-[#F5F0E8]'
+                    }`}>
+                  {isCredit(tx.type)
+                    ? <ArrowDownLeft size={13}
+                        className="text-[#047857]" />
+                    : <ArrowUpRight size={13}
+                        className="text-[#7C6F5E]" />
+                  }
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium
+                                 text-[#1C1410] truncate">
+                    {tx.description || tx.type}
+                  </p>
+                  <p className="text-[11px] text-[#7C6F5E] mt-0.5">
+                    {formatDate(tx.created_at)}
+                  </p>
+                </div>
+                <p className={`text-sm font-bold shrink-0
+                  ${isCredit(tx.type)
+                    ? 'text-[#047857]'
+                    : 'text-[#1C1410]'
+                  }`}>
+                  {isCredit(tx.type) ? '+' : '-'}
+                  {formatXOF(tx.amount)}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── BLOC 6 : AFIYA CAPITAL TEASER ── */}
+      <div className="px-5 mt-8">
+        <motion.div
+          whileTap={{ scale: 0.99 }}
+          onClick={() => navigate('/patrimoine')}
+          className="bg-[#1C1410] rounded-3xl p-5
+                      flex justify-between items-center
+                      cursor-pointer relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0
+                           -mt-6 -mr-6 w-24 h-24
+                           bg-[#047857]/15 rounded-full
+                           blur-xl pointer-events-none" />
+          <div>
+            <p className="text-[10px] font-semibold
+                           text-[#7C6F5E] uppercase
+                           tracking-[0.12em] mb-1">
+              Afiya Capital
+            </p>
+            <p className="text-sm font-bold text-white">
+              Investissez dès 500 FCFA
+            </p>
+            <p className="text-xs text-[#7C6F5E] mt-0.5">
+              Immobilier · Bourse · Obligations · PME
+            </p>
+          </div>
+          <div className="bg-[#047857] rounded-xl
+                           px-3 py-2 shrink-0">
+            <ChevronRight size={16} className="text-white" />
+          </div>
+        </motion.div>
+      </div>
+
     </div>
   );
 }
