@@ -6,14 +6,14 @@ export function Welcome() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex-1 bg-white flex flex-col h-full">
+    <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full">
       <div className="flex-1 flex flex-col items-center justify-center px-6">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           className="w-full max-w-sm"
         >
-          <div className="w-16 h-16 bg-[#047857] rounded-xl flex items-center justify-center mb-8">
+          <div className="w-16 h-16 bg-[#064E3B] rounded-xl flex items-center justify-center mb-8">
             <span className="text-white text-2xl font-bold">A</span>
           </div>
           <h1 className="text-[#111827] text-4xl font-bold mb-4 leading-tight">
@@ -28,7 +28,7 @@ export function Welcome() {
       <div className="p-6 pb-12">
         <button
           onClick={() => navigate('/login')}
-          className="w-full bg-[#047857] text-white h-14 rounded-xl font-semibold text-lg flex items-center justify-center gap-2 active:bg-[#059669] transition-colors"
+          className="w-full bg-[#064E3B] text-white h-14 rounded-xl font-semibold text-lg flex items-center justify-center gap-2 active:bg-[#047857] transition-colors"
         >
           Commencer
           <ArrowRight size={20} />

@@ -7,15 +7,22 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'sans-serif'],
+        sans: ["Sora", "sans-serif"],
       },
       colors: {
-        brand: {
-          green:       '#047857',
-          'green-mid': '#059669',
-          'green-light':'#ECFDF5',
-          gold:        '#D97706',
-          'gold-light':'#FEF3C7',
+        afiya: {
+          "deep":        "#064E3B",
+          "primary":     "#047857",
+          "mid":         "#059669",
+          "light":       "#ECFDF5",
+          "sand":        "#F5F0E8",
+          "sand-card":   "#FFFFFF",
+          "sand-border": "#E8E0D0",
+          "sand-sep":    "#F0EAE0",
+          "gold":        "#C47820",
+          "gold-light":  "#FDF3DC",
+          "ink":         "#1C1410",
+          "muted":       "#7C6F5E",
         }
       }
     },

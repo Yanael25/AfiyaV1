@@ -24,7 +24,7 @@ export function Login() {
       if (profile && !profile.full_name) {
         navigate('/kyc');
       } else {
-        navigate('/wallet');
+        navigate('/home');
       }
     } catch (err: any) {
       setError("Email ou mot de passe incorrect");
@@ -34,7 +34,7 @@ export function Login() {
   };
 
   return (
-    <div className="flex-1 bg-white flex flex-col h-full overflow-y-auto">
+    <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full overflow-y-auto">
       <div className="p-4 flex items-center">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-[#111827]">
           <ArrowLeft size={24} />
@@ -42,7 +42,7 @@ export function Login() {
       </div>
       
       <div className="flex-1 px-6 pt-4 pb-12">
-        <div className="w-16 h-16 bg-[#047857] rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-emerald-100">
+        <div className="w-16 h-16 bg-[#064E3B] rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-[#064E3B]/20">
           <span className="text-white font-bold text-3xl">A</span>
         </div>
         
@@ -110,7 +110,7 @@ export function Login() {
           <button
             type="submit"
             disabled={loading || !email || !password}
-            className="w-full bg-[#047857] text-white h-14 rounded-xl font-semibold text-lg hover:bg-[#059669] transition-colors disabled:opacity-50 mt-4"
+            className="w-full bg-[#064E3B] text-white h-14 rounded-xl font-semibold text-lg hover:bg-[#047857] transition-colors disabled:opacity-50 mt-4"
           >
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>

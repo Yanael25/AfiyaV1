@@ -50,11 +50,11 @@ export function AdjustDeposit() {
   };
 
   if (!memberInfo) {
-    return <div className="flex-1 bg-gray-50 flex items-center justify-center">Chargement...</div>;
+    return <div className="flex-1 bg-[#F5F0E8] flex items-center justify-center">Chargement...</div>;
   }
 
   return (
-    <div className="flex-1 bg-gray-50 flex flex-col h-full">
+    <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full">
       <div className="bg-white px-4 pt-4 pb-4 shadow-sm flex items-center gap-4 z-10">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-[#111827]">
           <ArrowLeft size={24} />
@@ -70,8 +70,8 @@ export function AdjustDeposit() {
         )}
 
         <div className="flex flex-col items-center justify-center py-4">
-          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
-            <AlertTriangle size={32} className="text-yellow-600" />
+          <div className="w-16 h-16 bg-[#D4AF37]/20 rounded-full flex items-center justify-center mb-4">
+            <AlertTriangle size={32} className="text-[#D4AF37]" />
           </div>
           <h2 className="text-[#111827] font-bold text-2xl mb-1">Position {memberInfo.draw_position}</h2>
           <p className="text-[#4B5563] text-center text-sm px-4">
@@ -90,7 +90,7 @@ export function AdjustDeposit() {
           </div>
           <div className="flex justify-between items-center pt-2">
             <span className="text-[#111827] font-bold text-lg">Différentiel à payer</span>
-            <span className="text-[#D97706] font-bold text-xl">{formatXOF(memberInfo.deposit_differential)}</span>
+            <span className="text-[#D4AF37] font-bold text-xl">{formatXOF(memberInfo.deposit_differential)}</span>
           </div>
         </div>
 
@@ -101,7 +101,7 @@ export function AdjustDeposit() {
         </div>
       </div>
 
-      <div className="p-6 bg-white border-t border-[#E5E7EB]">
+      <div className="p-6 bg-[#F5F0E8] border-t border-[#E5E7EB]">
         <button
           onClick={handlePayDifferential}
           disabled={loading || memberInfo.deposit_differential_paid}

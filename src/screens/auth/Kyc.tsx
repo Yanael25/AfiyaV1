@@ -51,7 +51,7 @@ export function Kyc() {
         kyc_status: 'APPROVED',
       });
 
-      navigate('/wallet');
+      navigate('/home');
     } catch (e: any) {
       setError(e.message || "Une erreur est survenue");
     } finally {
@@ -60,7 +60,7 @@ export function Kyc() {
   };
 
   return (
-    <div className="flex-1 bg-gray-50 flex flex-col h-full">
+    <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full">
       <div className="bg-white px-6 pt-12 pb-4 shadow-sm z-10">
         <h1 className="text-[#111827] text-2xl font-bold">Complétez votre profil</h1>
         <p className="text-[#4B5563] text-sm mt-1">Dernière étape avant de commencer</p>
@@ -76,7 +76,7 @@ export function Kyc() {
         {/* Section 1: Identité */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E5E7EB]">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+            <div className="w-8 h-8 rounded-full bg-[#E8F0E8] flex items-center justify-center text-[#047857]">
               <User size={18} />
             </div>
             <h2 className="text-[#111827] font-semibold">Identité</h2>
@@ -104,7 +104,7 @@ export function Kyc() {
         {/* Section 2: Contact */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E5E7EB]">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+            <div className="w-8 h-8 rounded-full bg-[#E8F0E8] flex items-center justify-center text-[#047857]">
               <MapPin size={18} />
             </div>
             <h2 className="text-[#111827] font-semibold">Contact</h2>
@@ -124,12 +124,12 @@ export function Kyc() {
         {/* Section 3: Sécurité */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E5E7EB]">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+            <div className="w-8 h-8 rounded-full bg-[#E8F0E8] flex items-center justify-center text-[#047857]">
               <Shield size={18} />
             </div>
             <h2 className="text-[#111827] font-semibold">Sécurité</h2>
           </div>
-          <div className="flex items-start gap-3 bg-gray-50 p-3 rounded-xl">
+          <div className="flex items-start gap-3 bg-[#F5F0E8] p-3 rounded-xl">
             <CheckCircle2 size={20} className="text-[#047857] mt-0.5 shrink-0" />
             <p className="text-xs text-[#4B5563] leading-relaxed">
               Vos données sont chiffrées et stockées en toute sécurité. Elles ne seront jamais partagées sans votre consentement.
@@ -138,7 +138,7 @@ export function Kyc() {
         </div>
       </div>
 
-      <div className="p-6 bg-white border-t border-[#E5E7EB]">
+      <div className="p-6 bg-[#F5F0E8] border-t border-[#E5E7EB]">
         <button
           onClick={handleSubmit}
           disabled={loading || !formData.firstName || !formData.lastName}

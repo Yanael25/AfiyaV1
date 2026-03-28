@@ -13,6 +13,7 @@ import { Welcome } from './screens/auth/Welcome';
 import { Login } from './screens/auth/Login';
 import { Signup } from './screens/auth/Signup';
 import { Kyc } from './screens/auth/Kyc';
+import { Home } from './screens/tabs/Home';
 import { Wallet } from './screens/tabs/Wallet';
 import { Tontines } from './screens/tabs/Tontines';
 import { Patrimoine } from './screens/tabs/Patrimoine';
@@ -28,8 +29,8 @@ import { StatusBar } from './components/StatusBar';
 
 function AuthContainer() {
   return (
-    <div className="min-h-[100dvh] bg-gray-100 flex justify-center antialiased">
-      <div className="w-full max-w-md h-[100dvh] bg-white sm:shadow-2xl overflow-hidden relative flex flex-col">
+    <div className="min-h-[100dvh] bg-[#F5F0E8] flex justify-center antialiased">
+      <div className="w-full max-w-md h-[100dvh] bg-[#F5F0E8] sm:shadow-2xl overflow-hidden relative flex flex-col">
         <div className="md:hidden">
           <StatusBar />
         </div>
@@ -43,8 +44,8 @@ function AuthContainer() {
 
 function AppContainer() {
   return (
-    <div className="min-h-[100dvh] bg-gray-100 flex justify-center antialiased">
-      <div className="w-full h-[100dvh] bg-white overflow-hidden relative flex flex-col">
+    <div className="min-h-[100dvh] bg-[#F5F0E8] flex justify-center antialiased">
+      <div className="w-full h-[100dvh] bg-[#F5F0E8] overflow-hidden relative flex flex-col">
         <div className="md:hidden">
           <StatusBar />
         </div>
@@ -58,11 +59,11 @@ function AppContainer() {
 
 function TabLayout() {
   return (
-    <div className="flex flex-col lg:flex-row h-full bg-gray-50 relative w-full max-w-[1200px] mx-auto">
+    <div className="flex flex-col lg:flex-row h-full bg-[#F5F0E8] relative w-full max-w-[1200px] mx-auto">
       {/* Sidebar for PC */}
-      <div className="hidden lg:flex w-64 border-r border-gray-200 bg-white h-full flex-col">
+      <div className="hidden lg:flex w-64 border-r border-[#E5E7EB] bg-[#F5F0E8] h-full flex-col">
         <div className="p-6 flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#047857] rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-[#064E3B] rounded-xl flex items-center justify-center">
             <span className="text-white font-bold text-xl">A</span>
           </div>
           <span className="text-xl font-bold text-[#111827]">Afiya</span>
@@ -134,11 +135,14 @@ export default function App() {
         <Route element={<AppContainer />}>
           {/* Tab Flow */}
           <Route element={<TabLayout />}>
-            <Route path="/wallet" element={<Wallet />} />
+            <Route path="/home" element={<Home />} />
             <Route path="/tontines" element={<Tontines />} />
             <Route path="/patrimoine" element={<Patrimoine />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
+
+          {/* Sub-pages */}
+          <Route path="/wallet" element={<Wallet />} />
 
           {/* Group Flow */}
           <Route path="/group/:id" element={<GroupDetail />} />

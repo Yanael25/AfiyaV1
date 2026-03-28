@@ -108,7 +108,7 @@ export function CreateGroup() {
   };
 
   return (
-    <div className="flex-1 bg-gray-50 flex flex-col h-full">
+    <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full">
       <div className="bg-white px-4 pt-4 pb-4 shadow-sm flex items-center gap-4 z-10">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-[#111827]">
           <ArrowLeft size={24} />
@@ -211,19 +211,19 @@ export function CreateGroup() {
           </div>
         </div>
         
-        <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-          <p className="text-sm text-blue-800 leading-relaxed mb-2">
+        <div className="bg-[#E8F0E8] p-4 rounded-xl border border-[#047857]/20">
+          <p className="text-sm text-[#064E3B] leading-relaxed mb-2">
             En tant qu'administrateur, vous devrez payer une caution (calculée selon votre tier) pour activer le Cercle.
           </p>
           {contribution > 0 && (
             <div className="bg-white/60 rounded-lg p-3 mt-2">
               <div className="flex justify-between text-sm mb-1">
-                <span className="text-blue-900">Caution estimée ({userTier}) :</span>
-                <span className="font-bold text-blue-900">{formatXOF(estimatedCaution)}</span>
+                <span className="text-[#064E3B]">Caution estimée ({userTier}) :</span>
+                <span className="font-bold text-[#064E3B]">{formatXOF(estimatedCaution)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-blue-900">Total à l'activation :</span>
-                <span className="font-bold text-blue-900">{formatXOF(estimatedCaution + contribution)}</span>
+                <span className="text-[#064E3B]">Total à l'activation :</span>
+                <span className="font-bold text-[#064E3B]">{formatXOF(estimatedCaution + contribution)}</span>
               </div>
             </div>
           )}

@@ -66,9 +66,9 @@ export function JoinGroup() {
   };
 
   return (
-    <div className="flex-1 bg-white flex flex-col h-full">
+    <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full">
       <div className="p-4 flex items-center">
-        <button onClick={() => navigate('/tontines')} className="p-2 -ml-2 text-[#4B5563] hover:bg-gray-100 rounded-full transition-colors">
+        <button onClick={() => navigate('/tontines')} className="p-2 -ml-2 text-[#4B5563] hover:bg-[#E8F0E8] rounded-full transition-colors">
           <X size={24} />
         </button>
       </div>
@@ -80,8 +80,8 @@ export function JoinGroup() {
           </div>
         )}
 
-        <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6">
-          <Key size={32} className="text-blue-600" />
+        <div className="w-16 h-16 bg-[#E8F0E8] rounded-2xl flex items-center justify-center mb-6">
+          <Key size={32} className="text-[#047857]" />
         </div>
         
         <h1 className="text-[#111827] text-3xl font-bold mb-2">Rejoindre un Cercle</h1>
@@ -104,7 +104,7 @@ export function JoinGroup() {
         </div>
 
         {groupInfo && (
-          <div className="mt-8 bg-gray-50 p-5 rounded-2xl border border-[#E5E7EB] space-y-4">
+          <div className="mt-8 bg-white p-5 rounded-2xl border border-[#E5E7EB] space-y-4">
             <h3 className="font-bold text-[#111827] text-lg">{groupInfo.name}</h3>
             <div className="flex justify-between text-sm">
               <span className="text-[#4B5563]">Membres actuels</span>
@@ -126,7 +126,7 @@ export function JoinGroup() {
         )}
       </div>
 
-      <div className="p-6 pb-12 bg-white border-t border-[#E5E7EB]">
+      <div className="p-6 pb-12 bg-[#F5F0E8] border-t border-[#E5E7EB]">
         {!groupInfo ? (
           <button
             onClick={handleSearch}

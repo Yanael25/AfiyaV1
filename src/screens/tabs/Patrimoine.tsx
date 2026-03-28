@@ -1,201 +1,157 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Building2, TrendingUp, Shield, Briefcase, Zap, Eye, Users, Check, CheckCircle } from 'lucide-react';
+import { Shield, TrendingUp, Building2, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 export function Patrimoine() {
   const [email, setEmail] = useState('');
-  const [interests, setInterests] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
 
-  const toggleInterest = (interest: string) => {
-    setInterests(prev => 
-      prev.includes(interest) 
-        ? prev.filter(i => i !== interest)
-        : [...prev, interest]
-    );
-  };
-
-  const cards = [
-    { icon: Building2, title: "Afiya Immo", desc: "Immobilier locatif béninois. Loyers versés chaque mois." },
-    { icon: TrendingUp, title: "Afiya Bourse", desc: "Actions BRVM sans SGI, sans formulaires." },
-    { icon: Shield, title: "Afiya Épargne+", desc: "Obligations du Trésor. Sécurisé et prévisible." },
-    { icon: Briefcase, title: "Afiya PME", desc: "Financez des PME locales sélectionnées." }
+  const assets = [
+    {
+      title: "Obligations d'État",
+      desc: "Rendement garanti, risque nul.",
+      yield: "6-7%",
+      icon: Shield
+    },
+    {
+      title: "BRVM Actions",
+      desc: "Participez à la croissance des leaders régionaux.",
+      yield: "Variable",
+      icon: TrendingUp
+    },
+    {
+      title: "Immobilier Fractionné",
+      desc: "Des loyers mensuels, sans gestion.",
+      yield: "8-10%",
+      icon: Building2
+    }
   ];
 
-  const argumentsList = [
-    { icon: Zap, title: "Accessible dès 500 FCFA", desc: "Pas de compte bancaire, pas de SGI, pas de formulaires papier." },
-    { icon: Eye, title: "Totalement transparent", desc: "Chaque actif expliqué en FCFA concrets. Pas de jargon financier." },
-    { icon: Users, title: "Connecté à vos Cercles", desc: "À la fin d'un cycle tontine, investissez en un tap." }
+  const steps = [
+    { num: "01", text: "Terminez un cycle de tontine." },
+    { num: "02", text: "Transférez votre cagnotte en un clic." },
+    { num: "03", text: "Percevez vos dividendes directement sur votre Wallet." }
   ];
-
-  const interestOptions = ["Afiya Immo", "Afiya Bourse", "Afiya Épargne+", "Afiya PME"];
 
   return (
-    <div className="flex-1 bg-[#FAFAFA] flex flex-col h-full overflow-y-auto no-scrollbar">
-      <div className="px-4 sm:px-6 max-w-2xl mx-auto w-full pb-8">
+    <div className="flex-1 bg-[#141414] flex flex-col h-full overflow-y-auto no-scrollbar pb-24">
+      <div className="px-6 max-w-2xl mx-auto w-full pt-16 pb-8">
         
-        {/* SECTION 1 : HEADER */}
+        {/* Header */}
         <motion.div 
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0 }}
-          className="pt-12 pb-8 bg-gradient-to-b from-[#ECFDF5] to-[#FAFAFA] -mx-4 px-4 sm:-mx-6 sm:px-6 rounded-b-3xl mb-8"
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="mb-14"
         >
-          <motion.div 
-            animate={{ opacity: [1, 0.7, 1] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="bg-[#047857] text-white text-xs font-semibold px-4 py-1.5 rounded-full inline-flex items-center gap-1.5 mb-4"
-          >
-            ✦ Bientôt disponible
-          </motion.div>
-          
-          <h1 className="text-4xl font-extrabold text-[#0F172A] tracking-tight">
-            Afiya Capital
-          </h1>
-          
-          <div className="text-xl font-semibold text-[#047857] mt-1">
-            <p>Investissez à partir de 500 FCFA</p>
-            <p>dans l'économie béninoise.</p>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 mb-6">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse" />
+            <span className="text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase">Accès Privé</span>
           </div>
           
-          <p className="text-sm text-[#64748B] mt-3 leading-relaxed max-w-sm">
-            Immobilier fractionné, Bourse BRVM, Obligations d'État, Financement PME — accessible à tous, depuis votre téléphone.
+          <h1 className="text-5xl font-extrabold text-[#F5F0E8] tracking-tight mb-4">
+            Afiya Capital.
+          </h1>
+          
+          <p className="text-lg text-[#A39887] font-light leading-relaxed max-w-sm">
+            L'accès exclusif aux marchés financiers béninois et régionaux.
           </p>
         </motion.div>
 
-        {/* SECTION 2 : CARDS DES 4 COUCHES */}
+        {/* Classes d'actifs */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="mb-8"
+          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+          className="mb-16"
         >
-          <h2 className="text-lg font-bold text-[#0F172A] mb-4">Ce que vous pourrez faire</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            {cards.map((card, idx) => (
-              <motion.div 
-                key={idx}
-                whileHover={{ scale: 1.02 }}
-                className="bg-white rounded-2xl p-4 border border-[#E2E8F0] shadow-sm flex flex-col"
-              >
-                <div className="w-10 h-10 rounded-xl bg-[#ECFDF5] flex items-center justify-center mb-3 shrink-0">
-                  <card.icon size={20} color="#047857" strokeWidth={2} />
-                </div>
-                <h3 className="text-sm font-bold text-[#0F172A]">{card.title}</h3>
-                <p className="text-xs text-[#64748B] leading-relaxed mt-1 flex-1">{card.desc}</p>
-                <div className="mt-2">
-                  <span className="text-[10px] font-medium text-[#D97706] bg-[#FEF3C7] px-2 py-0.5 rounded-full inline-block">
-                    Bientôt
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* SECTION 3 : 3 ARGUMENTS CLÉS */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="mb-8"
-        >
-          <h2 className="text-lg font-bold text-[#0F172A] mb-4">Pourquoi Afiya Capital ?</h2>
           <div className="flex flex-col gap-4">
-            {argumentsList.map((arg, idx) => (
-              <div key={idx} className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#ECFDF5] shrink-0 flex items-center justify-center mt-0.5">
-                  <arg.icon size={16} color="#047857" />
+            {assets.map((asset, idx) => (
+              <div 
+                key={idx}
+                className="bg-[#1A1A1A] border border-[#333333] rounded-2xl p-5 flex items-start gap-4"
+              >
+                <div className="w-12 h-12 rounded-full bg-[#222222] flex items-center justify-center shrink-0 border border-[#333333]">
+                  <asset.icon size={20} className="text-[#D4AF37]" strokeWidth={1.5} />
                 </div>
-                <div className="flex flex-col">
-                  <h3 className="text-sm font-bold text-[#0F172A]">{arg.title}</h3>
-                  <p className="text-xs text-[#64748B] leading-relaxed mt-0.5">{arg.desc}</p>
+                <div className="flex-1 pt-1">
+                  <h3 className="text-[#F5F0E8] font-bold text-base mb-1">{asset.title}</h3>
+                  <p className="text-[#A39887] text-sm font-light leading-relaxed mb-3">{asset.desc}</p>
+                  <div className="inline-flex items-center gap-2 bg-[#141414] px-3 py-1.5 rounded-lg border border-[#333333]">
+                    <span className="text-[10px] text-[#A39887] uppercase tracking-wider">Rendement estimé</span>
+                    <span className="text-xs font-bold text-[#D4AF37]">{asset.yield}</span>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </motion.div>
 
-        {/* SECTION 4 : LISTE D'ATTENTE */}
+        {/* Comment ça marche ? */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
+          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+          className="mb-16"
         >
-          <div className="bg-[#0F172A] rounded-2xl p-6 text-white">
-            {!submitted ? (
-              <>
-                <h2 className="text-xl font-bold text-white">Soyez parmi les premiers</h2>
-                <p className="text-sm text-[#94A3B8] mt-1">
-                  Rejoignez la liste d'attente et accédez en avant-première à Afiya Capital.
-                </p>
+          <h2 className="text-[#F5F0E8] text-xl font-bold mb-8">Comment ça marche ?</h2>
+          <div className="flex flex-col gap-6">
+            {steps.map((step, idx) => (
+              <div key={idx} className="flex items-center gap-4">
+                <span className="text-2xl font-extrabold text-[#333333]">{step.num}.</span>
+                <p className="text-[#A39887] text-sm font-light">{step.text}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
 
-                <div className="mt-6">
-                  <label className="text-xs font-medium text-[#94A3B8] mb-1 block">Votre email</label>
-                  <input 
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="votre@email.com"
-                    className="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/40 text-sm w-full outline-none focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-all"
-                  />
-                </div>
-
-                <div className="mt-4">
-                  <label className="text-xs font-medium text-[#94A3B8] mb-2 block">Vos centres d'intérêt</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {interestOptions.map((option) => {
-                      const isChecked = interests.includes(option);
-                      return (
-                        <div 
-                          key={option} 
-                          onClick={() => toggleInterest(option)}
-                          className="flex items-center gap-2 cursor-pointer group"
-                        >
-                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isChecked ? 'bg-[#047857] border-[#047857]' : 'border-white/30 group-hover:border-white/50'}`}>
-                            {isChecked && <Check size={10} strokeWidth={3} color="white" />}
-                          </div>
-                          <span className="text-xs text-white/80">{option}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
+        {/* Call to Action */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
+          className="bg-[#1A1A1A] border border-[#333333] rounded-3xl p-6 sm:p-8"
+        >
+          {submitted ? (
+            <div className="flex flex-col items-center text-center py-4">
+              <div className="w-16 h-16 rounded-full bg-[#D4AF37]/10 flex items-center justify-center mb-4">
+                <CheckCircle2 size={32} className="text-[#D4AF37]" />
+              </div>
+              <h3 className="text-[#F5F0E8] font-bold text-xl mb-2">Demande enregistrée</h3>
+              <p className="text-[#A39887] text-sm font-light">
+                Vous êtes sur la liste d'attente VIP. Nous vous contacterons prochainement.
+              </p>
+            </div>
+          ) : (
+            <>
+              <h3 className="text-[#F5F0E8] font-bold text-xl mb-2">Rejoindre la liste d'attente</h3>
+              <p className="text-[#A39887] text-sm font-light mb-6">
+                Les places sont limitées pour le lancement de la version bêta privée.
+              </p>
+              
+              <div className="flex flex-col gap-4">
+                <input 
+                  type="email" 
+                  placeholder="Votre adresse email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-transparent border border-[#333333] rounded-xl px-4 py-3.5 text-[#F5F0E8] placeholder:text-[#555555] focus:outline-none focus:border-[#D4AF37] transition-colors"
+                />
+                <button 
                   onClick={() => {
                     if (email) setSubmitted(true);
                   }}
-                  disabled={!email}
-                  className="bg-[#047857] text-white w-full py-3.5 rounded-xl font-semibold text-sm mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-[#D4AF37] hover:bg-[#E5C158] text-[#141414] font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors"
                 >
-                  Rejoindre la liste d'attente
-                </motion.button>
-                
-                <p className="text-xs text-[#D97706] text-center mt-3">
-                  🌟 Les membres GOLD et PLATINUM auront un accès prioritaire.
-                </p>
-              </>
-            ) : (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="py-4 flex flex-col items-center justify-center"
-              >
-                <CheckCircle size={40} color="#047857" className="mx-auto" />
-                <h2 className="text-lg font-bold text-white text-center mt-3">Merci, vous êtes sur la liste !</h2>
-                <p className="text-sm text-[#94A3B8] text-center mt-1">
-                  Nous vous contacterons en avant-première.
-                </p>
-              </motion.div>
-            )}
-          </div>
+                  Demander un accès
+                  <ArrowRight size={18} />
+                </button>
+              </div>
+            </>
+          )}
         </motion.div>
 
       </div>
     </div>
   );
 }
-
-

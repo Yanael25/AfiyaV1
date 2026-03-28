@@ -1,13 +1,13 @@
 import { NavLink } from 'react-router-dom';
-import { Wallet, Users, TrendingUp, User } from 'lucide-react';
+import { Home, CircleDot, Landmark, User } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 
 export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
   const tabs = [
-    { to: '/wallet', icon: Wallet, label: 'Wallet' },
-    { to: '/tontines', icon: Users, label: 'Cercles' },
-    { to: '/patrimoine', icon: TrendingUp, label: 'Capital' },
+    { to: '/home', icon: Home, label: 'Home' },
+    { to: '/tontines', icon: CircleDot, label: 'Cercles' },
+    { to: '/patrimoine', icon: Landmark, label: 'Capital' },
     { to: '/profile', icon: User, label: 'Profil' },
   ];
 
@@ -20,10 +20,10 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
             to={tab.to}
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200",
+                "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200",
                 isActive 
-                  ? "bg-[#ECFDF5] text-[#047857] font-semibold" 
-                  : "text-[#64748B] hover:bg-[#F8FAFC] font-medium"
+                  ? "bg-[#064E3B] text-white font-semibold" 
+                  : "text-[#7C6F5E] hover:bg-[#F5F0E8] font-medium"
               )
             }
           >
@@ -40,38 +40,31 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
   }
 
   return (
-    <div className="h-20 bg-white/95 backdrop-blur-xl border-t border-[#E2E8F0] flex items-start justify-around px-2 pt-3 pb-5 relative z-50">
+    <div className="h-20 bg-white border-t border-[#E8E0D0] flex items-center justify-around px-4 pb-5 pt-2 relative z-50">
       {tabs.map((tab) => (
         <NavLink
           key={tab.to}
           to={tab.to}
-          className="flex flex-col items-center w-16 gap-1 relative"
+          className="flex flex-col items-center gap-1 relative w-16 pt-1.5 pb-3"
         >
           {({ isActive }) => (
             <>
-              <div className="relative flex items-center justify-center w-10 h-8">
-                {isActive && (
-                  <motion.div
-                    layoutId="tabPill"
-                    className="absolute inset-0 bg-[#ECFDF5] rounded-xl z-0"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                )}
+              {isActive && (
                 <motion.div
-                  animate={{ scale: isActive ? 1.05 : 1 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className="relative z-10 flex items-center justify-center"
-                >
-                  <tab.icon 
-                    size={24} 
-                    strokeWidth={isActive ? 2.5 : 1.5} 
-                    color={isActive ? "#047857" : "#94A3B8"} 
-                  />
-                </motion.div>
-              </div>
+                  layoutId="activePill"
+                  className="absolute inset-x-0 top-0 bottom-3 bg-[#064E3B] rounded-2xl z-0"
+                  transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                />
+              )}
+              <tab.icon 
+                size={22} 
+                strokeWidth={isActive ? 2 : 1.5} 
+                color={isActive ? "#FFFFFF" : "#7C6F5E"} 
+                className="z-10"
+              />
               <span className={cn(
-                "text-[10px] tracking-wide", 
-                isActive ? "font-semibold text-[#047857]" : "font-medium text-[#94A3B8]"
+                "text-[10px] z-10", 
+                isActive ? "font-semibold text-white" : "font-medium text-[#7C6F5E]"
               )}>
                 {tab.label}
               </span>
