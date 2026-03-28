@@ -34,7 +34,7 @@ function DrawReveal({ member, group, onComplete }: { member: any, group: any, on
     <div className="absolute inset-0 z-50 bg-[#141414] text-white flex flex-col items-center justify-center p-6 text-center">
       {step === 0 && (
         <div className="animate-pulse">
-          <div className="w-24 h-24 border-4 border-[#064E3B] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+          <div className="w-24 h-24 border-4 border-[#047857] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
           <h2 className="text-2xl font-bold mb-2">Tirage au sort en cours...</h2>
           <p className="text-[#A39887]">Attribution des positions pour le groupe {group.name}</p>
         </div>
@@ -42,7 +42,7 @@ function DrawReveal({ member, group, onComplete }: { member: any, group: any, on
       
       {step === 1 && (
         <div className="animate-bounce">
-          <div className="w-32 h-32 bg-[#064E3B] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#064E3B]/50">
+          <div className="w-32 h-32 bg-[#047857] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#047857]/50">
             <span className="text-6xl font-black">{member.draw_position}</span>
           </div>
           <h2 className="text-3xl font-bold mb-2">Position {member.draw_position} !</h2>
@@ -52,7 +52,7 @@ function DrawReveal({ member, group, onComplete }: { member: any, group: any, on
 
       {step === 2 && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-sm">
-          <div className="w-24 h-24 bg-[#064E3B] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#064E3B]/50">
+          <div className="w-24 h-24 bg-[#047857] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#047857]/50">
             <span className="text-5xl font-black">{member.draw_position}</span>
           </div>
           <h2 className="text-2xl font-bold mb-4">Position {member.draw_position}</h2>
@@ -85,7 +85,7 @@ function DrawReveal({ member, group, onComplete }: { member: any, group: any, on
 
           <button 
             onClick={onComplete}
-            className="w-full bg-[#064E3B] text-white h-14 rounded-xl font-bold text-lg hover:bg-[#047857] transition-colors"
+            className="w-full bg-[#047857] text-white h-14 rounded-xl font-bold text-lg hover:bg-[#059669] transition-colors"
           >
             Continuer
           </button>
@@ -232,7 +232,7 @@ export function GroupDetail() {
     switch (status) {
       case 'FORMING': return <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">EN CONSTITUTION</span>;
       case 'ACTIVE': return <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">ACTIF</span>;
-      case 'COMPLETED': return <span className="bg-[#E8F5E9] text-[#064E3B] px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">TERMINÉ</span>;
+      case 'COMPLETED': return <span className="bg-[#ECFDF5] text-[#047857] px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">TERMINÉ</span>;
       case 'CANCELLED': return <span className="bg-[#FEE2E2] text-[#C84C31] px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">ANNULÉ</span>;
       case 'WAITING_VOTE': return <span className="bg-[#FEF3C7] text-[#92400E] px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">VOTE EN COURS</span>;
       default: return null;
@@ -330,7 +330,7 @@ export function GroupDetail() {
                 <X size={24} />
               </button>
               <div>
-                <h1 className="text-[#141414] text-lg font-bold leading-tight">{group.name}</h1>
+                <h1 className="text-[#1C1410] text-lg font-bold leading-tight">{group.name}</h1>
                 <div className="flex items-center gap-2 mt-0.5">
                   {getStatusBadge(group.status)}
                   <span className="text-[#A39887] text-xs flex items-center gap-1">
@@ -345,17 +345,17 @@ export function GroupDetail() {
           <div className="flex gap-6 px-2">
             <button 
               onClick={() => setActiveTab('dashboard')}
-              className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'dashboard' ? 'text-[#064E3B]' : 'text-[#A39887]'}`}
+              className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'dashboard' ? 'text-[#047857]' : 'text-[#A39887]'}`}
             >
               Tableau de bord
-              {activeTab === 'dashboard' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#064E3B] rounded-t-full" />}
+              {activeTab === 'dashboard' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#047857] rounded-t-full" />}
             </button>
             <button 
               onClick={() => setActiveTab('chat')}
-              className={`pb-3 text-sm font-semibold transition-colors relative flex items-center gap-1.5 ${activeTab === 'chat' ? 'text-[#064E3B]' : 'text-[#A39887]'}`}
+              className={`pb-3 text-sm font-semibold transition-colors relative flex items-center gap-1.5 ${activeTab === 'chat' ? 'text-[#047857]' : 'text-[#A39887]'}`}
             >
               Discussion
-              {activeTab === 'chat' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#064E3B] rounded-t-full" />}
+              {activeTab === 'chat' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#047857] rounded-t-full" />}
             </button>
           </div>
         </div>
@@ -371,7 +371,7 @@ export function GroupDetail() {
           )}
 
           {successMessage && (
-            <div className="mx-4 mt-4 bg-[#E8F5E9] border border-[#A7F3D0] rounded-xl px-4 py-3 text-sm text-[#064E3B]">
+            <div className="mx-4 mt-4 bg-[#ECFDF5] border border-[#E8E0D0] rounded-xl px-4 py-3 text-sm text-[#047857]">
               {successMessage}
             </div>
           )}
@@ -415,34 +415,34 @@ export function GroupDetail() {
                     <Calendar size={16} />
                     <span className="text-xs font-medium">Fréquence</span>
                   </div>
-                  <p className="text-[#141414] font-bold">{group.frequency === 'WEEKLY' ? 'Hebdomadaire' : group.frequency === 'MONTHLY' ? 'Mensuelle' : 'Trimestrielle'}</p>
+                  <p className="text-[#1C1410] font-bold">{group.frequency === 'WEEKLY' ? 'Hebdomadaire' : group.frequency === 'MONTHLY' ? 'Mensuelle' : 'Trimestrielle'}</p>
                 </div>
                 <div className="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-[#E8E0D0]">
                   <div className="flex items-center gap-2 text-[#7C6F5E] mb-2">
                     <Info size={16} />
                     <span className="text-xs font-medium">Cotisation</span>
                   </div>
-                  <p className="text-[#141414] font-bold">{formatXOF(group.contribution_amount)}</p>
+                  <p className="text-[#1C1410] font-bold">{formatXOF(group.contribution_amount)}</p>
                 </div>
               </div>
 
               {/* Mon Statut */}
               {memberInfo && (
                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8E0D0]">
-                  <h2 className="text-[#141414] font-semibold text-lg mb-4">Mon statut</h2>
+                  <h2 className="text-[#1C1410] font-semibold text-lg mb-4">Mon statut</h2>
                   <div className="space-y-3">
                     <div className="flex justify-between text-sm">
                       <span className="text-[#7C6F5E]">Position de tirage</span>
-                      <span className="font-bold text-[#141414]">{memberInfo.draw_position || 'Non tiré'}</span>
+                      <span className="font-bold text-[#1C1410]">{memberInfo.draw_position || 'Non tiré'}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-[#7C6F5E]">Caution payée</span>
-                      <span className="font-bold text-[#141414]">{formatXOF(memberInfo.initial_deposit)}</span>
+                      <span className="font-bold text-[#1C1410]">{formatXOF(memberInfo.initial_deposit)}</span>
                     </div>
                     {memberInfo.adjusted_deposit && (
                       <div className="flex justify-between text-sm">
                         <span className="text-[#7C6F5E]">Caution ajustée</span>
-                        <span className="font-bold text-[#141414]">{formatXOF(memberInfo.adjusted_deposit)}</span>
+                        <span className="font-bold text-[#1C1410]">{formatXOF(memberInfo.adjusted_deposit)}</span>
                       </div>
                     )}
                     {memberInfo.deposit_differential > 0 && !memberInfo.deposit_differential_paid && (
@@ -460,17 +460,17 @@ export function GroupDetail() {
 
               {/* Invitation Code (Admin only) */}
               {group.is_admin && group.status === 'FORMING' && (
-                <div className="bg-[#E8F5E9] p-5 rounded-2xl border border-[#A7F3D0] flex items-center justify-between">
+                <div className="bg-[#ECFDF5] p-5 rounded-2xl border border-[#E8E0D0] flex items-center justify-between">
                   <div>
-                    <p className="text-[#064E3B] text-xs font-medium mb-1">Code d'invitation</p>
-                    <p className="text-[#064E3B] font-bold text-xl tracking-widest">{group.invitation_code}</p>
+                    <p className="text-[#047857] text-xs font-medium mb-1">Code d'invitation</p>
+                    <p className="text-[#047857] font-bold text-xl tracking-widest">{group.invitation_code}</p>
                   </div>
                   <button 
                     onClick={() => {
                       navigator.clipboard.writeText(group.invitation_code);
                       setSuccessMessage('Code copié !');
                     }}
-                    className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-[#064E3B] active:bg-[#E8F5E9]"
+                    className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-[#047857] active:bg-[#ECFDF5]"
                   >
                     <Share2 size={20} />
                   </button>
@@ -479,7 +479,7 @@ export function GroupDetail() {
 
               {/* Members List */}
               <div>
-                <h2 className="text-[#141414] font-semibold text-lg mb-4">Membres ({membersList.length})</h2>
+                <h2 className="text-[#1C1410] font-semibold text-lg mb-4">Membres ({membersList.length})</h2>
                 <div className="bg-white rounded-2xl shadow-sm border border-[#E8E0D0] overflow-hidden">
                   {membersList.map((member) => (
                     <div key={member.id} className="flex items-center justify-between p-4 border-b border-[#E8E0D0] last:border-0">
@@ -488,10 +488,10 @@ export function GroupDetail() {
                           <span className="text-[#7C6F5E] font-bold">{member.name.charAt(0)}</span>
                         </div>
                         <div>
-                          <p className="text-[#141414] font-medium text-sm flex items-center gap-2">
+                          <p className="text-[#1C1410] font-medium text-sm flex items-center gap-2">
                             {member.name}
                             {member.is_admin && (
-                              <span className="bg-[#FEF3C7] text-[#92400E] text-[10px] px-1.5 py-0.5 rounded font-bold">ADMIN</span>
+                              <span className="bg-[#FDF3DC] text-[#C47820] text-[10px] px-1.5 py-0.5 rounded font-bold">ADMIN</span>
                             )}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
@@ -511,11 +511,11 @@ export function GroupDetail() {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col flex-1 bg-[#F3F4F6]">
+            <div className="flex flex-col flex-1 bg-[#F5F0E8]">
               {/* Chat Messages Area */}
               <div className="flex-1 p-4 overflow-y-auto space-y-4">
                 {messages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-[#9CA3AF]">
+                  <div className="h-full flex flex-col items-center justify-center text-[#A39887]">
                     <MessageCircle size={48} className="mb-4 opacity-50" />
                     <p className="text-sm">Aucun message pour le moment.</p>
                     <p className="text-xs mt-1">Commencez à discuter avec votre Cercle !</p>
@@ -526,11 +526,11 @@ export function GroupDetail() {
                     const sender = membersList.find(m => m.user_id === msg.user_id);
                     return (
                       <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                        {!isMe && <span className="text-[10px] text-[#6B7280] ml-1 mb-1">{sender?.name || 'Membre'}</span>}
-                        <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${isMe ? 'bg-[#047857] text-white rounded-tr-sm' : 'bg-white text-[#111827] border border-[#E5E7EB] rounded-tl-sm'}`}>
+                        {!isMe && <span className="text-[10px] text-[#7C6F5E] ml-1 mb-1">{sender?.name || 'Membre'}</span>}
+                        <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${isMe ? 'bg-[#047857] text-white rounded-tr-sm' : 'bg-white text-[#1C1410] border border-[#E8E0D0] rounded-tl-sm'}`}>
                           {msg.text}
                         </div>
-                        <span className="text-[10px] text-[#9CA3AF] mt-1 mx-1">
+                        <span className="text-[10px] text-[#A39887] mt-1 mx-1">
                           {new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
@@ -547,12 +547,12 @@ export function GroupDetail() {
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder="Écrire un message..."
-                  className="flex-1 bg-[#F5F0E8] rounded-full h-10 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#064E3B]/20"
+                  className="flex-1 bg-[#F5F0E8] rounded-full h-10 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#047857]/20"
                 />
                 <button 
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim()}
-                  className="w-10 h-10 bg-[#064E3B] rounded-full flex items-center justify-center text-white disabled:opacity-50 transition-opacity"
+                  className="w-10 h-10 bg-[#047857] rounded-full flex items-center justify-center text-white disabled:opacity-50 transition-opacity"
                 >
                   <Send size={18} className="ml-0.5" />
                 </button>
@@ -568,7 +568,7 @@ export function GroupDetail() {
           <div className="max-w-4xl mx-auto w-full">
             <button
               onClick={handleStartGroup}
-              className="w-full bg-[#064E3B] text-white h-14 rounded-xl font-semibold text-lg disabled:opacity-50 transition-colors"
+              className="w-full bg-[#047857] hover:bg-[#059669] text-white h-14 rounded-xl font-semibold text-lg disabled:opacity-50 transition-colors"
               disabled={membersList.length < group.target_members || loading}
             >
               {loading ? 'Démarrage...' : 'Démarrer le Cercle'}
@@ -587,14 +587,14 @@ export function GroupDetail() {
           <div className="max-w-4xl mx-auto w-full">
             {userPayment?.status === 'PENDING' ? (
               <button
-                className="w-full bg-[#064E3B] text-white h-14 rounded-xl font-semibold text-lg disabled:opacity-50 transition-colors"
+                className="w-full bg-[#047857] hover:bg-[#059669] text-white h-14 rounded-xl font-semibold text-lg disabled:opacity-50 transition-colors"
                 onClick={handlePayContribution}
                 disabled={loading}
               >
                 {loading ? 'Traitement...' : `Payer ma cotisation (${formatXOF(group.contribution_amount)})`}
               </button>
             ) : (
-              <div className="w-full bg-[#E8F5E9] text-[#064E3B] h-14 rounded-xl font-semibold text-lg flex items-center justify-center border border-[#A7F3D0]">
+              <div className="w-full bg-[#ECFDF5] text-[#047857] h-14 rounded-xl font-semibold text-lg flex items-center justify-center border border-[#E8E0D0]">
                 Cotisation payée pour ce cycle
               </div>
             )}

@@ -62,8 +62,8 @@ export function Kyc() {
   return (
     <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full">
       <div className="bg-white px-6 pt-12 pb-4 shadow-sm z-10">
-        <h1 className="text-[#111827] text-2xl font-bold">Complétez votre profil</h1>
-        <p className="text-[#4B5563] text-sm mt-1">Dernière étape avant de commencer</p>
+        <h1 className="text-[#1C1410] text-2xl font-bold">Complétez votre profil</h1>
+        <p className="text-[#7C6F5E] text-sm mt-1">Dernière étape avant de commencer</p>
       </div>
 
       {error && (
@@ -74,75 +74,75 @@ export function Kyc() {
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {/* Section 1: Identité */}
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E5E7EB]">
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8E0D0]">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-[#E8F0E8] flex items-center justify-center text-[#047857]">
+            <div className="w-8 h-8 rounded-full bg-[#ECFDF5] flex items-center justify-center text-[#047857]">
               <User size={18} />
             </div>
-            <h2 className="text-[#111827] font-semibold">Identité</h2>
+            <h2 className="text-[#1C1410] font-semibold">Identité</h2>
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-[#4B5563] mb-1 block">Prénom</label>
+              <label className="text-sm text-[#7C6F5E] mb-1 block">Prénom</label>
               <input 
                 value={formData.firstName}
                 onChange={e => setFormData({...formData, firstName: e.target.value})}
-                className="w-full border border-[#E5E7EB] rounded-xl h-12 px-4 text-[#111827] focus:border-[#047857] outline-none" 
+                className="w-full border border-[#E8E0D0] rounded-xl h-12 px-4 text-[#1C1410] focus:border-[#047857] outline-none" 
               />
             </div>
             <div>
-              <label className="text-sm text-[#4B5563] mb-1 block">Nom</label>
+              <label className="text-sm text-[#7C6F5E] mb-1 block">Nom</label>
               <input 
                 value={formData.lastName}
                 onChange={e => setFormData({...formData, lastName: e.target.value})}
-                className="w-full border border-[#E5E7EB] rounded-xl h-12 px-4 text-[#111827] focus:border-[#047857] outline-none" 
+                className="w-full border border-[#E8E0D0] rounded-xl h-12 px-4 text-[#1C1410] focus:border-[#047857] outline-none" 
               />
             </div>
           </div>
         </div>
 
         {/* Section 2: Contact */}
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E5E7EB]">
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8E0D0]">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-[#E8F0E8] flex items-center justify-center text-[#047857]">
+            <div className="w-8 h-8 rounded-full bg-[#ECFDF5] flex items-center justify-center text-[#047857]">
               <MapPin size={18} />
             </div>
-            <h2 className="text-[#111827] font-semibold">Contact</h2>
+            <h2 className="text-[#1C1410] font-semibold">Contact</h2>
           </div>
           <div>
-            <label className="text-sm text-[#4B5563] mb-1 block">Email (Optionnel)</label>
+            <label className="text-sm text-[#7C6F5E] mb-1 block">Email (Optionnel)</label>
             <input 
               type="email"
               value={formData.email}
               onChange={e => setFormData({...formData, email: e.target.value})}
               placeholder="fifame@exemple.com"
-              className="w-full border border-[#E5E7EB] rounded-xl h-12 px-4 text-[#111827] focus:border-[#047857] outline-none" 
+              className="w-full border border-[#E8E0D0] rounded-xl h-12 px-4 text-[#1C1410] focus:border-[#047857] outline-none" 
             />
           </div>
         </div>
 
         {/* Section 3: Sécurité */}
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E5E7EB]">
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8E0D0]">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-[#E8F0E8] flex items-center justify-center text-[#047857]">
+            <div className="w-8 h-8 rounded-full bg-[#ECFDF5] flex items-center justify-center text-[#047857]">
               <Shield size={18} />
             </div>
-            <h2 className="text-[#111827] font-semibold">Sécurité</h2>
+            <h2 className="text-[#1C1410] font-semibold">Sécurité</h2>
           </div>
           <div className="flex items-start gap-3 bg-[#F5F0E8] p-3 rounded-xl">
             <CheckCircle2 size={20} className="text-[#047857] mt-0.5 shrink-0" />
-            <p className="text-xs text-[#4B5563] leading-relaxed">
+            <p className="text-xs text-[#7C6F5E] leading-relaxed">
               Vos données sont chiffrées et stockées en toute sécurité. Elles ne seront jamais partagées sans votre consentement.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="p-6 bg-[#F5F0E8] border-t border-[#E5E7EB]">
+      <div className="p-6 bg-[#F5F0E8] border-t border-[#E8E0D0]">
         <button
           onClick={handleSubmit}
           disabled={loading || !formData.firstName || !formData.lastName}
-          className="w-full bg-[#047857] text-white h-14 rounded-xl font-semibold text-lg disabled:opacity-50 transition-colors"
+          className="w-full bg-[#047857] text-white h-14 rounded-xl font-semibold text-lg hover:bg-[#059669] disabled:opacity-50 transition-colors"
         >
           {loading ? 'Création...' : 'Terminer'}
         </button>

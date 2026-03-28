@@ -76,7 +76,7 @@ export function Profile() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-[#F5F0E8]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#064E3B]"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#047857]"></div>
       </div>
     );
   }
@@ -90,16 +90,16 @@ export function Profile() {
       {/* Bloc 1 — Identité */}
       <div className="bg-white px-6 pt-12 pb-6 shadow-sm">
         <div className="max-w-2xl mx-auto w-full">
-          <h1 className="text-[#111827] text-2xl font-bold mb-6">Profil</h1>
+          <h1 className="text-[#1C1410] text-2xl font-bold mb-6">Profil</h1>
           
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-[#064E3B] flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-[#047857] flex items-center justify-center">
               <span className="text-white text-2xl font-bold">
                 {(profile.full_name || profile.email || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
               </span>
             </div>
             <div>
-              <h2 className="text-[#141414] font-bold text-lg">{profile.full_name || 'Utilisateur'}</h2>
+              <h2 className="text-[#1C1410] font-bold text-lg">{profile.full_name || 'Utilisateur'}</h2>
               <p className="text-[#7C6F5E] text-sm">{profile.email}</p>
               <div className={`${getTierColor(profile.tier)} px-2 py-0.5 rounded text-[10px] font-bold inline-block mt-1`}>
                 {profile.tier}
@@ -135,41 +135,41 @@ export function Profile() {
           {/* Bloc 2 — Score Afiya */}
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8E0D0]">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-[#141414] font-semibold">Score Afiya</h3>
-              <span className="text-[#064E3B] font-bold text-sm">Niveau {profile.tier}</span>
+              <h3 className="text-[#1C1410] font-semibold">Score Afiya</h3>
+              <span className="text-[#047857] font-bold text-sm">Niveau {profile.tier}</span>
             </div>
             <div className="flex items-end gap-2 mb-2">
-              <span className="text-3xl font-bold text-[#064E3B]">{profile.score_afiya}</span>
+              <span className="text-3xl font-bold text-[#047857]">{profile.score_afiya}</span>
               <span className="text-[#A39887] text-sm mb-1">/ 100</span>
             </div>
             <div className="w-full bg-[#E8E0D0] h-2 rounded-full overflow-hidden">
-              <div className="bg-[#064E3B] h-full rounded-full transition-all duration-500" style={{ width: `${profile.score_afiya}%` }} />
+              <div className="bg-[#047857] h-full rounded-full transition-all duration-500" style={{ width: `${profile.score_afiya}%` }} />
             </div>
             
             {nextThreshold && (
               <p className="text-xs text-[#7C6F5E] mt-3">
-                Plus que <span className="font-bold text-[#064E3B]">{pointsToNext} points</span> pour atteindre le tier suivant.
+                Plus que <span className="font-bold text-[#047857]">{pointsToNext} points</span> pour atteindre le tier suivant.
               </p>
             )}
             
             <div className="mt-4 pt-4 border-t border-[#E8E0D0]">
-              <p className="text-xs font-semibold text-[#141414] mb-2">Avantages actuels :</p>
+              <p className="text-xs font-semibold text-[#1C1410] mb-2">Avantages actuels :</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#F5F0E8] p-2 rounded-lg">
                   <p className="text-[10px] text-[#7C6F5E] uppercase">Caution réduite</p>
-                  <p className="text-xs font-bold text-[#141414]">Caution × {benefits.caution}</p>
+                  <p className="text-xs font-bold text-[#1C1410]">Caution × {benefits.caution}</p>
                 </div>
                 <div className="bg-[#F5F0E8] p-2 rounded-lg">
                   <p className="text-[10px] text-[#7C6F5E] uppercase">Frais Afiya</p>
-                  <p className="text-xs font-bold text-[#141414]">{benefits.frais} sur réception</p>
+                  <p className="text-xs font-bold text-[#1C1410]">{benefits.frais} sur réception</p>
                 </div>
                 <div className="bg-[#F5F0E8] p-2 rounded-lg">
                   <p className="text-[10px] text-[#7C6F5E] uppercase">Cotisation max</p>
-                  <p className="text-xs font-bold text-[#141414]">{benefits.max}</p>
+                  <p className="text-xs font-bold text-[#1C1410]">{benefits.max}</p>
                 </div>
                 <div className="bg-[#F5F0E8] p-2 rounded-lg">
                   <p className="text-[10px] text-[#7C6F5E] uppercase">Membres max</p>
-                  <p className="text-xs font-bold text-[#141414]">{benefits.members} membres</p>
+                  <p className="text-xs font-bold text-[#1C1410]">{benefits.members} membres</p>
                 </div>
               </div>
             </div>
@@ -183,10 +183,10 @@ export function Profile() {
                 className="w-full flex items-center justify-between p-4 border-b border-[#E8E0D0] bg-[#F5F0E8] hover:bg-[#E8E0D0] active:bg-[#DED2BE] transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <Shield size={20} className="text-[#064E3B]" />
-                  <span className="text-[#064E3B] font-bold">Dashboard Admin</span>
+                  <Shield size={20} className="text-[#047857]" />
+                  <span className="text-[#047857] font-bold">Dashboard Admin</span>
                 </div>
-                <ChevronRight size={20} className="text-[#064E3B]" />
+                <ChevronRight size={20} className="text-[#047857]" />
               </button>
             )}
             {[
@@ -197,9 +197,9 @@ export function Profile() {
               <button key={i} className="w-full flex items-center justify-between p-4 border-b border-[#E8E0D0] last:border-0 hover:bg-[#F5F0E8] active:bg-[#E8E0D0] transition-colors">
                 <div className="flex items-center gap-3">
                   <item.icon size={20} className="text-[#7C6F5E]" />
-                  <span className="text-[#141414] font-medium">{item.label}</span>
+                  <span className="text-[#1C1410] font-medium">{item.label}</span>
                 </div>
-                <ChevronRight size={20} className="text-[#9CA3AF]" />
+                <ChevronRight size={20} className="text-[#7C6F5E]" />
               </button>
             ))}
           </div>

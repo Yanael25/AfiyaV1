@@ -34,7 +34,7 @@ export function Patrimoine() {
   ];
 
   return (
-    <div className="flex-1 bg-[#141414] flex flex-col h-full overflow-y-auto no-scrollbar pb-24">
+    <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full overflow-y-auto no-scrollbar pb-24">
       <div className="px-6 max-w-2xl mx-auto w-full pt-16 pb-8">
         
         {/* Header */}
@@ -42,18 +42,17 @@ export function Patrimoine() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="mb-14"
+          className="mb-14 bg-[#047857] rounded-3xl p-6 text-white"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 mb-6">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse" />
-            <span className="text-[10px] font-bold tracking-widest text-[#D4AF37] uppercase">Accès Privé</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ECFDF5] text-[#047857] mb-6">
+            <span className="text-xs font-semibold">Bientôt disponible</span>
           </div>
           
-          <h1 className="text-5xl font-extrabold text-[#F5F0E8] tracking-tight mb-4">
+          <h1 className="text-5xl font-extrabold text-white tracking-tight mb-4">
             Afiya Capital.
           </h1>
           
-          <p className="text-lg text-[#A39887] font-light leading-relaxed max-w-sm">
+          <p className="text-lg text-white/80 font-light leading-relaxed max-w-sm">
             L'accès exclusif aux marchés financiers béninois et régionaux.
           </p>
         </motion.div>
@@ -69,17 +68,17 @@ export function Patrimoine() {
             {assets.map((asset, idx) => (
               <div 
                 key={idx}
-                className="bg-[#1A1A1A] border border-[#333333] rounded-2xl p-5 flex items-start gap-4"
+                className="bg-white border border-[#E8E0D0] rounded-2xl p-5 flex items-start gap-4 shadow-sm"
               >
-                <div className="w-12 h-12 rounded-full bg-[#222222] flex items-center justify-center shrink-0 border border-[#333333]">
-                  <asset.icon size={20} className="text-[#D4AF37]" strokeWidth={1.5} />
+                <div className="w-12 h-12 rounded-full bg-[#F5F0E8] flex items-center justify-center shrink-0">
+                  <asset.icon size={20} className="text-[#047857]" strokeWidth={1.5} />
                 </div>
                 <div className="flex-1 pt-1">
-                  <h3 className="text-[#F5F0E8] font-bold text-base mb-1">{asset.title}</h3>
-                  <p className="text-[#A39887] text-sm font-light leading-relaxed mb-3">{asset.desc}</p>
-                  <div className="inline-flex items-center gap-2 bg-[#141414] px-3 py-1.5 rounded-lg border border-[#333333]">
-                    <span className="text-[10px] text-[#A39887] uppercase tracking-wider">Rendement estimé</span>
-                    <span className="text-xs font-bold text-[#D4AF37]">{asset.yield}</span>
+                  <h3 className="text-[#1C1410] font-bold text-base mb-1">{asset.title}</h3>
+                  <p className="text-[#7C6F5E] text-sm font-light leading-relaxed mb-3">{asset.desc}</p>
+                  <div className="inline-flex items-center gap-2 bg-[#F5F0E8] px-3 py-1.5 rounded-lg">
+                    <span className="text-[10px] text-[#7C6F5E] uppercase tracking-wider">Rendement estimé</span>
+                    <span className="text-xs font-bold text-[#047857]">{asset.yield}</span>
                   </div>
                 </div>
               </div>
@@ -94,12 +93,12 @@ export function Patrimoine() {
           transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
           className="mb-16"
         >
-          <h2 className="text-[#F5F0E8] text-xl font-bold mb-8">Comment ça marche ?</h2>
+          <h2 className="text-[#1C1410] text-xl font-bold mb-8">Comment ça marche ?</h2>
           <div className="flex flex-col gap-6">
             {steps.map((step, idx) => (
               <div key={idx} className="flex items-center gap-4">
-                <span className="text-2xl font-extrabold text-[#333333]">{step.num}.</span>
-                <p className="text-[#A39887] text-sm font-light">{step.text}</p>
+                <span className="text-2xl font-extrabold text-[#047857]">{step.num}.</span>
+                <p className="text-[#7C6F5E] text-sm font-light">{step.text}</p>
               </div>
             ))}
           </div>
@@ -110,22 +109,22 @@ export function Patrimoine() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
-          className="bg-[#1A1A1A] border border-[#333333] rounded-3xl p-6 sm:p-8"
+          className="bg-white border border-[#E8E0D0] rounded-3xl p-6 sm:p-8 shadow-sm"
         >
           {submitted ? (
             <div className="flex flex-col items-center text-center py-4">
-              <div className="w-16 h-16 rounded-full bg-[#D4AF37]/10 flex items-center justify-center mb-4">
-                <CheckCircle2 size={32} className="text-[#D4AF37]" />
+              <div className="w-16 h-16 rounded-full bg-[#ECFDF5] flex items-center justify-center mb-4">
+                <CheckCircle2 size={32} className="text-[#047857]" />
               </div>
-              <h3 className="text-[#F5F0E8] font-bold text-xl mb-2">Demande enregistrée</h3>
-              <p className="text-[#A39887] text-sm font-light">
+              <h3 className="text-[#1C1410] font-bold text-xl mb-2">Demande enregistrée</h3>
+              <p className="text-[#7C6F5E] text-sm font-light">
                 Vous êtes sur la liste d'attente VIP. Nous vous contacterons prochainement.
               </p>
             </div>
           ) : (
             <>
-              <h3 className="text-[#F5F0E8] font-bold text-xl mb-2">Rejoindre la liste d'attente</h3>
-              <p className="text-[#A39887] text-sm font-light mb-6">
+              <h3 className="text-[#1C1410] font-bold text-xl mb-2">Rejoindre la liste d'attente</h3>
+              <p className="text-[#7C6F5E] text-sm font-light mb-6">
                 Les places sont limitées pour le lancement de la version bêta privée.
               </p>
               
@@ -135,13 +134,13 @@ export function Patrimoine() {
                   placeholder="Votre adresse email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-transparent border border-[#333333] rounded-xl px-4 py-3.5 text-[#F5F0E8] placeholder:text-[#555555] focus:outline-none focus:border-[#D4AF37] transition-colors"
+                  className="w-full bg-white border border-[#E8E0D0] rounded-xl px-4 py-3.5 text-[#1C1410] placeholder:text-[#A39887] focus:outline-none focus:border-[#047857] transition-colors"
                 />
                 <button 
                   onClick={() => {
                     if (email) setSubmitted(true);
                   }}
-                  className="w-full bg-[#D4AF37] hover:bg-[#E5C158] text-[#141414] font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors"
+                  className="w-full bg-[#047857] hover:bg-[#059669] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors"
                 >
                   Demander un accès
                   <ArrowRight size={18} />

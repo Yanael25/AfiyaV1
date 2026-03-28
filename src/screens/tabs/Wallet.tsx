@@ -50,33 +50,33 @@ export function Wallet() {
 
   const getTxIcon = (type: string) => {
     switch (type) {
-      case 'DEPOSIT': return <ArrowDownCircle size={20} className="text-[#064E3B]" />;
+      case 'DEPOSIT': return <ArrowDownCircle size={20} className="text-[#047857]" />;
       case 'WITHDRAWAL': return <ArrowUpCircle size={20} className="text-[#7C6F5E]" />;
-      case 'CONTRIBUTION': return <Users size={20} className="text-[#064E3B]" />;
-      case 'PAYOUT': return <Award size={20} className="text-[#064E3B]" />;
+      case 'CONTRIBUTION': return <Users size={20} className="text-[#047857]" />;
+      case 'PAYOUT': return <Award size={20} className="text-[#047857]" />;
       case 'MINI_FUND_CONTRIB': return <Shield size={20} className="text-[#7C6F5E]" />;
       case 'GLOBAL_FUND_CONTRIB': return <Globe size={20} className="text-[#7C6F5E]" />;
       case 'PENALTY': return <MinusCircle size={20} className="text-[#92400E]" />;
-      case 'REFUND': return <RotateCcw size={20} className="text-[#064E3B]" />;
-      default: return <ArrowDownLeft size={20} className="text-[#064E3B]" />;
+      case 'REFUND': return <RotateCcw size={20} className="text-[#047857]" />;
+      default: return <ArrowDownLeft size={20} className="text-[#047857]" />;
     }
   };
 
   const getTxColor = (type: string) => {
     switch (type) {
-      case 'DEPOSIT': case 'PAYOUT': case 'REFUND': return 'text-[#064E3B]';
-      case 'WITHDRAWAL': case 'CONTRIBUTION': case 'MINI_FUND_CONTRIB': case 'GLOBAL_FUND_CONTRIB': case 'PENALTY': return 'text-[#141414]';
-      default: return 'text-[#141414]';
+      case 'DEPOSIT': case 'PAYOUT': case 'REFUND': return 'text-[#047857]';
+      case 'WITHDRAWAL': case 'CONTRIBUTION': case 'MINI_FUND_CONTRIB': case 'GLOBAL_FUND_CONTRIB': case 'PENALTY': return 'text-[#1C1410]';
+      default: return 'text-[#1C1410]';
     }
   };
 
   const getTxBg = (type: string) => {
     switch (type) {
-      case 'DEPOSIT': case 'PAYOUT': case 'REFUND': return 'bg-[#E8E0D0]';
+      case 'DEPOSIT': case 'PAYOUT': case 'REFUND': return 'bg-[#ECFDF5]';
       case 'WITHDRAWAL': return 'bg-[#F5F0E8]';
-      case 'CONTRIBUTION': return 'bg-[#E8E0D0]';
+      case 'CONTRIBUTION': return 'bg-[#F5F0E8]';
       case 'MINI_FUND_CONTRIB': return 'bg-[#F5F0E8]';
-      case 'GLOBAL_FUND_CONTRIB': case 'PENALTY': return 'bg-[#F5E6D3]';
+      case 'GLOBAL_FUND_CONTRIB': case 'PENALTY': return 'bg-[#F5F0E8]';
       default: return 'bg-[#F5F0E8]';
     }
   };
@@ -113,18 +113,18 @@ export function Wallet() {
       <div className="px-6 md:px-8 lg:px-10 pt-6 pb-6 flex justify-between items-center">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center border border-[#E8E0D0] shadow-sm">
-            <span className="text-[#141414] font-bold text-lg">{firstName.charAt(0)}</span>
+            <span className="text-[#1C1410] font-bold text-lg">{firstName.charAt(0)}</span>
           </div>
           <div>
             <p className="text-[#7C6F5E] text-sm">{greeting},</p>
-            <p className="text-[#141414] font-bold text-lg">{firstName}</p>
+            <p className="text-[#1C1410] font-bold text-lg">{firstName}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <button 
             onClick={handleAddDevFunds}
             disabled={loading}
-            className="bg-[#D4AF37] text-[#141414] text-xs font-bold px-3 py-1.5 rounded-full shadow-sm hover:bg-[#E5C158] transition-colors disabled:opacity-50"
+            className="bg-[#D4AF37] text-[#1C1410] text-xs font-bold px-3 py-1.5 rounded-full shadow-sm hover:bg-[#E5C158] transition-colors disabled:opacity-50"
           >
             +100K (DEV)
           </button>
@@ -141,7 +141,7 @@ export function Wallet() {
         <div className="flex flex-col gap-6 lg:col-span-2">
           
           {/* Green Card (Balance & Actions) */}
-          <div className="relative overflow-hidden bg-[#064E3B] rounded-[24px] p-6 md:p-8 lg:p-10 text-white shadow-xl flex flex-col lg:flex-row lg:items-center lg:justify-between transition-all duration-300">
+          <div className="relative overflow-hidden bg-[#047857] rounded-[24px] p-6 md:p-8 lg:p-10 text-white shadow-xl flex flex-col lg:flex-row lg:items-center lg:justify-between transition-all duration-300">
             {/* Decorative circles */}
             <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
             <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-32 h-32 bg-white/8 rounded-full blur-xl pointer-events-none"></div>
@@ -170,19 +170,19 @@ export function Wallet() {
             {/* Section Boutons d'Action */}
             <div className="relative z-10 grid grid-cols-3 gap-3 md:flex md:gap-4 lg:flex-col xl:flex-row">
               <button className="flex flex-col lg:flex-row items-center justify-center gap-2 bg-white/10 hover:bg-white/20 transition-colors rounded-2xl p-3 md:px-6 md:py-3 backdrop-blur-sm">
-                <div className="bg-white text-[#064E3B] p-2 rounded-xl">
+                <div className="bg-white text-[#047857] p-2 rounded-xl">
                   <Plus size={20} className="md:w-6 md:h-6" />
                 </div>
                 <span className="text-xs md:text-sm font-semibold mt-1 lg:mt-0">Dépôt</span>
               </button>
               <button className="flex flex-col lg:flex-row items-center justify-center gap-2 bg-white/10 hover:bg-white/20 transition-colors rounded-2xl p-3 md:px-6 md:py-3 backdrop-blur-sm">
-                <div className="bg-white text-[#064E3B] p-2 rounded-xl">
+                <div className="bg-white text-[#047857] p-2 rounded-xl">
                   <ArrowUpRight size={20} className="md:w-6 md:h-6" />
                 </div>
                 <span className="text-xs md:text-sm font-semibold mt-1 lg:mt-0">Retrait</span>
               </button>
               <button className="flex flex-col lg:flex-row items-center justify-center gap-2 bg-white/10 hover:bg-white/20 transition-colors rounded-2xl p-3 md:px-6 md:py-3 backdrop-blur-sm">
-                <div className="bg-white text-[#064E3B] p-2 rounded-xl">
+                <div className="bg-white text-[#047857] p-2 rounded-xl">
                   <ArrowDownLeft size={20} className="md:w-6 md:h-6" />
                 </div>
                 <span className="text-xs md:text-sm font-semibold mt-1 lg:mt-0">Envoyer</span>
@@ -202,7 +202,7 @@ export function Wallet() {
                   <p className="text-xs text-[#A39887]">Sécurisée dans vos Cercles</p>
                 </div>
               </div>
-              <span className="text-[#141414] text-lg font-bold">
+              <span className="text-[#1C1410] text-lg font-bold">
                 {cautionBloquee === null ? (
                   <div className="h-6 w-24 bg-[#E8E0D0] animate-pulse rounded"></div>
                 ) : (
@@ -214,8 +214,8 @@ export function Wallet() {
             {/* Desktop Only: Quick Stats / Chart Placeholder */}
             <div className="hidden lg:flex flex-col bg-white rounded-[24px] p-6 shadow-sm border border-[#E8E0D0]">
                <div className="flex justify-between items-center mb-4">
-                 <h3 className="text-[#141414] font-semibold text-base">Score Afiya</h3>
-                 <span className="text-sm font-medium text-[#064E3B] bg-[#F5F0E8] px-3 py-1 rounded-full">{profile?.score_afiya || 50}/100</span>
+                 <h3 className="text-[#1C1410] font-semibold text-base">Score Afiya</h3>
+                 <span className="text-sm font-medium text-[#047857] bg-[#F5F0E8] px-3 py-1 rounded-full">{profile?.score_afiya || 50}/100</span>
                </div>
                <div className="flex-1 flex items-center justify-center bg-[#F5F0E8] rounded-xl border border-dashed border-[#E8E0D0] min-h-[80px]">
                  <p className="text-[#A39887] text-sm font-medium">Graphique (Bientôt disponible)</p>
@@ -228,8 +228,8 @@ export function Wallet() {
         {/* Right Column (Transactions) */}
         <div className="flex flex-col bg-white rounded-[24px] shadow-sm border border-[#E8E0D0] p-6 h-fit lg:col-span-1">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-[#141414] font-semibold text-lg">Transactions récentes</h2>
-            <button className="text-[#064E3B] text-sm font-medium hover:underline">Voir tout</button>
+            <h2 className="text-[#1C1410] font-semibold text-lg">Transactions récentes</h2>
+            <button className="text-[#047857] text-sm font-medium hover:underline">Voir tout</button>
           </div>
 
           <div className="space-y-5">
@@ -248,7 +248,7 @@ export function Wallet() {
                         {getTxIcon(tx.type)}
                       </div>
                       <div>
-                        <p className="text-[#141414] font-medium text-sm">{tx.description || tx.type}</p>
+                        <p className="text-[#1C1410] font-medium text-sm">{tx.description || tx.type}</p>
                         <p className="text-[#A39887] text-xs mt-0.5">{date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                     </div>

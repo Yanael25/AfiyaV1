@@ -118,11 +118,36 @@ export function Home() {
           {firstName}
         </p>
         {profile && (
-          <p className="text-xs text-[#7C6F5E] mt-1 font-normal">
-            Score Afiya&nbsp;·&nbsp;
-            {profile.score_afiya}/100&nbsp;·&nbsp;
-            {profile.tier}
-          </p>
+          <motion.div
+            whileTap={{ scale: 0.98 }}
+            onClick={() => navigate('/profile')}
+            className="mt-3 bg-white rounded-2xl p-3 flex items-center justify-between border border-[#E8E0D0] shadow-sm cursor-pointer"
+          >
+            <div>
+              <p className="text-[10px] font-semibold text-[#7C6F5E] uppercase tracking-wider mb-0.5">
+                Score Afiya
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-[#1C1410]">
+                  {profile.score_afiya}/100
+                </span>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-bold
+                  ${profile?.tier === 'PLATINUM'
+                    ? 'bg-[#EDE9FE] text-[#5B21B6]'
+                    : profile?.tier === 'GOLD'
+                    ? 'bg-[#FDF3DC] text-[#C47820]'
+                    : profile?.tier === 'SILVER'
+                    ? 'bg-[#F1F5F9] text-[#475569]'
+                    : 'bg-[#F5E6D3] text-[#92400E]'
+                  }`}>
+                  {profile?.tier ?? 'BRONZE'}
+                </span>
+              </div>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-[#F5F0E8] flex items-center justify-center">
+              <ChevronRight size={16} className="text-[#047857]" />
+            </div>
+          </motion.div>
         )}
       </div>
 
@@ -130,7 +155,7 @@ export function Home() {
       <div className="mt-5 px-5">
 
         {/* Conteneur carte — hauteur fixe absolue */}
-        <div className="relative h-[220px] overflow-hidden rounded-3xl">
+        <div className="relative h-[190px] overflow-hidden rounded-3xl">
           <AnimatePresence initial={false} custom={dragDirection}>
             {activeCard === 0 && (
               <motion.div
@@ -159,7 +184,7 @@ export function Home() {
                 dragElastic={0.08}
                 onDragEnd={handleDragEnd}
                 className="absolute inset-0 bg-[#047857]
-                           rounded-3xl p-6 text-white
+                           rounded-3xl p-5 text-white
                            flex flex-col justify-between
                            cursor-grab active:cursor-grabbing
                            select-none"
@@ -194,10 +219,10 @@ export function Home() {
                                      animate-pulse rounded-lg" />
                   ) : balanceVisible ? (
                     <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-extrabold
+                      <span className="text-3xl font-extrabold
                                         text-white tracking-tight
                                         leading-none">
-                        {formatXOF(balance).replace(' FCFA','')}
+                        {new Intl.NumberFormat('fr-FR').format(balance ?? 0)}
                       </span>
                       <span className="text-base font-semibold
                                         text-emerald-200">
@@ -214,10 +239,7 @@ export function Home() {
                 </div>
 
                 {/* Row 3: lien détail */}
-                <p className="text-[11px] text-emerald-300
-                               font-medium text-right">
-                  Carte 1 / 3 — glissez pour voir les autres →
-                </p>
+                <div />
               </motion.div>
             )}
 
@@ -246,7 +268,7 @@ export function Home() {
                 dragElastic={0.08}
                 onDragEnd={handleDragEnd}
                 className="absolute inset-0 bg-[#047857]
-                           rounded-3xl p-6 text-white
+                           rounded-3xl p-5 text-white
                            flex flex-col justify-between
                            cursor-grab active:cursor-grabbing
                            select-none"
@@ -355,8 +377,8 @@ export function Home() {
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.08}
                 onDragEnd={handleDragEnd}
-                className="absolute inset-0 bg-[#1C1410]
-                           rounded-3xl p-6 text-white
+                className="absolute inset-0 bg-[#064E3B]
+                           rounded-3xl p-5 text-white
                            flex flex-col justify-between
                            cursor-grab active:cursor-grabbing
                            select-none overflow-hidden"
@@ -368,7 +390,7 @@ export function Home() {
 
                 <div>
                   <span className="text-[10px] font-semibold
-                                    text-[#7C6F5E] uppercase
+                                    text-emerald-300 uppercase
                                     tracking-[0.15em]">
                     Afiya Capital
                   </span>
@@ -635,7 +657,7 @@ export function Home() {
         <motion.div
           whileTap={{ scale: 0.99 }}
           onClick={() => navigate('/patrimoine')}
-          className="bg-[#1C1410] rounded-3xl p-5
+          className="bg-[#047857] rounded-3xl p-5
                       flex justify-between items-center
                       cursor-pointer relative overflow-hidden"
         >

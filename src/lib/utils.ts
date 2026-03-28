@@ -5,12 +5,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const formatXOF = (amount: number): string => {
-  return new Intl.NumberFormat('fr-FR', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount) + ' FCFA';
-};
+export function formatXOF(amount: number): string {
+  return (
+    new Intl.NumberFormat('fr-FR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount) + '\u00A0FCFA'
+  );
+}
 
 export const formatDate = (date: any) => {
   if (!date) return '';

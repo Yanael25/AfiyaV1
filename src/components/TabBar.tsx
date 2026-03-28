@@ -22,7 +22,7 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
               cn(
                 "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200",
                 isActive 
-                  ? "bg-[#064E3B] text-white font-semibold" 
+                  ? "bg-[#047857] text-white font-semibold" 
                   : "text-[#7C6F5E] hover:bg-[#F5F0E8] font-medium"
               )
             }
@@ -52,7 +52,7 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
               {isActive && (
                 <motion.div
                   layoutId="activePill"
-                  className="absolute inset-x-0 top-0 bottom-3 bg-[#064E3B] rounded-2xl z-0"
+                  className="absolute inset-x-0 top-0 bottom-3 bg-[#047857] rounded-2xl z-0"
                   transition={{ type: "spring", stiffness: 400, damping: 35 }}
                 />
               )}

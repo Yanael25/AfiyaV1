@@ -546,15 +546,15 @@ export function AdminDashboard() {
   return (
     <div className="flex flex-col h-[100dvh] bg-[#F5F0E8]">
       {/* Header */}
-      <div className="bg-white border-b border-[#E5E7EB] px-4 py-3 flex items-center justify-between shrink-0">
+      <div className="bg-white border-b border-[#E8E0D0] px-4 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <button 
             onClick={() => navigate('/home')}
-            className="p-2 hover:bg-[#E8F0E8] rounded-full transition-colors"
+            className="p-2 hover:bg-[#F5F0E8] rounded-full transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-[#4B5563]" />
+            <ArrowLeft className="w-5 h-5 text-[#7C6F5E]" />
           </button>
-          <h1 className="text-lg font-bold text-[#111827]">Dashboard Admin</h1>
+          <h1 className="text-lg font-bold text-[#1C1410]">Dashboard Admin</h1>
         </div>
         <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-full">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
@@ -563,7 +563,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-[#E5E7EB] shrink-0 overflow-x-auto hide-scrollbar">
+      <div className="bg-white border-b border-[#E8E0D0] shrink-0 overflow-x-auto hide-scrollbar">
         <div className="flex px-2 min-w-max">
           {['synthèse', 'utilisateurs', 'wallets', 'cercles', 'transactions'].map(tab => (
             <button
@@ -572,7 +572,7 @@ export function AdminDashboard() {
               className={`px-4 py-3 text-sm font-medium capitalize border-b-2 transition-colors ${
                 activeTab === tab 
                   ? 'border-[#047857] text-[#047857]' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  : 'border-transparent text-[#7C6F5E] hover:text-[#1C1410]'
               }`}
             >
               {tab}

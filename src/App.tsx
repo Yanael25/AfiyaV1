@@ -60,12 +60,12 @@ function TabLayout() {
   return (
     <div className="flex flex-col lg:flex-row h-full bg-[#F5F0E8] relative w-full max-w-[1200px] mx-auto">
       {/* Sidebar for PC */}
-      <div className="hidden lg:flex w-64 border-r border-[#E5E7EB] bg-[#F5F0E8] h-full flex-col">
+      <div className="hidden lg:flex w-64 border-r border-[#E8E0D0] bg-[#F5F0E8] h-full flex-col">
         <div className="p-6 flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#064E3B] rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-[#047857] rounded-xl flex items-center justify-center">
             <span className="text-white font-bold text-xl">A</span>
           </div>
-          <span className="text-xl font-bold text-[#111827]">Afiya</span>
+          <span className="text-xl font-bold text-[#1C1410]">Afiya</span>
         </div>
         <TabBar isSidebar={true} />
       </div>

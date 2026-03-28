@@ -15,7 +15,7 @@ export function StatusBar() {
   }, []);
 
   return (
-    <div className="h-12 w-full flex items-center justify-between px-6 text-[#111827] z-50 bg-transparent absolute top-0 left-0 right-0 pointer-events-none">
+    <div className="h-12 w-full flex items-center justify-between px-6 text-[#1C1410] z-50 bg-transparent absolute top-0 left-0 right-0 pointer-events-none">
       <div className="text-[15px] font-semibold tracking-tight w-14 text-center">
         {time}
       </div>

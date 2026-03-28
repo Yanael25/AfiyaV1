@@ -56,10 +56,10 @@ export function AdjustDeposit() {
   return (
     <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full">
       <div className="bg-white px-4 pt-4 pb-4 shadow-sm flex items-center gap-4 z-10">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-[#111827]">
+        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-[#1C1410]">
           <ArrowLeft size={24} />
         </button>
-        <h1 className="text-[#111827] text-xl font-bold">Ajustement Caution</h1>
+        <h1 className="text-[#1C1410] text-xl font-bold">Ajustement Caution</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -73,23 +73,23 @@ export function AdjustDeposit() {
           <div className="w-16 h-16 bg-[#D4AF37]/20 rounded-full flex items-center justify-center mb-4">
             <AlertTriangle size={32} className="text-[#D4AF37]" />
           </div>
-          <h2 className="text-[#111827] font-bold text-2xl mb-1">Position {memberInfo.draw_position}</h2>
-          <p className="text-[#4B5563] text-center text-sm px-4">
+          <h2 className="text-[#1C1410] font-bold text-2xl mb-1">Position {memberInfo.draw_position}</h2>
+          <p className="text-[#7C6F5E] text-center text-sm px-4">
             Le tirage au sort vous a attribué une position avantageuse. Un ajustement de votre caution est requis.
           </p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E5E7EB] space-y-4">
-          <div className="flex justify-between items-center pb-4 border-b border-[#E5E7EB]">
-            <span className="text-[#4B5563]">Caution initiale payée</span>
-            <span className="text-[#111827] font-semibold">{formatXOF(memberInfo.initial_deposit)}</span>
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8E0D0] space-y-4">
+          <div className="flex justify-between items-center pb-4 border-b border-[#E8E0D0]">
+            <span className="text-[#7C6F5E]">Caution initiale payée</span>
+            <span className="text-[#1C1410] font-semibold">{formatXOF(memberInfo.initial_deposit)}</span>
           </div>
-          <div className="flex justify-between items-center pb-4 border-b border-[#E5E7EB]">
-            <span className="text-[#4B5563]">Caution ajustée requise</span>
-            <span className="text-[#111827] font-semibold">{formatXOF(memberInfo.adjusted_deposit)}</span>
+          <div className="flex justify-between items-center pb-4 border-b border-[#E8E0D0]">
+            <span className="text-[#7C6F5E]">Caution ajustée requise</span>
+            <span className="text-[#1C1410] font-semibold">{formatXOF(memberInfo.adjusted_deposit)}</span>
           </div>
           <div className="flex justify-between items-center pt-2">
-            <span className="text-[#111827] font-bold text-lg">Différentiel à payer</span>
+            <span className="text-[#1C1410] font-bold text-lg">Différentiel à payer</span>
             <span className="text-[#D4AF37] font-bold text-xl">{formatXOF(memberInfo.deposit_differential)}</span>
           </div>
         </div>
@@ -101,11 +101,11 @@ export function AdjustDeposit() {
         </div>
       </div>
 
-      <div className="p-6 bg-[#F5F0E8] border-t border-[#E5E7EB]">
+      <div className="p-6 bg-[#F5F0E8] border-t border-[#E8E0D0]">
         <button
           onClick={handlePayDifferential}
           disabled={loading || memberInfo.deposit_differential_paid}
-          className="w-full bg-[#047857] text-white h-14 rounded-xl font-semibold text-lg disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+          className="w-full bg-[#047857] hover:bg-[#059669] text-white h-14 rounded-xl font-semibold text-lg disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
         >
           {loading ? (
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
