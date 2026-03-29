@@ -19,14 +19,18 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
             className={({ isActive }) =>
               `flex items-center gap-4 px-4 py-2.5 transition-all duration-200 ${
                 isActive
-                  ? "bg-[#ECFDF5] text-[#047857] font-semibold rounded-xl"
+                  ? "text-[#047857] font-semibold"
                   : "text-[#A39887] font-normal hover:bg-[#E8E0D0] rounded-xl"
               }`
             }
           >
             {({ isActive }) => (
               <>
-                <tab.icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+                <tab.icon 
+                  size={24} 
+                  strokeWidth={isActive ? 2 : 1.5} 
+                  color={isActive ? '#047857' : '#A39887'} 
+                />
                 <span className="text-base">{tab.label}</span>
               </>
             )}

@@ -27,26 +27,31 @@ export interface UserProfile {
   role?: string;
 }
 
+export const createUserProfile = async (userId: string, email: string) => {
+  const newProfile: UserProfile = {
+    id: userId,
+    email: email,
+    full_name: '',
+    score_afiya: 50,
+    tier: 'BRONZE',
+    status: 'ACTIVE',
+    deposit_coefficient: 1.0,
+    retention_coefficient: 1.0,
+    kyc_status: 'PENDING',
+    last_activity_at: null,
+    created_at: serverTimestamp()
+  };
+  await createDocument('profiles', userId, newProfile);
+  return newProfile;
+};
+
 export const signUpWithEmail = async (email: string, pass: string) => {
   try {
     const result = await createUserWithEmailAndPassword(auth, email, pass);
     const user = result.user;
     
     // Create initial profile
-    const newProfile: UserProfile = {
-      id: user.uid,
-      email: user.email || '',
-      full_name: '',
-      score_afiya: 50,
-      tier: 'BRONZE',
-      status: 'ACTIVE',
-      deposit_coefficient: 1.0,
-      retention_coefficient: 1.0,
-      kyc_status: 'PENDING',
-      last_activity_at: null,
-      created_at: serverTimestamp()
-    };
-    await createDocument('profiles', user.uid, newProfile);
+    await createUserProfile(user.uid, user.email || '');
     
     // Create initial wallets
     await createUserWallets(user.uid);

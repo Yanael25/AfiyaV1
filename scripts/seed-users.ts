@@ -1,187 +1,135 @@
 import { initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import fs from 'fs';
 import path from 'path';
 
-// ─── Init Firebase Admin ───────────────────────────────────────────────────
+// Load config
 const configPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
+// Load service account key
 const serviceAccountPath = path.resolve(process.cwd(), 'serviceAccountKey.json');
 if (!fs.existsSync(serviceAccountPath)) {
   console.error('❌ Fichier serviceAccountKey.json introuvable à la racine du projet.');
   process.exit(1);
 }
+
 const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
 
+// Initialize Firebase Admin
 const app = initializeApp({
   credential: cert(serviceAccount),
   projectId: config.projectId,
 });
 
-const auth = getAuth(app);
 const db = getFirestore(app, config.firestoreDatabaseId);
+const auth = getAuth(app);
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
-
-function getTierFromScore(score: number) {
-  if (score >= 90) return 'PLATINUM';
-  if (score >= 75) return 'GOLD';
-  if (score >= 60) return 'SILVER';
-  return 'BRONZE';
-}
-
-function getCoeffFromTier(tier: string) {
-  return { PLATINUM: 0.25, GOLD: 0.5, SILVER: 0.75, BRONZE: 1.0 }[tier] || 1.0;
-}
-
-// ─── Données des 10 comptes ────────────────────────────────────────────────
-const USERS = [
-  {
-    email: 'fifame@afiya.test',
-    full_name: 'Fifamè Agbodjan',
-    score_afiya: 34,
-    balance: 75000,
-  },
-  {
-    email: 'kossi@afiya.test',
-    full_name: 'Kossi Hounsou',
-    score_afiya: 51,
-    balance: 120000,
-  },
-  {
-    email: 'ayivi@afiya.test',
-    full_name: 'Ayivi Dossou',
-    score_afiya: 63,
-    balance: 200000,
-  },
-  {
-    email: 'adjoua@afiya.test',
-    full_name: 'Adjoua Mensah',
-    score_afiya: 70,
-    balance: 350000,
-  },
-  {
-    email: 'dossou@afiya.test',
-    full_name: 'Dossou Amoussou',
-    score_afiya: 76,
-    balance: 500000,
-  },
-  {
-    email: 'afi@afiya.test',
-    full_name: 'Afi Kpodénou',
-    score_afiya: 82,
-    balance: 750000,
-  },
-  {
-    email: 'kwame@afiya.test',
-    full_name: 'Kwame Soglo',
-    score_afiya: 88,
-    balance: 1000000,
-  },
-  {
-    email: 'oumar@afiya.test',
-    full_name: 'Oumar Traoré',
-    score_afiya: 91,
-    balance: 1500000,
-  },
-  {
-    email: 'fatou@afiya.test',
-    full_name: 'Fatou Diallo',
-    score_afiya: 96,
-    balance: 2000000,
-  },
-  {
-    email: 'mamadou@afiya.test',
-    full_name: 'Mamadou Koné',
-    score_afiya: 100,
-    balance: 5000000,
-  },
+const USERS_TO_SEED = [
+  { email: 'fifame.dossou@test.com', pass: 'Test1234!', full_name: 'Fifamè Dossou', score: 45, balance: 75000 },
+  { email: 'ayivi.koffi@test.com', pass: 'Test1234!', full_name: 'Ayivi Koffi', score: 63, balance: 250000 },
+  { email: 'adjoua.mensah@test.com', pass: 'Test1234!', full_name: 'Adjoua Mensah', score: 78, balance: 500000 },
+  { email: 'kwame.agbessi@test.com', pass: 'Test1234!', full_name: 'Kwame Agbessi', score: 92, balance: 1200000 },
+  { email: 'fatou.sow@test.com', pass: 'Test1234!', full_name: 'Fatou Sow', score: 38, balance: 30000 },
+  { email: 'oumar.bah@test.com', pass: 'Test1234!', full_name: 'Oumar Bah', score: 71, balance: 180000 },
+  { email: 'afi.togbe@test.com', pass: 'Test1234!', full_name: 'Afi Togbé', score: 85, balance: 850000 },
+  { email: 'mamadou.diallo@test.com', pass: 'Test1234!', full_name: 'Mamadou Diallo', score: 55, balance: 120000 },
+  { email: 'akosua.akpan@test.com', pass: 'Test1234!', full_name: 'Akosua Akpan', score: 67, balance: 320000 },
+  { email: 'kofi.amoah@test.com', pass: 'Test1234!', full_name: 'Kofi Amoah', score: 88, balance: 650000 },
 ];
 
-const PASSWORD = '123456';
+async function seedUsers() {
+  console.log('════════════════════════════════════════');
+  console.log('  AFIYA V3 — Seed Utilisateurs de Test  ');
+  console.log('════════════════════════════════════════\n');
 
-// ─── Création des comptes ──────────────────────────────────────────────────
+  for (const userData of USERS_TO_SEED) {
+    console.log(`→ Création de ${userData.full_name} (${userData.email})`);
+    try {
+      // 1. Create Auth User
+      const userRecord = await auth.createUser({
+        email: userData.email,
+        password: userData.pass,
+        displayName: userData.full_name,
+      });
+      const uid = userRecord.uid;
+      console.log(`  ✓ Auth créé : ${uid}`);
 
-async function createUser(userData: any) {
-  const { email, full_name, score_afiya, balance } = userData;
-  const tier = getTierFromScore(score_afiya);
-  const coeff = getCoeffFromTier(tier);
+      // 2. Calculate Tier and Coefficients based on score
+      const score = userData.score;
+      const tier = score >= 90 ? 'PLATINUM' : score >= 75 ? 'GOLD' : score >= 60 ? 'SILVER' : 'BRONZE';
+      const coeffs: Record<string, number> = { PLATINUM: 0.25, GOLD: 0.5, SILVER: 0.75, BRONZE: 1.0 };
+      const coeff = coeffs[tier];
 
-  console.log(`\n→ Création de ${full_name} (${email})`);
-  console.log(`  Score: ${score_afiya} | Tier: ${tier} | Solde: ${balance.toLocaleString('fr-FR')} FCFA`);
+      // 3. Create Profile
+      const profileRef = db.collection('profiles').doc(uid);
+      await profileRef.set({
+        id: uid,
+        email: userData.email,
+        full_name: userData.full_name,
+        score_afiya: score,
+        tier: tier,
+        status: 'ACTIVE',
+        deposit_coefficient: coeff,
+        retention_coefficient: coeff,
+        kyc_status: 'PENDING',
+        last_activity_at: null,
+        created_at: FieldValue.serverTimestamp()
+      });
+      console.log(`  ✓ Profil créé (Tier: ${tier}, Coeff: ${coeff})`);
 
-  let userRecord;
-  try {
-    userRecord = await auth.createUser({
-      email,
-      password: PASSWORD,
-      displayName: full_name,
-    });
-    console.log(`  ✓ Auth créé : ${userRecord.uid}`);
-  } catch (err: any) {
-    if (err.code === 'auth/email-already-exists') {
-      console.log(`  ⚠️  Email déjà existant, récupération du UID...`);
-      userRecord = await auth.getUserByEmail(email);
-    } else {
-      throw err;
+      // 4. Create Wallets
+      const mainId = `wallet_user_${uid}`;
+      const cerclesId = `wallet_cercles_${uid}`;
+      const capitalId = `wallet_capital_${uid}`;
+
+      const batch = db.batch();
+
+      batch.set(db.collection('wallets').doc(mainId), {
+        id: mainId,
+        owner_id: uid,
+        group_id: null,
+        wallet_type: 'USER_MAIN',
+        balance: userData.balance,
+        currency: 'XOF',
+        updated_at: FieldValue.serverTimestamp()
+      });
+
+      batch.set(db.collection('wallets').doc(cerclesId), {
+        id: cerclesId,
+        owner_id: uid,
+        group_id: null,
+        wallet_type: 'USER_CERCLES',
+        balance: 0,
+        currency: 'XOF',
+        updated_at: FieldValue.serverTimestamp()
+      });
+
+      batch.set(db.collection('wallets').doc(capitalId), {
+        id: capitalId,
+        owner_id: uid,
+        group_id: null,
+        wallet_type: 'USER_CAPITAL',
+        balance: 0,
+        currency: 'XOF',
+        updated_at: FieldValue.serverTimestamp()
+      });
+
+      await batch.commit();
+      console.log(`  ✓ Wallets créés (USER_MAIN balance: ${userData.balance})\n`);
+
+    } catch (error: any) {
+      console.error(`  ❌ Erreur pour ${userData.email}:`, error.message, '\n');
     }
   }
 
-  const uid = userRecord.uid;
-  const now = Timestamp.now();
-
-  await db.collection('profiles').doc(uid).set({
-    id: uid,
-    email,
-    full_name,
-    score_afiya,
-    tier,
-    status: 'ACTIVE',
-    deposit_coefficient: coeff,
-    retention_coefficient: coeff,
-    kyc_status: 'APPROVED',
-    last_activity_at: now,
-    created_at: now,
-  });
-  console.log(`  ✓ Profil Firestore créé`);
-
-  const walletId = `${uid}_main`;
-  await db.collection('wallets').doc(walletId).set({
-    id: walletId,
-    owner_id: uid,
-    group_id: null,
-    wallet_type: 'USER_MAIN',
-    balance,
-    currency: 'XOF',
-    updated_at: now,
-  });
-  console.log(`  ✓ Wallet créé (${balance.toLocaleString('fr-FR')} FCFA)`);
+  console.log('════════════════════════════════════════');
+  console.log('  ✅ Seed terminé !');
+  console.log('════════════════════════════════════════');
 }
 
-async function main() {
-  console.log('════════════════════════════════════════');
-  console.log('  AFIYA V3 — Seed Utilisateurs de Test  ');
-  console.log('════════════════════════════════════════');
-  console.log(`  ${USERS.length} comptes à créer | Mot de passe : ${PASSWORD}`);
-
-  for (const user of USERS) {
-    await createUser(user);
-  }
-
-  console.log('\n════════════════════════════════════════');
-  console.log('  ✅ Seed terminé avec succès !');
-  console.log('\n  Comptes disponibles :');
-  USERS.forEach(u => {
-    const tier = getTierFromScore(u.score_afiya);
-    console.log(`  ${u.email.padEnd(25)} | ${tier.padEnd(9)} | score ${u.score_afiya}`);
-  });
-  console.log('\n  Mot de passe pour tous : 123456');
-  console.log('════════════════════════════════════════\n');
-}
-
-main().catch(err => {
-  console.error('\n❌ Erreur :', err.message);
+seedUsers().then(() => process.exit(0)).catch((e) => {
+  console.error(e);
   process.exit(1);
 });
