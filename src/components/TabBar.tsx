@@ -11,7 +11,7 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
 
   if (isSidebar) {
     return (
-      <div className="flex flex-col gap-2 px-4 py-6 bg-[#F5F0E8] h-full">
+      <div className="flex flex-col gap-2 px-4 py-6 bg-[#1C1410] h-full">
         {tabs.map((tab) => (
           <NavLink
             key={tab.to}
@@ -20,7 +20,7 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
               `flex items-center gap-4 px-4 py-2.5 transition-all duration-200 ${
                 isActive
                   ? "text-[#047857] font-semibold"
-                  : "text-[#A39887] font-normal hover:bg-[#E8E0D0] rounded-xl"
+                  : "text-[#7C6F5E] font-normal hover:bg-[#2C2018] rounded-xl"
               }`
             }
           >
@@ -29,7 +29,7 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
                 <tab.icon 
                   size={24} 
                   strokeWidth={isActive ? 2 : 1.5} 
-                  color={isActive ? '#047857' : '#A39887'} 
+                  color={isActive ? '#047857' : '#7C6F5E'} 
                 />
                 <span className="text-base">{tab.label}</span>
               </>
@@ -41,7 +41,7 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
   }
 
   return (
-    <div className="bg-[#F5F0E8] border-t border-[#E8E0D0]
+    <div className="bg-[#1C1410] border-t border-[#2C2018]
                      flex items-center justify-around
                      px-4 py-3 pb-5">
       {tabs.map((tab) => (
@@ -55,12 +55,12 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
               <tab.icon
                 size={22}
                 strokeWidth={isActive ? 2 : 1.5}
-                color={isActive ? '#047857' : '#A39887'}
+                color={isActive ? '#047857' : '#7C6F5E'}
               />
               <span className={`text-[10px] tracking-wide
                 ${isActive
                   ? 'font-semibold text-[#047857]'
-                  : 'font-normal text-[#A39887]'
+                  : 'font-normal text-[#7C6F5E]'
                 }`}>
                 {tab.label}
               </span>

@@ -104,7 +104,7 @@ export function JoinGroup() {
         </div>
 
         {groupInfo && (
-          <div className="mt-8 bg-[#F5F0E8] p-5 rounded-2xl border border-[#E8E0D0] space-y-4">
+          <div className="mt-8 bg-white p-5 rounded-2xl border border-[#E8E0D0] space-y-4">
             <h3 className="font-bold text-[#1C1410] text-lg">{groupInfo.name}</h3>
             <div className="flex justify-between text-sm">
               <span className="text-[#7C6F5E]">Membres actuels</span>
@@ -126,7 +126,7 @@ export function JoinGroup() {
         )}
       </div>
 
-      <div className="p-6 pb-12 bg-[#F5F0E8] border-t border-[#E8E0D0]">
+      <div className="p-6 pb-12 bg-white border-t border-[#E8E0D0]">
         {!groupInfo ? (
           <button
             onClick={handleSearch}

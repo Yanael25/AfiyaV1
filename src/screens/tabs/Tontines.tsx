@@ -130,7 +130,7 @@ export function Tontines() {
             <div className="w-16 h-16 bg-[#E8E0D0] rounded-full flex items-center justify-center mb-4">
               <Shield size={32} className="text-[#047857]" />
             </div>
-            <h3 className="text-[#1C1410] font-bold text-lg mb-2">Afiya Pools</h3>
+            <h3 className="text-[#1C1410] font-semibold text-lg mb-2">Afiya Pools</h3>
             <p className="text-[#7C6F5E] text-sm mb-6 max-w-[250px]">
               Rejoignez des cercles publics sécurisés par Afiya. Bientôt disponible.
             </p>

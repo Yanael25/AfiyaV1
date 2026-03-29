@@ -19,7 +19,7 @@ export function Login() {
     setLoading(true);
     setError(null);
     try {
-      const user = await signInWithEmail(email, password);
+      const user = await signInWithEmail(email.trim(), password);
       const profile = await getUserProfile(user.uid);
       if (profile && !profile.full_name) {
         navigate('/kyc');

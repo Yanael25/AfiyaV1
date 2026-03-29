@@ -23,7 +23,7 @@ export function Signup() {
     setLoading(true);
     setError(null);
     try {
-      await signUpWithEmail(email, password);
+      await signUpWithEmail(email.trim(), password);
       navigate('/kyc');
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {

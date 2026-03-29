@@ -61,7 +61,7 @@ export function Kyc() {
 
   return (
     <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full">
-      <div className="bg-[#F5F0E8] px-6 pt-12 pb-4 z-10">
+      <div className="bg-white px-6 pt-12 pb-4 z-10 border-b border-[#E8E0D0]">
         <h1 className="text-2xl font-bold text-[#1C1410]">Complétez votre profil</h1>
         <p className="text-sm text-[#7C6F5E] mt-1">Dernière étape avant de commencer</p>
       </div>
@@ -138,7 +138,7 @@ export function Kyc() {
         </div>
       </div>
 
-      <div className="p-6 bg-[#F5F0E8] border-t border-[#E8E0D0]">
+      <div className="p-6 bg-white border-t border-[#E8E0D0]">
         <button
           onClick={handleSubmit}
           disabled={loading || !formData.firstName || !formData.lastName}

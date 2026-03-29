@@ -142,7 +142,7 @@ export function Home() {
       <div className="flex justify-between items-center px-5 pt-12 pb-4">
         <div>
           <p className="text-xs font-normal text-[#7C6F5E]">{greeting},</p>
-          <p className="text-2xl font-bold text-[#1C1410]">{firstName}</p>
+          <p className="text-2xl font-semibold text-[#1C1410]">{firstName}</p>
         </div>
         
         {/* Pill Score & Tier */}
@@ -189,7 +189,7 @@ export function Home() {
           >
             {/* Card 0 — Solde */}
             <div
-              className="shrink-0 bg-[#047857] rounded-3xl p-5 text-white relative overflow-hidden flex flex-col justify-between"
+              className="shrink-0 bg-[#047857] rounded-3xl p-5 text-white relative overflow-hidden flex flex-col"
               style={{ width: cardWidth, height: 200 }}
             >
               <div className="absolute -bottom-8 -right-8 w-40 h-40 rounded-full bg-white/[0.04] pointer-events-none" />
@@ -197,7 +197,7 @@ export function Home() {
 
               <div className="flex justify-between items-center relative z-10">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-300">
-                  Solde disponible
+                  COMPTE PRINCIPAL
                 </p>
                 <button
                   onPointerDown={e => e.stopPropagation()}
@@ -211,43 +211,34 @@ export function Home() {
                 </button>
               </div>
 
-              <div className="relative z-10 flex-1 flex flex-col justify-center">
+              <p className="text-[10px] font-normal text-white/50 mt-3 relative z-10">
+                Solde disponible
+              </p>
+
+              <div className="relative z-10">
                 {balance === null ? (
-                  <div className="h-10 w-36 bg-white/20 animate-pulse rounded-lg mt-2" />
+                  <div className="h-8 w-36 bg-white/20 animate-pulse rounded-lg" />
                 ) : balanceVisible ? (
-                  <div>
-                    <div className="flex items-baseline mt-2">
-                      <span className="text-3xl font-semibold tracking-tight text-white">
-                        {new Intl.NumberFormat('fr-FR').format(balance)}
-                      </span>
-                      <span className="text-sm font-normal text-white/60 ml-1.5">
-                        FCFA
-                      </span>
-                    </div>
-                    <div className="flex items-baseline gap-1.5 mt-1">
-                      <span className="text-[10px] font-normal text-white/50 uppercase tracking-[0.12em]">
-                        À venir
-                      </span>
-                      <span className="text-sm font-medium text-white/70">
-                        {cycleInfo
-                          ? new Intl.NumberFormat('fr-FR').format(cycleInfo.amount) + ' FCFA'
-                          : '0 FCFA'
-                        }
-                      </span>
-                    </div>
+                  <div className="flex items-baseline">
+                    <span className="text-3xl font-semibold text-white tracking-tight">
+                      {new Intl.NumberFormat('fr-FR').format(balance)}
+                    </span>
+                    <span className="text-sm font-normal text-white/60 ml-1.5">
+                      FCFA
+                    </span>
                   </div>
                 ) : (
-                  <p className="text-3xl font-light text-white/60 tracking-[0.2em] mt-2">
+                  <p className="text-2xl font-normal text-white/40 tracking-[0.2em]">
                     ••••••
                   </p>
                 )}
               </div>
 
-              <div className="flex justify-between items-end relative z-10">
+              <div className="flex justify-between items-center mt-auto relative z-10">
                 <p className="text-[10px] text-white/40 font-normal">
                   {new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
                 </p>
-                <p className="text-[10px] text-emerald-300/60">
+                <p className="text-[10px] text-white/40 font-normal">
                   1 / 3
                 </p>
               </div>
@@ -255,79 +246,102 @@ export function Home() {
 
             {/* Card 1 — Cercles */}
             <div
-              className="shrink-0 bg-[#047857] rounded-3xl p-5 text-white relative overflow-hidden flex flex-col justify-between"
+              className="shrink-0 bg-[#047857] rounded-3xl p-5 text-white relative overflow-hidden flex flex-col"
               style={{ width: cardWidth, height: 200 }}
             >
-              <div className="absolute -bottom-8 -right-8 w-40 h-40 rounded-full bg-white/5 pointer-events-none" />
+              <div className="absolute -bottom-8 -right-8 w-40 h-40 rounded-full bg-white/[0.04] pointer-events-none" />
 
-              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-300">
-                Mes Cercles
-              </p>
-
-              <div className="relative z-10 flex-1 flex flex-col justify-center">
-                {balanceCercles === null
-                  ? <div className="h-8 w-32 bg-white/20 animate-pulse rounded-lg" />
-                  : <>
-                      <div className="flex items-baseline mt-2">
-                        <span className="text-3xl font-semibold text-white tracking-tight">
-                          {new Intl.NumberFormat('fr-FR').format(balanceCercles)}
-                        </span>
-                        <span className="text-sm font-normal text-white/60 ml-1.5">
-                          FCFA
-                        </span>
-                      </div>
-                    </>
-                }
+              <div className="relative z-10">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-300">
+                  COMPTE CERCLES
+                </p>
               </div>
 
-              <div className="flex justify-between items-end relative z-10">
-                <div className="space-y-1">
-                  <p className="text-[10px] text-white/50">
-                    Caution · {new Intl.NumberFormat('fr-FR').format(cautionBloquee)} FCFA
+              <p className="text-[10px] font-normal text-white/50 mt-3 relative z-10">
+                Solde Cercles
+              </p>
+
+              <div className="relative z-10">
+                {balanceCercles === null ? (
+                  <div className="h-8 w-36 bg-white/20 animate-pulse rounded-lg" />
+                ) : (
+                  <div className="flex items-baseline">
+                    <span className="text-3xl font-semibold text-white tracking-tight">
+                      {new Intl.NumberFormat('fr-FR').format(balanceCercles)}
+                    </span>
+                    <span className="text-sm font-normal text-white/60 ml-1.5">
+                      FCFA
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-3 space-y-1 relative z-10">
+                <p className="text-[10px] font-normal text-white/50">
+                  Caution bloquée · {new Intl.NumberFormat('fr-FR').format(cautionBloquee)} FCFA
+                </p>
+                {cycleInfo ? (
+                  <p className="text-[10px] font-normal text-white/50">
+                    {cycleInfo.type} · {new Intl.NumberFormat('fr-FR').format(cycleInfo.amount)} FCFA · {cycleInfo.dueDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
                   </p>
-                  {cycleInfo && (
-                    <p className="text-[10px] text-white/50">
-                      {cycleInfo.type === 'À recevoir' ? '+' : '-'}
-                      {new Intl.NumberFormat('fr-FR').format(cycleInfo.amount)} FCFA
-                      · {cycleInfo.dueDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
-                    </p>
-                  )}
-                </div>
+                ) : groups.length === 0 ? (
+                  <p className="text-[10px] font-normal text-white/40">
+                    Aucun Cercle actif
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="flex justify-end mt-auto relative z-10">
+                <p className="text-[10px] text-white/40 font-normal">
+                  2 / 3
+                </p>
               </div>
             </div>
 
             {/* Card 2 — Capital */}
             <div
-              className="shrink-0 bg-[#047857] rounded-3xl p-5 text-white relative overflow-hidden flex flex-col justify-between"
+              className="shrink-0 bg-[#047857] rounded-3xl p-5 text-white relative overflow-hidden flex flex-col"
               style={{ width: cardWidth, height: 200 }}
             >
-              <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-[#047857]/30 pointer-events-none" />
+              <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-white/[0.04] pointer-events-none" />
 
-              <div className="flex items-center gap-2">
+              <div className="relative z-10">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-300">
-                  Afiya Capital
+                  AFIYA CAPITAL
                 </p>
               </div>
 
-              <div className="relative z-10 flex-1 flex flex-col justify-center">
-                {balanceCapital === null
-                  ? <div className="h-8 w-32 bg-white/20 animate-pulse rounded-lg" />
-                  : <>
-                      <div className="flex items-baseline mt-2">
-                        <span className="text-3xl font-semibold text-white tracking-tight">
-                          {new Intl.NumberFormat('fr-FR').format(balanceCapital)}
-                        </span>
-                        <span className="text-sm font-normal text-white/60 ml-1.5">
-                          FCFA
-                        </span>
-                      </div>
-                    </>
-                }
+              <p className="text-[10px] font-normal text-white/50 mt-3 relative z-10">
+                Solde Capital
+              </p>
+
+              <div className="relative z-10">
+                {balanceCapital === null ? (
+                  <div className="h-8 w-36 bg-white/20 animate-pulse rounded-lg" />
+                ) : (
+                  <div className="flex items-baseline">
+                    <span className="text-3xl font-semibold text-white tracking-tight">
+                      {new Intl.NumberFormat('fr-FR').format(balanceCapital)}
+                    </span>
+                    <span className="text-sm font-normal text-white/60 ml-1.5">
+                      FCFA
+                    </span>
+                  </div>
+                )}
               </div>
 
-              <div className="flex justify-between items-end relative z-10">
-                <p className="text-[10px] text-white/50">
+              <div className="mt-3 relative z-10">
+                <p className="text-[10px] font-normal text-white/50">
                   Immo · Bourse · Obligations · PME
+                </p>
+              </div>
+
+              <div className="flex justify-between items-center mt-auto relative z-10">
+                <p className="text-[10px] text-white/40 font-normal">
+                  Bientôt disponible
+                </p>
+                <p className="text-[10px] text-white/40 font-normal">
+                  3 / 3
                 </p>
               </div>
             </div>

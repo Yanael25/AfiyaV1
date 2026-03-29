@@ -99,7 +99,7 @@ export function Profile() {
               </span>
             </div>
             <div>
-              <h2 className="text-[#1C1410] font-bold text-lg">{profile.full_name || 'Utilisateur'}</h2>
+              <h2 className="text-[#1C1410] font-semibold text-lg">{profile.full_name || 'Utilisateur'}</h2>
               <p className="text-[#7C6F5E] text-sm">{profile.email}</p>
               <div className={`${getTierColor(profile.tier)} px-2 py-0.5 rounded text-[10px] font-bold inline-block mt-1`}>
                 {profile.tier}
