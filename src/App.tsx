@@ -13,6 +13,7 @@ import { Welcome } from './screens/auth/Welcome';
 import { Login } from './screens/auth/Login';
 import { Signup } from './screens/auth/Signup';
 import { Kyc } from './screens/auth/Kyc';
+import { KycStep3 } from './screens/auth/KycStep3';
 import { Home } from './screens/tabs/Home';
 import { Tontines } from './screens/tabs/Tontines';
 import { Patrimoine } from './screens/tabs/Patrimoine';
@@ -21,6 +22,8 @@ import { GroupDetail } from './screens/group/GroupDetail';
 import { CreateGroup } from './screens/group/CreateGroup';
 import { JoinGroup } from './screens/group/JoinGroup';
 import { AdjustDeposit } from './screens/group/AdjustDeposit';
+import { TirageAuSort } from './screens/group/TirageAuSort';
+import { HistoriqueCercles } from './screens/group/HistoriqueCercles';
 import { AdminDashboard } from './screens/admin/AdminDashboard';
 import { TabBar } from './components/TabBar';
 
@@ -33,7 +36,7 @@ function AuthContainer() {
         <div className="md:hidden">
           <StatusBar />
         </div>
-        <div className="flex-1 overflow-hidden flex flex-col pt-10 md:pt-0">
+        <div className="flex-1 overflow-y-auto pt-10 md:pt-0">
           <Outlet />
         </div>
       </div>
@@ -48,7 +51,7 @@ function AppContainer() {
         <div className="md:hidden">
           <StatusBar />
         </div>
-        <div className="flex-1 overflow-hidden flex flex-col pt-10 md:pt-0">
+        <div className="flex-1 overflow-y-auto pt-10 md:pt-0">
           <Outlet />
         </div>
       </div>
@@ -128,6 +131,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/kyc" element={<Kyc />} />
+          <Route path="/kyc-step-3" element={<KycStep3 />} />
         </Route>
 
         {/* App Flow */}
@@ -141,10 +145,12 @@ export default function App() {
           </Route>
 
           {/* Sub-pages */}
+          <Route path="/cercles/historique" element={<HistoriqueCercles />} />
 
           {/* Group Flow */}
           <Route path="/group/:id" element={<GroupDetail />} />
           <Route path="/group/:id/adjust-deposit" element={<AdjustDeposit />} />
+          <Route path="/tirage/:groupId" element={<TirageAuSort />} />
           <Route path="/group/create" element={<CreateGroup />} />
           <Route path="/group/join" element={<JoinGroup />} />
           <Route path="/admin" element={<AdminDashboard />} />

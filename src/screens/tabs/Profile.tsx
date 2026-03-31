@@ -1,19 +1,27 @@
 import { useState, useEffect } from 'react';
-import { User, Shield, Settings, HelpCircle, LogOut, ChevronRight } from 'lucide-react';
+import { User, Shield, Bell, Globe, MessageCircle, FileText, LogOut, Share2, Lock, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../../lib/firebase';
+import { auth, db } from '../../lib/firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getUserProfile } from '../../services/userService';
+import { formatXOF } from '../../lib/utils';
 
 export function Profile() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
+  const [wallets, setWallets] = useState({
+    main: 0,
+    cercles: 0,
+    capital: 0
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadProfile = async (uid: string) => {
+    const loadData = async (uid: string) => {
       try {
         setLoading(true);
+        // 1. Load Profile
         const p = await getUserProfile(uid);
         setProfile(p || { 
           email: auth.currentUser?.email || '', 
@@ -23,8 +31,26 @@ export function Profile() {
           status: 'PENDING_REVIEW',
           kyc_status: 'PENDING'
         });
+
+        // 2. Load Wallets
+        const walletsQuery = query(
+          collection(db, 'wallets'),
+          where('owner_id', '==', uid)
+        );
+        const walletsSnap = await getDocs(walletsQuery);
+        let main = 0, cercles = 0, capital = 0;
+        
+        walletsSnap.docs.forEach(doc => {
+          const data = doc.data();
+          if (data.wallet_type === 'USER_MAIN') main = data.balance || 0;
+          if (data.wallet_type === 'USER_CERCLES') cercles = data.balance || 0;
+          if (data.wallet_type === 'USER_CAPITAL') capital = data.balance || 0;
+        });
+
+        setWallets({ main, cercles, capital });
+
       } catch (error) {
-        console.error("Error loading profile:", error);
+        console.error("Error loading profile data:", error);
       } finally {
         setLoading(false);
       }
@@ -32,7 +58,7 @@ export function Profile() {
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        loadProfile(user.uid);
+        loadData(user.uid);
       } else {
         navigate('/login');
       }
@@ -43,16 +69,7 @@ export function Profile() {
 
   const handleSignOut = async () => {
     await signOut(auth);
-    navigate('/login');
-  };
-
-  const getTierColor = (tier: string) => {
-    switch (tier) {
-      case 'PLATINUM': return 'bg-[var(--color-primary-light)] text-[var(--color-primary)]';
-      case 'GOLD': return 'bg-[var(--color-primary-light)] text-[var(--color-primary)]';
-      case 'SILVER': return 'bg-[var(--color-surface-inner)] text-[var(--color-text-secondary)]';
-      default: return 'bg-[var(--color-surface-inner)] text-[var(--color-text-secondary)]';
-    }
+    navigate('/welcome');
   };
 
   const getTierBenefits = (tier: string) => {
@@ -64,155 +81,256 @@ export function Profile() {
     }
   };
 
-  const getNextTierThreshold = (tier: string) => {
+  const getNextTierInfo = (tier: string, score: number) => {
     switch (tier) {
-      case 'BRONZE': return 60;
-      case 'SILVER': return 75;
-      case 'GOLD': return 90;
+      case 'BRONZE': return { name: 'SILVER', threshold: 60, points: 60 - score };
+      case 'SILVER': return { name: 'GOLD', threshold: 75, points: 75 - score };
+      case 'GOLD': return { name: 'PLATINUM', threshold: 90, points: 90 - score };
       default: return null;
     }
   };
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[var(--color-bg)]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)]"></div>
+      <div className="flex-1 flex items-center justify-center bg-[#FAFAF8]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#047857]"></div>
       </div>
     );
   }
 
-  const benefits = getTierBenefits(profile.tier);
-  const nextThreshold = getNextTierThreshold(profile.tier);
-  const pointsToNext = nextThreshold ? nextThreshold - profile.score_afiya : 0;
+  const benefits = getTierBenefits(profile?.tier || 'BRONZE');
+  const nextTier = getNextTierInfo(profile?.tier || 'BRONZE', profile?.score_afiya || 50);
+  const totalPatrimoine = wallets.main + wallets.cercles + wallets.capital;
 
   return (
-    <div className="flex-1 bg-[var(--color-bg)] flex flex-col h-full pb-24">
-      {/* Bloc 1 — Identité */}
-      <div className="bg-[var(--color-surface)] px-6 pt-12 pb-6">
-        <div className="max-w-2xl mx-auto w-full">
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text-primary)] mb-6">Profil</h1>
-          
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-[var(--radius-avatar)] bg-[var(--color-primary)] flex items-center justify-center">
-              <span className="text-white text-2xl font-bold">
-                {(profile.full_name || profile.email || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
-              </span>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{profile.full_name || 'Utilisateur'}</h2>
-              <p className="text-sm font-normal text-[var(--color-text-secondary)]">{profile.email}</p>
-              <div className={`${getTierColor(profile.tier)} px-2 py-0.5 rounded text-[10px] font-bold inline-block mt-1`}>
-                {profile.tier}
-              </div>
-            </div>
+    <div className="bg-[#FAFAF8] min-h-screen pb-[80px] flex flex-col">
+      {/* HEADER */}
+      <div className="pt-[52px] px-6 mb-0">
+        <h1 className="text-[26px] font-extrabold text-[#1A1A1A] tracking-tight">Mon profil</h1>
+      </div>
+
+      {/* CARD IDENTITÉ */}
+      <div className="bg-white rounded-[24px] p-5 mx-4 mt-5 mb-2.5 flex items-center gap-4 shadow-sm">
+        <div className="w-[60px] h-[60px] bg-[#047857] rounded-[20px] flex items-center justify-center text-[20px] font-extrabold text-white flex-shrink-0">
+          {(profile?.full_name || profile?.email || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+        </div>
+        <div className="flex-1">
+          <h2 className="text-[18px] font-extrabold text-[#1A1A1A] tracking-tight mb-1">
+            {profile?.full_name || 'Utilisateur'}
+          </h2>
+          <p className="text-[12px] font-medium text-[#A39887] mb-2">{profile?.email}</p>
+          <div className="inline-flex items-center gap-1.5 bg-[#F0FDF4] rounded-[8px] px-2.5 py-1">
+            <div className="w-1.5 h-1.5 bg-[#047857] rounded-full" />
+            <span className="text-[11px] font-bold text-[#047857] uppercase tracking-[0.08em]">
+              Tier {profile?.tier || 'BRONZE'}
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-2xl mx-auto w-full space-y-6">
-          {/* Bannière Profil Incomplet */}
-          {(!profile.full_name || profile.kyc_status === 'PENDING') && (
-            <div className="bg-[var(--color-primary-light)] p-5 rounded-[var(--radius-inner)] flex flex-col gap-3">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-[var(--radius-avatar)] bg-white flex items-center justify-center shrink-0">
-                  <User size={20} className="text-[var(--color-primary)]" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-[var(--color-primary)]">Profil incomplet</h3>
-                  <p className="text-xs font-normal text-[var(--color-text-secondary)] mt-0.5">Veuillez compléter votre KYC pour accéder à toutes les fonctionnalités d'Afiya.</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => navigate('/kyc')}
-                className="w-full bg-[var(--color-primary)] text-white py-2.5 rounded-[var(--radius-btn)] font-bold text-sm active:scale-[0.98] transition-transform"
-              >
-                Compléter mon profil
-              </button>
-            </div>
-          )}
-
-          {/* Bloc 2 — Score Afiya */}
-          <div className="bg-[var(--color-surface)] p-5 rounded-[var(--radius-card)]">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">Score Afiya</h3>
-              <span className="text-sm font-bold text-[var(--color-primary)]">Niveau {profile.tier}</span>
-            </div>
-            <div className="flex items-end gap-2 mb-2">
-              <span className="text-3xl font-bold text-[var(--color-primary)]">{profile.score_afiya}</span>
-              <span className="text-sm font-normal text-[var(--color-text-secondary)] mb-1">/ 100</span>
-            </div>
-            <div className="w-full bg-[var(--color-border)] h-2 rounded-[var(--radius-badge)] overflow-hidden">
-              <div className="bg-[var(--color-primary)] h-full rounded-[var(--radius-badge)] transition-all duration-500" style={{ width: `${profile.score_afiya}%` }} />
-            </div>
-            
-            {nextThreshold && (
-              <p className="text-xs font-normal text-[var(--color-text-secondary)] mt-3">
-                Plus que <span className="font-bold text-[var(--color-primary)]">{pointsToNext} points</span> pour atteindre le tier suivant.
-              </p>
-            )}
-            
-            <div className="mt-4 pt-4">
-              <p className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">Avantages actuels :</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-[var(--color-bg)] p-2 rounded-[var(--radius-inner)]">
-                  <p className="text-[10px] text-[var(--color-text-secondary)] uppercase">Caution réduite</p>
-                  <p className="text-sm font-bold text-[var(--color-text-primary)]">Caution × {benefits.caution}</p>
-                </div>
-                <div className="bg-[var(--color-bg)] p-2 rounded-[var(--radius-inner)]">
-                  <p className="text-[10px] text-[var(--color-text-secondary)] uppercase">Frais Afiya</p>
-                  <p className="text-sm font-bold text-[var(--color-text-primary)]">{benefits.frais} sur réception</p>
-                </div>
-                <div className="bg-[var(--color-bg)] p-2 rounded-[var(--radius-inner)]">
-                  <p className="text-[10px] text-[var(--color-text-secondary)] uppercase">Cotisation max</p>
-                  <p className="text-sm font-bold text-[var(--color-text-primary)]">{benefits.max}</p>
-                </div>
-                <div className="bg-[var(--color-bg)] p-2 rounded-[var(--radius-inner)]">
-                  <p className="text-[10px] text-[var(--color-text-secondary)] uppercase">Membres max</p>
-                  <p className="text-sm font-bold text-[var(--color-text-primary)]">{benefits.members} membres</p>
-                </div>
-              </div>
-            </div>
+      {/* BANNIÈRE KYC */}
+      {profile?.kyc_status !== 'VERIFIED' && (
+        <div 
+          onClick={() => navigate('/kyc-step3')}
+          className="bg-white border border-[#E8E6E3] rounded-[20px] mx-4 mb-2.5 p-4 flex items-center gap-3 cursor-pointer shadow-sm active:scale-[0.98] transition-transform"
+        >
+          <div className="w-[38px] h-[38px] bg-[#F5F4F2] rounded-[12px] flex items-center justify-center flex-shrink-0">
+            <Lock size={18} strokeWidth={1.5} className="text-[#1A1A1A]" />
           </div>
-
-          {/* Bloc 3 — Menu */}
-          <div className="bg-[var(--color-surface)] rounded-[var(--radius-card)] overflow-hidden">
-            {auth.currentUser?.email === 'jespere20000@gmail.com' && (
-              <button 
-                onClick={() => navigate('/admin')}
-                className="w-full flex items-center justify-between px-4 py-3.5 bg-[var(--color-bg)] active:bg-[var(--color-surface-inner)] transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <Shield size={20} className="text-[var(--color-primary)]" />
-                  <span className="text-sm font-bold text-[var(--color-primary)]">Dashboard Admin</span>
-                </div>
-                <ChevronRight size={20} className="text-[var(--color-primary)]" />
-              </button>
-            )}
-            {[
-              { icon: User, label: 'Informations personnelles' },
-              { icon: Shield, label: 'Sécurité & Mot de passe' },
-              { icon: HelpCircle, label: 'Aide & Support' },
-            ].map((item, i) => (
-              <button key={i} className="w-full flex items-center justify-between px-4 py-3.5 active:bg-[var(--color-surface-inner)] transition-colors">
-                <div className="flex items-center gap-3">
-                  <item.icon size={20} className="text-[var(--color-text-secondary)]" />
-                  <span className="text-sm font-medium text-[var(--color-text-primary)]">{item.label}</span>
-                </div>
-                <ChevronRight size={20} className="text-[var(--color-text-secondary)]" />
-              </button>
-            ))}
+          <div className="flex-1">
+            <h3 className="text-[13px] font-bold text-[#1A1A1A]">Vérification d'identité requise</h3>
+            <p className="text-[11px] text-[#A39887] leading-tight mt-0.5">Complétez votre KYC pour activer les transactions</p>
           </div>
-
-          <button 
-            onClick={handleSignOut}
-            className="w-full flex items-center justify-center gap-2 p-4 text-[var(--color-text-primary)] font-semibold bg-[var(--color-surface)] rounded-[var(--radius-btn)] active:bg-[var(--color-surface-inner)] transition-colors"
-          >
-            <LogOut size={20} />
-            Déconnexion
-          </button>
+          <span className="text-[12px] font-bold text-[#047857] flex-shrink-0">Compléter →</span>
         </div>
+      )}
+
+      {/* SCORE AFIYA */}
+      <div className="bg-white rounded-[24px] p-5 mx-4 mb-2.5 shadow-sm">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-1.5">SCORE AFIYA</h3>
+            <div className="flex items-baseline gap-1">
+              <span className="text-[40px] font-extrabold text-[#1A1A1A] tracking-[-0.03em] leading-none">
+                {profile?.score_afiya || 50}
+              </span>
+              <span className="text-[16px] font-semibold text-[#C4B8AC]">/ 100</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-[16px] font-extrabold text-[#047857]">{profile?.tier || 'BRONZE'}</div>
+            <div className="text-[11px] text-[#A39887]">Tier actuel</div>
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <div className="bg-[#F0EFED] h-1.5 rounded-full overflow-hidden mb-1.5">
+            <div 
+              className="bg-[#047857] h-full rounded-full transition-all duration-500" 
+              style={{ width: `${profile?.score_afiya || 50}%` }} 
+            />
+          </div>
+          <div className="flex justify-between text-[10px] font-semibold">
+            <span className="text-[#C4B8AC]">0</span>
+            {nextTier && (
+              <span className="text-[#047857]">
+                {nextTier.name} à {nextTier.threshold} pts · encore {nextTier.points} pts
+              </span>
+            )}
+            <span className="text-[#C4B8AC]">100</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3">
+            <div className="text-[13px] font-extrabold text-[#1A1A1A] mb-0.5">{benefits.max}</div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#A39887]">Cotisation max</div>
+          </div>
+          <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3">
+            <div className="text-[13px] font-extrabold text-[#1A1A1A] mb-0.5">{benefits.members}</div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#A39887]">Membres max</div>
+          </div>
+          <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3">
+            <div className="text-[13px] font-extrabold text-[#1A1A1A] mb-0.5">{benefits.caution}</div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#A39887]">Coeff. caution</div>
+          </div>
+          <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3">
+            <div className="text-[13px] font-extrabold text-[#1A1A1A] mb-0.5">{benefits.frais}</div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#A39887]">Frais de gestion</div>
+          </div>
+        </div>
+
+        {nextTier && (
+          <div className="bg-[#F0FDF4] rounded-[12px] px-3.5 py-2.5 flex justify-between items-center">
+            <span className="text-[12px] font-semibold text-[#047857]">Prochaine palier — {nextTier.name}</span>
+            <span className="text-[13px] font-extrabold text-[#047857]">+ {nextTier.points} pts</span>
+          </div>
+        )}
+      </div>
+
+      {/* PATRIMOINE TOTAL */}
+      <div className="bg-white rounded-[20px] p-5 mx-4 mb-2.5 shadow-sm">
+        <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-1.5">PATRIMOINE TOTAL</h3>
+        <div className="text-[28px] font-extrabold text-[#1A1A1A] tracking-tight mb-1">
+          {formatXOF(totalPatrimoine)}
+        </div>
+        <p className="text-[12px] text-[#A39887] mb-4">Tous comptes confondus</p>
+
+        <div className="flex justify-between items-center mb-2.5">
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 bg-[#047857] rounded-full opacity-100" />
+            <span className="text-[12px] font-medium text-[#6B6B6B]">Compte Principal</span>
+          </div>
+          <span className="text-[13px] font-bold text-[#1A1A1A]">{formatXOF(wallets.main)}</span>
+        </div>
+        <div className="flex justify-between items-center mb-2.5">
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 bg-[#047857] rounded-full opacity-70" />
+            <span className="text-[12px] font-medium text-[#6B6B6B]">Compte Cercles</span>
+          </div>
+          <span className="text-[13px] font-bold text-[#1A1A1A]">{formatXOF(wallets.cercles)}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 bg-[#047857] rounded-full opacity-40" />
+            <span className="text-[12px] font-medium text-[#6B6B6B]">Afiya Capital</span>
+          </div>
+          <span className="text-[13px] font-bold text-[#1A1A1A]">{formatXOF(wallets.capital)}</span>
+        </div>
+      </div>
+
+      {/* MENU SECTIONS */}
+      <div className="mt-4">
+        <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mx-4 mb-2">MON COMPTE</h3>
+        <div className="bg-white rounded-[20px] overflow-hidden mx-4 mb-5 shadow-sm">
+          <div className="flex items-center gap-3.5 px-[18px] py-[15px] border-b border-[#F8F7F6] cursor-pointer active:bg-gray-50">
+            <div className="w-[34px] h-[34px] rounded-[11px] bg-[#F5F4F2] flex items-center justify-center">
+              <User size={18} strokeWidth={1.5} className="text-[#1A1A1A]" />
+            </div>
+            <span className="text-[14px] font-semibold text-[#1A1A1A]">Informations personnelles</span>
+            <ChevronRight size={18} strokeWidth={1.5} className="text-[#C4B8AC] ml-auto" />
+          </div>
+          <div className="flex items-center gap-3.5 px-[18px] py-[15px] border-b border-[#F8F7F6] cursor-pointer active:bg-gray-50">
+            <div className="w-[34px] h-[34px] rounded-[11px] bg-[#F5F4F2] flex items-center justify-center">
+              <Lock size={18} strokeWidth={1.5} className="text-[#1A1A1A]" />
+            </div>
+            <span className="text-[14px] font-semibold text-[#1A1A1A]">Vérification d'identité</span>
+            <div className="ml-auto flex items-center">
+              {profile?.kyc_status === 'VERIFIED' && (
+                <span className="bg-[#F5F4F2] text-[#6B6B6B] text-[10px] font-bold px-2 py-0.5 rounded-[6px] mr-1">Vérifié</span>
+              )}
+              <ChevronRight size={18} strokeWidth={1.5} className="text-[#C4B8AC]" />
+            </div>
+          </div>
+          <div className="flex items-center gap-3.5 px-[18px] py-[15px] cursor-pointer active:bg-gray-50">
+            <div className="w-[34px] h-[34px] rounded-[11px] bg-[#F5F4F2] flex items-center justify-center">
+              <Shield size={18} strokeWidth={1.5} className="text-[#1A1A1A]" />
+            </div>
+            <span className="text-[14px] font-semibold text-[#1A1A1A]">Sécurité & Mot de passe</span>
+            <ChevronRight size={18} strokeWidth={1.5} className="text-[#C4B8AC] ml-auto" />
+          </div>
+        </div>
+
+        <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mx-4 mb-2">PRÉFÉRENCES</h3>
+        <div className="bg-white rounded-[20px] overflow-hidden mx-4 mb-5 shadow-sm">
+          <div className="flex items-center gap-3.5 px-[18px] py-[15px] border-b border-[#F8F7F6] cursor-pointer active:bg-gray-50">
+            <div className="w-[34px] h-[34px] rounded-[11px] bg-[#F0FDF4] flex items-center justify-center">
+              <Bell size={18} strokeWidth={1.5} className="text-[#047857]" />
+            </div>
+            <span className="text-[14px] font-semibold text-[#1A1A1A]">Notifications</span>
+            <ChevronRight size={18} strokeWidth={1.5} className="text-[#C4B8AC] ml-auto" />
+          </div>
+          <div className="flex items-center gap-3.5 px-[18px] py-[15px] cursor-pointer active:bg-gray-50">
+            <div className="w-[34px] h-[34px] rounded-[11px] bg-[#F5F4F2] flex items-center justify-center">
+              <Globe size={18} strokeWidth={1.5} className="text-[#1A1A1A]" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[14px] font-semibold text-[#1A1A1A]">Langue</span>
+              <span className="text-[11px] text-[#A39887]">Français</span>
+            </div>
+            <ChevronRight size={18} strokeWidth={1.5} className="text-[#C4B8AC] ml-auto" />
+          </div>
+        </div>
+
+        <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mx-4 mb-2">SUPPORT</h3>
+        <div className="bg-white rounded-[20px] overflow-hidden mx-4 mb-6 shadow-sm">
+          <div className="flex items-center gap-3.5 px-[18px] py-[15px] border-b border-[#F8F7F6] cursor-pointer active:bg-gray-50">
+            <div className="w-[34px] h-[34px] rounded-[11px] bg-[#F5F4F2] flex items-center justify-center">
+              <MessageCircle size={18} strokeWidth={1.5} className="text-[#1A1A1A]" />
+            </div>
+            <span className="text-[14px] font-semibold text-[#1A1A1A]">Nous contacter</span>
+            <ChevronRight size={18} strokeWidth={1.5} className="text-[#C4B8AC] ml-auto" />
+          </div>
+          <div className="flex items-center gap-3.5 px-[18px] py-[15px] cursor-pointer active:bg-gray-50">
+            <div className="w-[34px] h-[34px] rounded-[11px] bg-[#F5F4F2] flex items-center justify-center">
+              <FileText size={18} strokeWidth={1.5} className="text-[#1A1A1A]" />
+            </div>
+            <span className="text-[14px] font-semibold text-[#1A1A1A]">Mentions légales</span>
+            <ChevronRight size={18} strokeWidth={1.5} className="text-[#C4B8AC] ml-auto" />
+          </div>
+        </div>
+      </div>
+
+      {/* BOUTONS BAS */}
+      <div className="mx-4 mt-1">
+        <button className="w-full bg-white rounded-[16px] py-3.5 flex items-center justify-center gap-2.5 text-[14px] font-bold text-[#047857] mb-2 shadow-sm active:scale-[0.98] transition-transform">
+          <Share2 size={18} strokeWidth={2} className="text-[#047857]" />
+          Partager Afiya
+        </button>
+        <button 
+          onClick={handleSignOut}
+          className="w-full bg-white rounded-[16px] py-3.5 flex items-center justify-center gap-2.5 text-[14px] font-bold text-[#A39887] mb-2 shadow-sm active:scale-[0.98] transition-transform"
+        >
+          <LogOut size={18} strokeWidth={2} className="text-[#A39887]" />
+          Se déconnecter
+        </button>
+      </div>
+
+      {/* VERSION */}
+      <div className="text-[11px] text-[#C4B8AC] text-center py-2 mt-2">
+        Afiya v1.0.0
       </div>
     </div>
   );
 }
+

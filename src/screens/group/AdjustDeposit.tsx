@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, AlertTriangle } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { formatXOF } from '../../lib/utils';
-import { auth } from '../../lib/firebase';
-import { getGroupMembers, payDepositDifferential } from '../../services/tontineService';
+import { auth, db } from '../../lib/firebase';
+import { getGroupMembers, payDepositDifferential, getTontineGroup, repositionMember } from '../../services/tontineService';
+import { getUserProfile } from '../../services/userService';
 
 export function AdjustDeposit() {
   const navigate = useNavigate();
@@ -11,6 +12,8 @@ export function AdjustDeposit() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [memberInfo, setMemberInfo] = useState<any>(null);
+  const [groupInfo, setGroupInfo] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
     loadData();
@@ -21,12 +24,18 @@ export function AdjustDeposit() {
       const user = auth.currentUser;
       if (!user || !id) return;
 
-      const members = await getGroupMembers(id);
+      const [members, group, profile] = await Promise.all([
+        getGroupMembers(id),
+        getTontineGroup(id),
+        getUserProfile(user.uid)
+      ]);
+
       const currentMember = members?.find((m: any) => m.user_id === user.uid);
       
-      if (currentMember) {
-        setMemberInfo(currentMember);
-      }
+      if (currentMember) setMemberInfo(currentMember);
+      if (group) setGroupInfo(group);
+      if (profile) setUserProfile(profile);
+      
     } catch (e) {
       console.error(e);
     }
@@ -49,72 +58,152 @@ export function AdjustDeposit() {
     }
   };
 
-  if (!memberInfo) {
-    return <div className="flex-1 bg-[var(--color-bg)] flex items-center justify-center">Chargement...</div>;
+  const handleRefuse = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error("Utilisateur non connecté");
+
+      await repositionMember(memberInfo.id, groupInfo.target_members);
+      
+      navigate(-1);
+    } catch (e: any) {
+      setError(e.message || "Une erreur est survenue");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!memberInfo || !groupInfo || !userProfile) {
+    return (
+      <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#047857] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
+  const initials = userProfile.full_name
+    ? userProfile.full_name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+    : 'U';
+
   return (
-    <div className="flex-1 bg-[var(--color-bg)] flex flex-col h-full">
-      <div className="bg-[var(--color-surface)] px-4 pt-4 pb-4 flex items-center gap-4 z-10">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-[var(--color-text-primary)] rounded-[var(--radius-btn)] hover:bg-[var(--color-surface-inner)] transition-colors">
-          <ArrowLeft size={24} />
+    <div className="min-h-screen bg-[#FAFAF8] font-manrope pb-10">
+      {/* TOP BAR */}
+      <div className="pt-[52px] px-6 mb-5 flex items-start gap-3">
+        <button 
+          onClick={() => navigate(-1)}
+          className="w-9 h-9 bg-white rounded-[12px] flex items-center justify-center shrink-0"
+        >
+          <ArrowLeft size={18} stroke="#6B6B6B" strokeWidth={1.5} />
         </button>
-        <h1 className="text-xl font-bold text-[var(--color-text-primary)]">Ajustement Caution</h1>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {error && (
-          <div className="bg-[var(--color-surface-inner)] rounded-[var(--radius-inner)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)]">
-            {error}
-          </div>
-        )}
-
-        <div className="flex flex-col items-center justify-center py-4">
-          <div className="w-16 h-16 bg-[var(--color-primary-light)] rounded-[var(--radius-card)] flex items-center justify-center mb-4">
-            <AlertTriangle size={32} className="text-[var(--color-primary)]" />
-          </div>
-          <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-1">Position {memberInfo.draw_position}</h2>
-          <p className="text-[var(--color-text-secondary)] text-center text-sm font-normal px-4">
-            Le tirage au sort vous a attribué une position avantageuse. Un ajustement de votre caution est requis.
-          </p>
-        </div>
-
-        <div className="bg-[var(--color-surface)] p-5 rounded-[var(--radius-card)] space-y-4">
-          <div className="flex justify-between items-center pb-4">
-            <span className="text-[var(--color-text-secondary)]">Caution initiale payée</span>
-            <span className="text-[var(--color-text-primary)] font-semibold">{formatXOF(memberInfo.initial_deposit)}</span>
-          </div>
-          <div className="flex justify-between items-center pb-4">
-            <span className="text-[var(--color-text-secondary)]">Caution ajustée requise</span>
-            <span className="text-[var(--color-text-primary)] font-semibold">{formatXOF(memberInfo.adjusted_deposit)}</span>
-          </div>
-          <div className="flex justify-between items-center pt-2">
-            <span className="text-[var(--color-text-primary)] font-bold text-lg">Différentiel à payer</span>
-            <span className="text-[var(--color-primary)] font-bold text-xl">{formatXOF(memberInfo.deposit_differential)}</span>
-          </div>
-        </div>
-
-        <div className="bg-[var(--color-surface-inner)] p-4 rounded-[var(--radius-card)]">
-          <p className="text-sm font-medium text-[var(--color-text-primary)] leading-relaxed text-center">
-            Vous avez 48h pour régler ce montant. Passé ce délai, vous serez repositionné automatiquement.
-          </p>
+        <div>
+          <h1 className="text-[22px] font-extrabold text-[#1A1A1A] tracking-tight mb-1">Compléter ma caution</h1>
+          <p className="text-[13px] font-medium text-[#A39887]">{groupInfo.name}</p>
         </div>
       </div>
 
-      <div className="p-6 bg-[var(--color-bg)]">
+      {error && (
+        <div className="mx-4 mb-4 bg-[#FFF5F5] border border-[#EF4444] rounded-[12px] p-3 text-[13px] font-medium text-[#EF4444]">
+          {error}
+        </div>
+      )}
+
+      {/* CONTEXTE MEMBRE */}
+      <div className="bg-white rounded-[20px] p-4 px-5 mx-4 mb-2.5 flex items-center gap-3.5">
+        <div className="w-11 h-11 bg-[#047857] rounded-[14px] flex items-center justify-center text-[14px] font-extrabold text-white shrink-0">
+          {initials}
+        </div>
+        <div>
+          <h2 className="text-[16px] font-extrabold text-[#1A1A1A] mb-0.5">Moi · Position #{memberInfo.draw_position}</h2>
+          <p className="text-[12px] font-medium text-[#A39887]">{groupInfo.name} · Tier {userProfile.tier}</p>
+        </div>
+      </div>
+
+      {/* BLOC CAUTION */}
+      <div className="bg-white rounded-[20px] overflow-hidden mx-4 mb-2.5">
+        <div className="px-5 pt-4 mb-3">
+          <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A39887]">CAUTION BLOQUÉE</h3>
+        </div>
+        
+        <div className="mx-5 mb-4 flex flex-col gap-2">
+          {/* BLOC 1 — caution initiale */}
+          <div className="bg-[#FAFAF8] rounded-[14px] p-3 px-3.5">
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="text-[12px] font-semibold text-[#6B6B6B]">Caution initiale versée</span>
+              <span className="bg-[#F0FDF4] text-[#047857] text-[10px] font-bold px-2.5 py-1 rounded-[8px]">Validée</span>
+            </div>
+            <div className="text-[15px] font-extrabold text-[#1A1A1A]">{formatXOF(memberInfo.initial_deposit)}</div>
+          </div>
+
+          {/* BLOC 2 — caution cible + complément */}
+          <div className="bg-[#FAFAF8] rounded-[14px] p-3 px-3.5">
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="text-[12px] font-semibold text-[#6B6B6B]">Caution cible · position {memberInfo.draw_position}</span>
+              <span className="bg-[#F5F4F2] text-[#6B6B6B] text-[10px] font-bold px-2.5 py-1 rounded-[8px]">À compléter</span>
+            </div>
+            <div className="text-[15px] font-extrabold text-[#1A1A1A]">{formatXOF(memberInfo.adjusted_deposit)}</div>
+            
+            <div className="h-px bg-[#EDECEA] my-2.5" />
+            
+            <div className="flex justify-between items-start gap-2.5">
+              <div>
+                <div className="text-[12px] font-semibold text-[#6B6B6B] mb-0.5">Complément requis</div>
+                <div className="text-[10px] italic text-[#C4B8AC]">Selon votre position de tirage</div>
+              </div>
+              <div className="text-[14px] font-extrabold text-[#1A1A1A]">+{formatXOF(memberInfo.deposit_differential)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* NOTE DÉLAI */}
+      <div className="bg-[#FAFAF8] rounded-[16px] mx-4 mb-2.5 p-3.5 flex items-start gap-2.5">
+        <div className="w-1.5 h-1.5 bg-[#A39887] rounded-full flex-shrink-0 mt-1.5" />
+        <p className="text-[12px] font-medium text-[#6B6B6B] leading-relaxed">
+          Vous avez 48h pour compléter. Sans paiement, votre position sera automatiquement déplacée dans la seconde moitié du groupe, sans pénalité.
+        </p>
+      </div>
+
+      {/* TOTAL À PAYER */}
+      <div className="bg-[#F0FDF4] rounded-[12px] mx-4 mb-2.5 px-4 py-3.5 flex justify-between items-center">
+        <span className="text-[13px] font-bold text-[#047857]">À payer maintenant</span>
+        <span className="text-[18px] font-extrabold text-[#047857] tracking-tight">{formatXOF(memberInfo.deposit_differential)}</span>
+      </div>
+
+      {/* NOTE SÉCURITÉ */}
+      <div className="bg-[#F0FDF4] rounded-[16px] mx-4 mb-2.5 p-3.5 flex items-start gap-2.5">
+        <div className="w-1.5 h-1.5 bg-[#047857] rounded-full flex-shrink-0 mt-1.5" />
+        <p className="text-[12px] font-medium text-[#047857] leading-relaxed">
+          Ce complément est bloqué comme votre caution initiale. Restitué intégralement en fin de cercle si aucun incident.
+        </p>
+      </div>
+
+      {/* CTAs */}
+      <div className="mx-4 mt-2">
         <button
           onClick={handlePayDifferential}
           disabled={loading || memberInfo.deposit_differential_paid}
-          className="w-full bg-[var(--color-primary)] hover:opacity-90 text-white h-14 rounded-[var(--radius-btn)] font-semibold text-lg disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
+          className="w-full bg-[#047857] text-white rounded-[16px] py-4 text-[15px] font-bold mb-2.5 disabled:opacity-50 flex items-center justify-center"
         >
           {loading ? (
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : memberInfo.deposit_differential_paid ? (
             'Déjà payé'
           ) : (
-            'Payer le différentiel'
+            `Payer ${formatXOF(memberInfo.deposit_differential)}`
           )}
         </button>
+        
+        {!memberInfo.deposit_differential_paid && (
+          <button
+            onClick={handleRefuse}
+            disabled={loading}
+            className="w-full bg-white text-[#1A1A1A] rounded-[16px] py-4 text-[15px] font-bold disabled:opacity-50"
+          >
+            Refuser et être repositionné
+          </button>
+        )}
       </div>
     </div>
   );

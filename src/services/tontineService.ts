@@ -558,6 +558,29 @@ export const joinTontineGroup = async (groupId: string, userId: string) => {
   return memberId;
 };
 
+export const repositionMember = async (memberId: string, targetMembers: number) => {
+  const memberRef = doc(db, 'tontine_members', memberId);
+  const memberSnap = await getDoc(memberRef);
+  if (!memberSnap.exists()) throw new Error('Membre introuvable');
+  
+  // Calculate new position in the second half (60% to 100%)
+  const minPosition = Math.ceil(targetMembers * 0.6);
+  const maxPosition = targetMembers;
+  const newPosition = Math.floor(Math.random() * (maxPosition - minPosition + 1)) + minPosition;
+
+  await runTransaction(db, async (transaction) => {
+    const txMemberSnap = await transaction.get(memberRef);
+    if (!txMemberSnap.exists()) throw new Error('Membre introuvable');
+    
+    transaction.update(memberRef, {
+      draw_position: newPosition,
+      deposit_differential: 0,
+      deposit_differential_paid: true,
+      status: 'ACTIVE'
+    });
+  });
+};
+
 export const payDepositDifferential = async (memberId: string, userId: string) => {
   const memberRef = doc(db, 'tontine_members', memberId);
   const memberSnap = await getDoc(memberRef);

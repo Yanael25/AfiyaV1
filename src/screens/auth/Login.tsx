@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, Eye, EyeOff } from 'lucide-react';
 import { signInWithEmail, getUserProfile } from '../../services/userService';
-import { auth } from '../../lib/firebase';
 
 export function Login() {
   const navigate = useNavigate();
@@ -12,8 +11,7 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async () => {
     if (!email || !password) return;
     
     setLoading(true);
@@ -34,89 +32,104 @@ export function Login() {
   };
 
   return (
-    <div className="flex-1 bg-[var(--color-bg)] flex flex-col h-full overflow-y-auto">
-      <div className="px-6 pt-6 pb-4">
+    <div className="min-h-screen bg-[#FAFAF8] flex flex-col">
+      {/* 1. BOUTON RETOUR */}
+      <div className="pt-[52px] px-[24px]">
         <button 
-          onClick={() => navigate(-1)} 
-          className="w-10 h-10 bg-[var(--color-surface)] rounded-[var(--radius-btn)] flex items-center justify-center text-[var(--color-text-primary)]"
+          onClick={() => navigate('/welcome')} 
+          className="w-9 h-9 bg-white rounded-xl flex items-center justify-center"
         >
-          <ArrowLeft size={20} strokeWidth={1.5} />
+          <ChevronLeft size={18} strokeWidth={1.5} color="#6B6B6B" />
         </button>
       </div>
       
-      <div className="px-6 pt-4 pb-6 relative">
-        <div className="absolute left-0 top-4 bottom-6 w-[3px] bg-[var(--color-primary)] rounded-r-[4px]" />
-        <div className="pl-4">
-          <div className="text-[11px] font-bold tracking-[0.2em] text-[var(--color-primary)] uppercase mb-2">Afiya</div>
-          <h1 className="text-3xl font-bold tracking-tight text-[var(--color-text-primary)] mb-2 leading-tight">
-            Bon retour.
-          </h1>
-          <p className="text-[13px] text-[var(--color-text-muted)]">
-            Connectez-vous pour accéder à votre espace.
-          </p>
+      {/* 2. HEADER */}
+      <div className="px-[28px] pb-[28px] border-b border-[#F0EFED] mb-[32px] relative mt-6">
+        <div className="absolute left-0 top-2 bottom-2 w-[3px] bg-[#047857] rounded-r-[4px]" />
+        <div className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#047857] mb-3">
+          AFIYA
         </div>
+        <h1 className="text-[26px] font-extrabold text-[#1A1A1A] tracking-tight leading-tight mb-1.5">
+          Bon retour.
+        </h1>
+        <p className="text-[13px] font-normal text-[#A39887]">
+          Connectez-vous pour accéder à votre espace.
+        </p>
       </div>
 
-      <div className="h-px bg-[var(--color-divider)] w-full mb-6" />
-
-      <div className="flex-1 px-6 pb-12">
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
+      {/* 3. FORMULAIRE */}
+      <div className="px-[28px] flex-1 flex flex-col justify-between">
+        <div>
+          <div className="mb-5">
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-2">
+              ADRESSE EMAIL
+            </label>
             <input 
               type="email"
               value={email}
               onChange={e => { setEmail(e.target.value); setError(null); }}
-              placeholder="Adresse email"
-              className={`w-full bg-[var(--color-surface-inner)] rounded-[var(--radius-field)] px-4 py-3.5 text-[15px] font-semibold text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-colors ${error ? 'ring-2 ring-[var(--color-text-primary)]' : ''}`} 
-              required
+              placeholder="fifame.dossou@gmail.com"
+              className="w-full bg-[#FAFAF8] border-2 border-transparent focus:border-[#047857]/20 rounded-[14px] px-4 py-[14px] text-[15px] font-semibold text-[#1A1A1A] outline-none placeholder:text-[#C4B8AC] placeholder:font-normal transition-colors"
             />
           </div>
 
-          <div className="relative">
-            <input 
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={e => { setPassword(e.target.value); setError(null); }}
-              placeholder="Mot de passe"
-              className={`w-full bg-[var(--color-surface-inner)] rounded-[var(--radius-field)] pl-4 pr-12 py-3.5 text-[15px] font-semibold text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-colors ${error ? 'ring-2 ring-[var(--color-text-primary)]' : ''}`} 
-              required
-            />
-            <button 
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center text-[var(--color-text-muted)]"
-            >
-              {showPassword ? <EyeOff size={20} strokeWidth={1.5} /> : <Eye size={20} strokeWidth={1.5} />}
-            </button>
-          </div>
-
-          <div className="flex justify-end pt-1">
-            <button type="button" className="text-[12px] font-bold text-[var(--color-primary)]">
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-2">
+              MOT DE PASSE
+            </label>
+            <div className="relative">
+              <input 
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={e => { setPassword(e.target.value); setError(null); }}
+                placeholder="••••••••"
+                className="w-full bg-[#FAFAF8] border-2 border-transparent focus:border-[#047857]/20 rounded-[14px] pl-4 pr-12 py-[14px] text-[15px] font-semibold text-[#1A1A1A] outline-none placeholder:text-[#C4B8AC] placeholder:font-normal transition-colors"
+              />
+              <button 
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center"
+              >
+                {showPassword ? (
+                  <EyeOff size={20} strokeWidth={1.5} color="#C4B8AC" />
+                ) : (
+                  <Eye size={20} strokeWidth={1.5} color="#C4B8AC" />
+                )}
+              </button>
+            </div>
+            <p className="text-right text-[12px] font-semibold text-[#047857] mt-1.5 cursor-pointer">
               Mot de passe oublié ?
-            </button>
+            </p>
           </div>
+        </div>
 
+        {/* BLOC BAS */}
+        <div className="pb-[40px]">
           {error && (
-            <p className="text-[13px] font-medium text-[var(--color-text-primary)] mt-2">{error}</p>
+            <div className="bg-[#FAFAF8] rounded-[14px] p-3 text-[12px] font-semibold text-[#1A1A1A] mb-4 border border-red-100">
+              {error}
+            </div>
           )}
 
-          <div className="pt-4">
-            <button
-              type="submit"
-              disabled={loading || !email || !password}
-              className="w-full bg-[var(--color-primary)] text-white py-4 rounded-[var(--radius-btn)] text-[15px] font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-opacity"
-            >
-              {loading ? 'Connexion...' : 'Se connecter'}
-            </button>
-          </div>
-        </form>
+          <button
+            onClick={handleLogin}
+            disabled={loading || !email || !password}
+            className={`w-full rounded-[16px] py-4 text-[15px] font-bold mb-2.5 transition-colors ${
+              loading || !email || !password
+                ? 'bg-[#E8E6E3] text-[#C4B8AC] cursor-not-allowed'
+                : 'bg-[#047857] text-white'
+            }`}
+          >
+            {loading ? 'Connexion...' : 'Se connecter'}
+          </button>
 
-        <div className="mt-8 text-center">
-          <p className="text-[13px] font-medium text-[var(--color-text-secondary)]">
+          <p className="text-[13px] text-[#A39887] text-center">
             Pas encore de compte ?{' '}
-            <Link to="/signup" className="text-[var(--color-primary)] font-bold">
+            <button 
+              onClick={() => navigate('/signup')}
+              className="text-[#047857] font-bold"
+            >
               S'inscrire
-            </Link>
+            </button>
           </p>
         </div>
       </div>

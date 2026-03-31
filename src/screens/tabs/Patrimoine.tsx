@@ -1,146 +1,89 @@
-import { useState } from 'react';
-import { motion } from 'motion/react';
-import { Shield, TrendingUp, Building2, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { TrendingUp, Building2, BarChart2, PiggyBank, Briefcase } from 'lucide-react';
 
 export function Patrimoine() {
-  const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-
-  const assets = [
-    {
-      title: "Obligations d'État",
-      desc: "Rendement garanti, risque nul.",
-      yield: "6-7%",
-      icon: Shield
-    },
-    {
-      title: "BRVM Actions",
-      desc: "Participez à la croissance des leaders régionaux.",
-      yield: "Variable",
-      icon: TrendingUp
-    },
-    {
-      title: "Immobilier Fractionné",
-      desc: "Des loyers mensuels, sans gestion.",
-      yield: "8-10%",
-      icon: Building2
-    }
-  ];
-
-  const steps = [
-    { num: "01", text: "Terminez un cycle de tontine." },
-    { num: "02", text: "Transférez votre cagnotte en un clic." },
-    { num: "03", text: "Percevez vos dividendes directement sur votre Wallet." }
-  ];
-
   return (
-    <div className="flex-1 bg-[var(--color-bg)] flex flex-col h-full overflow-y-auto no-scrollbar pb-24">
-      <div className="px-6 max-w-2xl mx-auto w-full pt-16 pb-8">
+    <div className="bg-[#FAFAF8] min-h-screen pb-[80px] flex flex-col font-['Manrope']">
+      {/* HEADER */}
+      <div className="pt-[52px] px-6 mb-0">
+        <h1 className="text-[26px] font-extrabold text-[#1A1A1A] tracking-tight mb-1">Afiya Capital</h1>
+        <p className="text-[13px] font-medium text-[#A39887]">Faites fructifier votre épargne.</p>
+      </div>
+
+      {/* CONTENU CENTRÉ */}
+      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
         
-        {/* Header & Assets */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="mb-14 bg-[var(--color-primary)] rounded-[var(--radius-card)] p-6 text-white"
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-[var(--radius-badge)] bg-white/20 text-white mb-6">
-            <span className="text-xs font-medium">Bientôt disponible</span>
-          </div>
+        {/* Icône principale */}
+        <div className="w-20 h-20 bg-[#F0FDF4] rounded-[28px] flex items-center justify-center mx-auto mb-6">
+          <TrendingUp size={36} stroke="#047857" strokeWidth={1.5} />
+        </div>
+
+        {/* Titre */}
+        <h2 className="text-[22px] font-extrabold text-[#1A1A1A] tracking-tight mb-3">
+          Bientôt disponible
+        </h2>
+
+        {/* Description */}
+        <p className="text-[14px] font-normal text-[#6B6B6B] leading-relaxed max-w-[260px] mx-auto mb-8">
+          Investissez dans l'immobilier, la bourse, l'épargne+ et les PME locales. Afiya Capital arrive bientôt.
+        </p>
+
+        {/* 4 modules à venir */}
+        <div className="grid grid-cols-2 gap-3 w-full mb-8">
           
-          <h1 className="text-5xl font-extrabold text-white tracking-tight mb-4">
-            Afiya Capital.
-          </h1>
-          
-          <p className="text-lg text-white/80 font-light leading-relaxed max-w-sm mb-8">
-            L'accès exclusif aux marchés financiers béninois et régionaux.
-          </p>
-
-          <div className="flex flex-col gap-4">
-            {assets.map((asset, idx) => (
-              <div 
-                key={idx}
-                className="bg-[var(--color-surface)] rounded-[var(--radius-inner)] p-5 flex items-start gap-4"
-              >
-                <div className="w-12 h-12 rounded-[var(--radius-avatar)] bg-[var(--color-bg)] flex items-center justify-center shrink-0">
-                  <asset.icon size={20} className="text-[var(--color-primary)]" strokeWidth={1.5} />
-                </div>
-                <div className="flex-1 pt-1">
-                  <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">{asset.title}</h3>
-                  <p className="text-sm font-normal text-[var(--color-text-secondary)] leading-relaxed mb-3">{asset.desc}</p>
-                  <div className="inline-flex items-center gap-2 bg-[var(--color-bg)] px-3 py-1.5 rounded-[var(--radius-badge)]">
-                    <span className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider">Rendement estimé</span>
-                    <span className="text-xs font-semibold text-[var(--color-text-primary)]">{asset.yield}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Comment ça marche ? */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-          className="mb-16"
-        >
-          <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-8">Comment ça marche ?</h2>
-          <div className="flex flex-col gap-6">
-            {steps.map((step, idx) => (
-              <div key={idx} className="flex items-center gap-4">
-                <span className="text-2xl font-extrabold text-[var(--color-primary)]">{step.num}.</span>
-                <p className="text-sm font-normal text-[var(--color-text-secondary)]">{step.text}</p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Call to Action */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
-          className="bg-[var(--color-primary)] rounded-[var(--radius-card)] p-6 sm:p-8"
-        >
-          {submitted ? (
-            <div className="flex flex-col items-center text-center py-4">
-              <div className="w-16 h-16 rounded-[var(--radius-avatar)] bg-white/10 flex items-center justify-center mb-4">
-                <CheckCircle2 size={32} className="text-white" />
-              </div>
-              <h3 className="text-white font-bold text-xl mb-2">Demande enregistrée</h3>
-              <p className="text-sm font-normal text-white/80">
-                Vous êtes sur la liste d'attente VIP. Nous vous contacterons prochainement.
-              </p>
+          {/* Immobilier */}
+          <div className="bg-white rounded-[20px] p-4 text-left opacity-60 relative">
+            <div className="absolute top-3 right-3 bg-[#F5F4F2] text-[#A39887] text-[9px] font-bold uppercase tracking-[0.08em] px-2 py-0.5 rounded-[6px]">
+              Bientôt
             </div>
-          ) : (
-            <>
-              <h3 className="text-white font-bold text-xl mb-2">Rejoindre la liste d'attente</h3>
-              <p className="text-sm font-normal text-white/80 mb-6">
-                Les places sont limitées pour le lancement de la version bêta privée.
-              </p>
-              
-              <div className="flex flex-col gap-4">
-                <input 
-                  type="email" 
-                  placeholder="Votre adresse email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white/10 rounded-[var(--radius-field)] px-4 py-3.5 text-white placeholder:text-white/50 focus:outline-none focus:bg-white/20 transition-colors"
-                />
-                <button 
-                  onClick={() => {
-                    if (email) setSubmitted(true);
-                  }}
-                  className="w-full bg-[var(--color-surface)] text-[var(--color-primary)] font-bold py-3.5 rounded-[var(--radius-btn)] flex items-center justify-center gap-2 transition-colors"
-                >
-                  Demander un accès
-                  <ArrowRight size={18} />
-                </button>
-              </div>
-            </>
-          )}
-        </motion.div>
+            <div className="w-8 h-8 bg-[#F0FDF4] rounded-[10px] mb-2.5 flex items-center justify-center">
+              <Building2 size={20} stroke="#047857" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-[13px] font-bold text-[#1A1A1A] mb-1">Immobilier</h3>
+            <p className="text-[11px] text-[#A39887]">Investissez dans la pierre</p>
+          </div>
+
+          {/* Bourse */}
+          <div className="bg-white rounded-[20px] p-4 text-left opacity-60 relative">
+            <div className="absolute top-3 right-3 bg-[#F5F4F2] text-[#A39887] text-[9px] font-bold uppercase tracking-[0.08em] px-2 py-0.5 rounded-[6px]">
+              Bientôt
+            </div>
+            <div className="w-8 h-8 bg-[#F0FDF4] rounded-[10px] mb-2.5 flex items-center justify-center">
+              <BarChart2 size={20} stroke="#047857" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-[13px] font-bold text-[#1A1A1A] mb-1">Bourse</h3>
+            <p className="text-[11px] text-[#A39887]">Actions et marchés</p>
+          </div>
+
+          {/* Épargne+ */}
+          <div className="bg-white rounded-[20px] p-4 text-left opacity-60 relative">
+            <div className="absolute top-3 right-3 bg-[#F5F4F2] text-[#A39887] text-[9px] font-bold uppercase tracking-[0.08em] px-2 py-0.5 rounded-[6px]">
+              Bientôt
+            </div>
+            <div className="w-8 h-8 bg-[#F0FDF4] rounded-[10px] mb-2.5 flex items-center justify-center">
+              <PiggyBank size={20} stroke="#047857" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-[13px] font-bold text-[#1A1A1A] mb-1">Épargne+</h3>
+            <p className="text-[11px] text-[#A39887]">Rendements garantis</p>
+          </div>
+
+          {/* PME Locales */}
+          <div className="bg-white rounded-[20px] p-4 text-left opacity-60 relative">
+            <div className="absolute top-3 right-3 bg-[#F5F4F2] text-[#A39887] text-[9px] font-bold uppercase tracking-[0.08em] px-2 py-0.5 rounded-[6px]">
+              Bientôt
+            </div>
+            <div className="w-8 h-8 bg-[#F0FDF4] rounded-[10px] mb-2.5 flex items-center justify-center">
+              <Briefcase size={20} stroke="#047857" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-[13px] font-bold text-[#1A1A1A] mb-1">PME Locales</h3>
+            <p className="text-[11px] text-[#A39887]">Financez des entreprises</p>
+          </div>
+
+        </div>
+
+        {/* Note bas */}
+        <p className="text-[12px] text-[#C4B8AC] text-center">
+          Rejoignez la liste d'attente pour être notifié en premier.
+        </p>
 
       </div>
     </div>
