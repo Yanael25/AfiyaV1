@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Shield, Settings, HelpCircle, LogOut, ChevronRight, AlertCircle } from 'lucide-react';
+import { User, Shield, Settings, HelpCircle, LogOut, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../../lib/firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
@@ -48,10 +48,10 @@ export function Profile() {
 
   const getTierColor = (tier: string) => {
     switch (tier) {
-      case 'PLATINUM': return 'bg-[#EDE9FE] text-[#5B21B6]';
-      case 'GOLD': return 'bg-[#FDF3DC] text-[#C47820]';
-      case 'SILVER': return 'bg-[#F1F5F9] text-[#475569]';
-      default: return 'bg-[#F5E6D3] text-[#92400E]';
+      case 'PLATINUM': return 'bg-[var(--color-primary-light)] text-[var(--color-primary)]';
+      case 'GOLD': return 'bg-[var(--color-primary-light)] text-[var(--color-primary)]';
+      case 'SILVER': return 'bg-[var(--color-surface-inner)] text-[var(--color-text-secondary)]';
+      default: return 'bg-[var(--color-surface-inner)] text-[var(--color-text-secondary)]';
     }
   };
 
@@ -75,8 +75,8 @@ export function Profile() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#FAFAF8]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#047857]"></div>
+      <div className="flex-1 flex items-center justify-center bg-[var(--color-bg)]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)]"></div>
       </div>
     );
   }
@@ -86,21 +86,21 @@ export function Profile() {
   const pointsToNext = nextThreshold ? nextThreshold - profile.score_afiya : 0;
 
   return (
-    <div className="flex-1 bg-[#FAFAF8] flex flex-col h-full pb-24">
+    <div className="flex-1 bg-[var(--color-bg)] flex flex-col h-full pb-24">
       {/* Bloc 1 — Identité */}
-      <div className="bg-white px-6 pt-12 pb-6 border-b border-[#ECECEA]">
+      <div className="bg-[var(--color-surface)] px-6 pt-12 pb-6">
         <div className="max-w-2xl mx-auto w-full">
-          <h1 className="text-xl font-semibold text-[#1C1410] mb-6">Profil</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text-primary)] mb-6">Profil</h1>
           
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-[#047857] flex items-center justify-center">
+            <div className="w-16 h-16 rounded-[var(--radius-avatar)] bg-[var(--color-primary)] flex items-center justify-center">
               <span className="text-white text-2xl font-bold">
                 {(profile.full_name || profile.email || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
               </span>
             </div>
             <div>
-              <h2 className="text-[#1C1410] font-bold text-lg">{profile.full_name || 'Utilisateur'}</h2>
-              <p className="text-[#7C6F5E] text-sm">{profile.email}</p>
+              <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{profile.full_name || 'Utilisateur'}</h2>
+              <p className="text-sm font-normal text-[var(--color-text-secondary)]">{profile.email}</p>
               <div className={`${getTierColor(profile.tier)} px-2 py-0.5 rounded text-[10px] font-bold inline-block mt-1`}>
                 {profile.tier}
               </div>
@@ -112,78 +112,81 @@ export function Profile() {
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-2xl mx-auto w-full space-y-6">
           {/* Bannière Profil Incomplet */}
-          {profile.kyc_status !== 'APPROVED' && (
-            <div className="bg-white border border-[#ECECEA] rounded-2xl p-4 flex items-start gap-3">
-              <AlertCircle size={16} className="text-[#7C6F5E] shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-[#1C1410]">Profil incomplet</h3>
-                <p className="text-xs font-normal text-[#7C6F5E] mt-1">Veuillez compléter votre KYC pour accéder à toutes les fonctionnalités d'Afiya.</p>
-                <button 
-                  onClick={() => navigate('/kyc')}
-                  className="bg-[#047857] text-white rounded-xl text-xs font-semibold px-4 py-2 mt-3"
-                >
-                  Compléter mon profil
-                </button>
+          {(!profile.full_name || profile.kyc_status === 'PENDING') && (
+            <div className="bg-[var(--color-primary-light)] p-5 rounded-[var(--radius-inner)] flex flex-col gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-[var(--radius-avatar)] bg-white flex items-center justify-center shrink-0">
+                  <User size={20} className="text-[var(--color-primary)]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-[var(--color-primary)]">Profil incomplet</h3>
+                  <p className="text-xs font-normal text-[var(--color-text-secondary)] mt-0.5">Veuillez compléter votre KYC pour accéder à toutes les fonctionnalités d'Afiya.</p>
+                </div>
               </div>
+              <button 
+                onClick={() => navigate('/kyc')}
+                className="w-full bg-[var(--color-primary)] text-white py-2.5 rounded-[var(--radius-btn)] font-bold text-sm active:scale-[0.98] transition-transform"
+              >
+                Compléter mon profil
+              </button>
             </div>
           )}
 
           {/* Bloc 2 — Score Afiya */}
-          <div className="bg-white p-5 rounded-2xl border border-[#ECECEA]">
+          <div className="bg-[var(--color-surface)] p-5 rounded-[var(--radius-card)]">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-semibold text-[#1C1410]">Score Afiya</h3>
-              <span className={`${getTierColor(profile.tier)} text-xs font-semibold px-2.5 py-1 rounded-full`}>
-                Niveau {profile.tier}
-              </span>
+              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">Score Afiya</h3>
+              <span className="text-sm font-bold text-[var(--color-primary)]">Niveau {profile.tier}</span>
             </div>
-            <div className="flex items-end gap-1 mb-3">
-              <span className="text-[#1C1410] font-bold text-3xl leading-none">{profile.score_afiya}</span>
-              <span className="text-sm font-normal text-[#7C6F5E] leading-none mb-1">/100</span>
+            <div className="flex items-end gap-2 mb-2">
+              <span className="text-3xl font-bold text-[var(--color-primary)]">{profile.score_afiya}</span>
+              <span className="text-sm font-normal text-[var(--color-text-secondary)] mb-1">/ 100</span>
             </div>
-            <div className="w-full bg-[#ECECEA] h-1.5 rounded-full overflow-hidden">
-              <div className="bg-[#047857] h-1.5 rounded-full transition-all duration-500" style={{ width: `${(profile.score_afiya / 100) * 100}%` }} />
+            <div className="w-full bg-[var(--color-border)] h-2 rounded-[var(--radius-badge)] overflow-hidden">
+              <div className="bg-[var(--color-primary)] h-full rounded-[var(--radius-badge)] transition-all duration-500" style={{ width: `${profile.score_afiya}%` }} />
             </div>
             
             {nextThreshold && (
-              <p className="text-xs font-normal text-[#7C6F5E] mt-2">
-                {pointsToNext} points pour atteindre le tier suivant
+              <p className="text-xs font-normal text-[var(--color-text-secondary)] mt-3">
+                Plus que <span className="font-bold text-[var(--color-primary)]">{pointsToNext} points</span> pour atteindre le tier suivant.
               </p>
             )}
             
-            <div className="mt-6 bg-[#FAFAF8] border border-[#ECECEA] rounded-2xl p-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#A39887]">Caution réduite</p>
-                  <p className="text-sm font-semibold text-[#1C1410] mt-1">Caution × {benefits.caution}</p>
+            <div className="mt-4 pt-4">
+              <p className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">Avantages actuels :</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-[var(--color-bg)] p-2 rounded-[var(--radius-inner)]">
+                  <p className="text-[10px] text-[var(--color-text-secondary)] uppercase">Caution réduite</p>
+                  <p className="text-sm font-bold text-[var(--color-text-primary)]">Caution × {benefits.caution}</p>
                 </div>
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#A39887]">Frais Afiya</p>
-                  <p className="text-sm font-semibold text-[#1C1410] mt-1">{benefits.frais} sur réception</p>
+                <div className="bg-[var(--color-bg)] p-2 rounded-[var(--radius-inner)]">
+                  <p className="text-[10px] text-[var(--color-text-secondary)] uppercase">Frais Afiya</p>
+                  <p className="text-sm font-bold text-[var(--color-text-primary)]">{benefits.frais} sur réception</p>
                 </div>
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#A39887]">Cotisation max</p>
-                  <p className="text-sm font-semibold text-[#1C1410] mt-1">{benefits.max}</p>
+                <div className="bg-[var(--color-bg)] p-2 rounded-[var(--radius-inner)]">
+                  <p className="text-[10px] text-[var(--color-text-secondary)] uppercase">Cotisation max</p>
+                  <p className="text-sm font-bold text-[var(--color-text-primary)]">{benefits.max}</p>
                 </div>
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#A39887]">Membres max</p>
-                  <p className="text-sm font-semibold text-[#1C1410] mt-1">{benefits.members} membres</p>
+                <div className="bg-[var(--color-bg)] p-2 rounded-[var(--radius-inner)]">
+                  <p className="text-[10px] text-[var(--color-text-secondary)] uppercase">Membres max</p>
+                  <p className="text-sm font-bold text-[var(--color-text-primary)]">{benefits.members} membres</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Bloc 3 — Menu */}
-          <div className="bg-white rounded-2xl border border-[#ECECEA] overflow-hidden">
+          <div className="bg-[var(--color-surface)] rounded-[var(--radius-card)] overflow-hidden">
             {auth.currentUser?.email === 'jespere20000@gmail.com' && (
               <button 
                 onClick={() => navigate('/admin')}
-                className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[#F2F2F0] bg-[#FAFAF8] active:bg-[#ECECEA] transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3.5 bg-[var(--color-bg)] active:bg-[var(--color-surface-inner)] transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <Shield size={20} className="text-[#047857]" />
-                  <span className="text-[#047857] font-bold text-sm">Dashboard Admin</span>
+                  <Shield size={20} className="text-[var(--color-primary)]" />
+                  <span className="text-sm font-bold text-[var(--color-primary)]">Dashboard Admin</span>
                 </div>
-                <ChevronRight size={20} className="text-[#047857]" />
+                <ChevronRight size={20} className="text-[var(--color-primary)]" />
               </button>
             )}
             {[
@@ -191,22 +194,22 @@ export function Profile() {
               { icon: Shield, label: 'Sécurité & Mot de passe' },
               { icon: HelpCircle, label: 'Aide & Support' },
             ].map((item, i) => (
-              <button key={i} className="w-full flex items-center justify-between px-4 py-4 border-b border-[#F2F2F0] last:border-0 active:bg-[#FAFAF8] transition-colors">
+              <button key={i} className="w-full flex items-center justify-between px-4 py-3.5 active:bg-[var(--color-surface-inner)] transition-colors">
                 <div className="flex items-center gap-3">
-                  <item.icon size={16} strokeWidth={1.5} className="text-[#7C6F5E]" />
-                  <span className="text-sm font-medium text-[#1C1410]">{item.label}</span>
+                  <item.icon size={20} className="text-[var(--color-text-secondary)]" />
+                  <span className="text-sm font-medium text-[var(--color-text-primary)]">{item.label}</span>
                 </div>
-                <ChevronRight size={14} className="text-[#A39887]" />
+                <ChevronRight size={20} className="text-[var(--color-text-secondary)]" />
               </button>
             ))}
           </div>
 
           <button 
             onClick={handleSignOut}
-            className="w-full flex items-center justify-center gap-2 px-4 py-4 bg-white rounded-2xl border border-[#ECECEA] active:bg-[#FAFAF8] transition-colors"
+            className="w-full flex items-center justify-center gap-2 p-4 text-[var(--color-text-primary)] font-semibold bg-[var(--color-surface)] rounded-[var(--radius-btn)] active:bg-[var(--color-surface-inner)] transition-colors"
           >
-            <LogOut size={16} strokeWidth={1.5} className="text-[#7C6F5E]" />
-            <span className="text-sm font-medium text-[#7C6F5E]">Déconnexion</span>
+            <LogOut size={20} />
+            Déconnexion
           </button>
         </div>
       </div>

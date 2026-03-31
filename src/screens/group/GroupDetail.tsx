@@ -31,53 +31,53 @@ function DrawReveal({ member, group, onComplete }: { member: any, group: any, on
   }, []);
 
   return (
-    <div className="absolute inset-0 z-50 bg-[#141414] text-white flex flex-col items-center justify-center p-6 text-center">
+    <div className="absolute inset-0 z-50 bg-[var(--color-text-primary)] text-white flex flex-col items-center justify-center p-6 text-center">
       {step === 0 && (
         <div className="animate-pulse">
-          <div className="w-24 h-24 border-4 border-[#047857] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+          <div className="w-24 h-24 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
           <h2 className="text-2xl font-bold mb-2">Tirage au sort en cours...</h2>
-          <p className="text-[#A39887]">Attribution des positions pour le groupe {group.name}</p>
+          <p className="text-[var(--color-text-muted)]">Attribution des positions pour le groupe {group.name}</p>
         </div>
       )}
       
       {step === 1 && (
         <div className="animate-bounce">
-          <div className="w-32 h-32 bg-[#047857] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#047857]/50">
+          <div className="w-32 h-32 bg-[var(--color-primary)] rounded-[var(--radius-avatar)] flex items-center justify-center mx-auto mb-6">
             <span className="text-6xl font-black">{member.draw_position}</span>
           </div>
           <h2 className="text-3xl font-bold mb-2">Position {member.draw_position} !</h2>
-          <p className="text-[#86EFAC]">C'est votre ordre de réception de la cagnotte.</p>
+          <p className="text-[var(--color-primary-light)]">C'est votre ordre de réception de la cagnotte.</p>
         </div>
       )}
 
       {step === 2 && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-sm">
-          <div className="w-24 h-24 bg-[#047857] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#047857]/50">
+          <div className="w-24 h-24 bg-[var(--color-primary)] rounded-[var(--radius-avatar)] flex items-center justify-center mx-auto mb-6">
             <span className="text-5xl font-black">{member.draw_position}</span>
           </div>
           <h2 className="text-2xl font-bold mb-4">Position {member.draw_position}</h2>
           
-          <div className="bg-[#1F1F1F] rounded-2xl p-5 mb-8 text-left border border-[#333333]">
-            <h3 className="font-bold text-[#E8E0D0] mb-4 text-sm uppercase tracking-wider">Ajustement de Caution</h3>
+          <div className="bg-white/10 rounded-[var(--radius-card)] p-5 mb-8 text-left">
+            <h3 className="text-sm font-bold text-[var(--color-bg)] mb-4 uppercase tracking-wider">Ajustement de Caution</h3>
             
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-[#A39887]">Caution initiale</span>
+                <span className="text-[var(--color-text-muted)]">Caution initiale</span>
                 <span className="font-bold">{formatXOF(member.initial_deposit || 0)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#A39887]">Caution ajustée (Position {member.draw_position})</span>
-                <span className="font-bold text-[#86EFAC]">{formatXOF(member.adjusted_deposit || 0)}</span>
+                <span className="text-[var(--color-text-muted)]">Caution ajustée (Position {member.draw_position})</span>
+                <span className="font-bold text-[var(--color-primary-light)]">{formatXOF(member.adjusted_deposit || 0)}</span>
               </div>
-              <div className="h-px bg-[#333333] my-2"></div>
+              <div className="h-px bg-white/20 my-2"></div>
               <div className="flex justify-between text-base">
-                <span className="text-[#E8E0D0] font-bold">Différentiel à payer</span>
-                <span className="font-bold text-[#D4AF37]">{formatXOF(member.deposit_differential || 0)}</span>
+                <span className="text-[var(--color-bg)] font-bold">Différentiel à payer</span>
+                <span className="font-bold text-[var(--color-primary-light)]">{formatXOF(member.deposit_differential || 0)}</span>
               </div>
             </div>
             
             {(member.deposit_differential || 0) > 0 && (
-              <p className="text-xs text-[#A39887] mt-4 leading-relaxed">
+              <p className="text-xs font-normal text-[var(--color-text-muted)] mt-4 leading-relaxed">
                 Vous avez 48h pour régler ce différentiel. En cas de non-paiement, votre position sera réattribuée.
               </p>
             )}
@@ -85,7 +85,7 @@ function DrawReveal({ member, group, onComplete }: { member: any, group: any, on
 
           <button 
             onClick={onComplete}
-            className="w-full bg-[#047857] text-white h-14 rounded-xl font-bold text-lg hover:bg-[#059669] transition-colors"
+            className="w-full bg-[var(--color-primary)] text-white h-14 rounded-[var(--radius-btn)] font-bold text-lg hover:opacity-90 transition-opacity"
           >
             Continuer
           </button>
@@ -230,11 +230,11 @@ export function GroupDetail() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'FORMING': return <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">EN CONSTITUTION</span>;
-      case 'ACTIVE': return <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">ACTIF</span>;
-      case 'COMPLETED': return <span className="bg-[#ECFDF5] text-[#047857] px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">TERMINÉ</span>;
-      case 'CANCELLED': return <span className="bg-[#FEE2E2] text-[#C84C31] px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">ANNULÉ</span>;
-      case 'WAITING_VOTE': return <span className="bg-[#FEF3C7] text-[#92400E] px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">VOTE EN COURS</span>;
+      case 'FORMING': return <span className="bg-[var(--color-surface-inner)] text-[var(--color-text-primary)] px-2 py-0.5 rounded-[var(--radius-badge)] text-[10px] font-bold tracking-wide">EN CONSTITUTION</span>;
+      case 'ACTIVE': return <span className="bg-[var(--color-primary-light)] text-[var(--color-primary)] px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">ACTIF</span>;
+      case 'COMPLETED': return <span className="bg-[var(--color-primary-light)] text-[var(--color-primary)] px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">TERMINÉ</span>;
+      case 'CANCELLED': return <span className="bg-[var(--color-surface-inner)] text-[var(--color-text-primary)] px-2 py-0.5 rounded text-[10px] font-bold tracking-wide">ANNULÉ</span>;
+      case 'WAITING_VOTE': return <span className="bg-[var(--color-surface-inner)] text-[var(--color-text-primary)] px-2 py-0.5 rounded-[var(--radius-badge)] text-[10px] font-bold tracking-wide">VOTE EN COURS</span>;
       default: return null;
     }
   };
@@ -293,7 +293,7 @@ export function GroupDetail() {
   };
 
   if (loading && !group) {
-    return <div className="flex-1 bg-[#F5F0E8] flex items-center justify-center">Chargement...</div>;
+    return <div className="flex-1 bg-[var(--color-bg)] flex items-center justify-center">Chargement...</div>;
   }
 
   if (!group) return null;
@@ -316,24 +316,24 @@ export function GroupDetail() {
   }
 
   return (
-    <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full relative">
+    <div className="flex-1 bg-[var(--color-bg)] flex flex-col h-full relative">
       {needsReveal && (
         <DrawReveal member={memberInfo} group={group} onComplete={handleDrawSeen} />
       )}
 
       {/* Clean Premium Header */}
-      <div className="bg-white px-4 pt-4 pb-0 shadow-sm z-20 border-b border-[#E8E0D0]">
+      <div className="bg-[var(--color-surface)] px-4 pt-4 pb-0 z-20">
         <div className="max-w-4xl mx-auto w-full">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <button onClick={() => navigate('/tontines')} className="p-2 -ml-2 text-[#7C6F5E] hover:bg-[#F5F0E8] rounded-full transition-colors">
+              <button onClick={() => navigate('/tontines')} className="p-2 -ml-2 text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-inner)] rounded-[var(--radius-btn)] transition-colors">
                 <X size={24} />
               </button>
               <div>
-                <h1 className="text-[#1C1410] text-lg font-bold leading-tight">{group.name}</h1>
+                <h1 className="text-[var(--color-text-primary)] text-lg font-bold leading-tight">{group.name}</h1>
                 <div className="flex items-center gap-2 mt-0.5">
                   {getStatusBadge(group.status)}
-                  <span className="text-[#A39887] text-xs flex items-center gap-1">
+                  <span className="text-xs font-normal text-[var(--color-text-muted)] flex items-center gap-1">
                     <Users size={12} /> {membersList.length}/{group.target_members}
                   </span>
                 </div>
@@ -345,17 +345,17 @@ export function GroupDetail() {
           <div className="flex gap-6 px-2">
             <button 
               onClick={() => setActiveTab('dashboard')}
-              className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'dashboard' ? 'text-[#047857]' : 'text-[#A39887]'}`}
+              className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'dashboard' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}
             >
               Tableau de bord
-              {activeTab === 'dashboard' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#047857] rounded-t-full" />}
+              {activeTab === 'dashboard' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-t-full" />}
             </button>
             <button 
               onClick={() => setActiveTab('chat')}
-              className={`pb-3 text-sm font-semibold transition-colors relative flex items-center gap-1.5 ${activeTab === 'chat' ? 'text-[#047857]' : 'text-[#A39887]'}`}
+              className={`pb-3 text-sm font-medium transition-colors relative flex items-center gap-1.5 ${activeTab === 'chat' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}
             >
               Discussion
-              {activeTab === 'chat' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#047857] rounded-t-full" />}
+              {activeTab === 'chat' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-t-full" />}
             </button>
           </div>
         </div>
@@ -365,39 +365,39 @@ export function GroupDetail() {
       <div className="flex-1 overflow-y-auto relative z-10 flex flex-col">
         <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col">
           {error && (
-            <div className="mx-4 mt-4 bg-[#FEE2E2] border border-[#FCA5A5] rounded-xl px-4 py-3 text-sm text-[#C84C31]">
+            <div className="mx-4 mt-4 bg-[var(--color-surface-inner)] rounded-[var(--radius-inner)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)]">
               {error}
             </div>
           )}
 
           {successMessage && (
-            <div className="mx-4 mt-4 bg-[#ECFDF5] border border-[#E8E0D0] rounded-xl px-4 py-3 text-sm text-[#047857]">
+            <div className="mx-4 mt-4 bg-[var(--color-primary-light)] rounded-[var(--radius-inner)] px-4 py-3 text-sm font-medium text-[var(--color-primary)]">
               {successMessage}
             </div>
           )}
 
           {needsPayment && activeTab === 'dashboard' && !needsReveal && (
-            <div className="bg-[#FEF3C7] border-b border-[#FDE68A] p-4">
+            <div className="bg-[var(--color-surface-inner)] p-4">
               <div className="flex gap-3">
-                <AlertCircle className="text-[#92400E] shrink-0 mt-0.5" size={20} />
+                <AlertCircle className="text-[var(--color-text-primary)] shrink-0 mt-0.5" size={20} />
                 <div className="flex-1">
-                  <h3 className="text-[#92400E] font-bold text-sm mb-1">Action requise : Ajustement de caution</h3>
-                  <p className="text-[#92400E] text-xs mb-3 leading-relaxed">
+                  <h3 className="text-sm font-bold text-[var(--color-text-primary)] mb-1">Action requise : Ajustement de caution</h3>
+                  <p className="text-xs font-normal text-[var(--color-text-secondary)] mb-3 leading-relaxed">
                     Suite au tirage au sort, vous avez obtenu la position {memberInfo.draw_position}. 
                     Votre caution doit être ajustée pour sécuriser le groupe.
                   </p>
-                  <div className="flex items-center justify-between bg-white/60 rounded-lg p-2 mb-3">
-                    <span className="text-[#92400E] text-xs font-medium">Montant à régler</span>
-                    <span className="text-[#92400E] font-bold">{formatXOF(memberInfo.deposit_differential)}</span>
+                  <div className="flex items-center justify-between bg-[var(--color-surface)] rounded-[var(--radius-inner)] p-2 mb-3">
+                    <span className="text-xs font-medium text-[var(--color-text-secondary)]">Montant à régler</span>
+                    <span className="text-[var(--color-text-primary)] font-bold">{formatXOF(memberInfo.deposit_differential)}</span>
                   </div>
-                  <div className="flex items-center gap-2 mb-3 text-[#D97706] text-xs font-medium">
+                  <div className="flex items-center gap-2 mb-3 text-xs font-medium text-[var(--color-text-secondary)]">
                     <Clock size={14} />
                     <span>Temps restant : {timeLeftStr}</span>
                   </div>
                   <button 
                     onClick={handlePayDifferential}
                     disabled={loading}
-                    className="w-full bg-[#D97706] hover:bg-[#B45309] text-white text-sm font-bold py-2.5 rounded-lg transition-colors disabled:opacity-50"
+                    className="w-full bg-[var(--color-primary)] hover:opacity-90 text-white text-sm font-bold py-2.5 rounded-[var(--radius-btn)] transition-colors disabled:opacity-50"
                   >
                     {loading ? 'Traitement...' : 'Payer l\'ajustement'}
                   </button>
@@ -410,47 +410,47 @@ export function GroupDetail() {
             <div className="p-6 space-y-6 flex-1">
               {/* Info Cards */}
               <div className="flex gap-4">
-                <div className="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-[#E8E0D0]">
-                  <div className="flex items-center gap-2 text-[#7C6F5E] mb-2">
+                <div className="flex-1 bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)]">
+                  <div className="flex items-center gap-2 text-[var(--color-text-secondary)] mb-2">
                     <Calendar size={16} />
-                    <span className="text-xs font-medium">Fréquence</span>
+                    <span className="text-xs font-medium text-[var(--color-text-secondary)]">Fréquence</span>
                   </div>
-                  <p className="text-[#1C1410] font-bold">{group.frequency === 'WEEKLY' ? 'Hebdomadaire' : group.frequency === 'MONTHLY' ? 'Mensuelle' : 'Trimestrielle'}</p>
+                  <p className="text-[var(--color-text-primary)] font-bold">{group.frequency === 'WEEKLY' ? 'Hebdomadaire' : group.frequency === 'MONTHLY' ? 'Mensuelle' : 'Trimestrielle'}</p>
                 </div>
-                <div className="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-[#E8E0D0]">
-                  <div className="flex items-center gap-2 text-[#7C6F5E] mb-2">
+                <div className="flex-1 bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)]">
+                  <div className="flex items-center gap-2 text-[var(--color-text-secondary)] mb-2">
                     <Info size={16} />
-                    <span className="text-xs font-medium">Cotisation</span>
+                    <span className="text-xs font-medium text-[var(--color-text-secondary)]">Cotisation</span>
                   </div>
-                  <p className="text-[#1C1410] font-bold">{formatXOF(group.contribution_amount)}</p>
+                  <p className="text-[var(--color-text-primary)] font-bold">{formatXOF(group.contribution_amount)}</p>
                 </div>
               </div>
 
               {/* Mon Statut */}
               {memberInfo && (
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8E0D0]">
-                  <h2 className="text-[#1C1410] font-semibold text-lg mb-4">Mon statut</h2>
+                <div className="bg-[var(--color-surface)] p-5 rounded-[var(--radius-card)]">
+                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">Mon statut</h2>
                   <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-[#7C6F5E]">Position de tirage</span>
-                      <span className="font-bold text-[#1C1410]">{memberInfo.draw_position || 'Non tiré'}</span>
+                    <div className="flex justify-between text-sm font-medium">
+                      <span className="text-[var(--color-text-secondary)]">Position de tirage</span>
+                      <span className="font-bold text-[var(--color-text-primary)]">{memberInfo.draw_position || 'Non tiré'}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-[#7C6F5E]">Caution payée</span>
-                      <span className="font-bold text-[#1C1410]">{formatXOF(memberInfo.initial_deposit)}</span>
+                    <div className="flex justify-between text-sm font-medium">
+                      <span className="text-[var(--color-text-secondary)]">Caution payée</span>
+                      <span className="font-bold text-[var(--color-text-primary)]">{formatXOF(memberInfo.initial_deposit)}</span>
                     </div>
                     {memberInfo.adjusted_deposit && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-[#7C6F5E]">Caution ajustée</span>
-                        <span className="font-bold text-[#1C1410]">{formatXOF(memberInfo.adjusted_deposit)}</span>
+                      <div className="flex justify-between text-sm font-medium">
+                        <span className="text-[var(--color-text-secondary)]">Caution ajustée</span>
+                        <span className="font-bold text-[var(--color-text-primary)]">{formatXOF(memberInfo.adjusted_deposit)}</span>
                       </div>
                     )}
                     {memberInfo.deposit_differential > 0 && !memberInfo.deposit_differential_paid && (
-                      <div className="mt-3 bg-[#FEF3C7] p-3 rounded-xl border border-[#FDE68A] flex items-start gap-3">
-                        <AlertCircle size={20} className="text-[#92400E] shrink-0 mt-0.5" />
+                      <div className="mt-3 bg-[var(--color-surface-inner)] p-3 rounded-[var(--radius-inner)] flex items-start gap-3">
+                        <AlertCircle size={20} className="text-[var(--color-text-primary)] shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-sm font-bold text-[#92400E] mb-1">Différentiel à payer : {formatXOF(memberInfo.deposit_differential)}</p>
-                          <p className="text-xs text-[#92400E]">Veuillez régler ce montant via la bannière ci-dessus.</p>
+                          <p className="text-sm font-bold text-[var(--color-text-primary)] mb-1">Différentiel à payer : {formatXOF(memberInfo.deposit_differential)}</p>
+                          <p className="text-xs font-normal text-[var(--color-text-secondary)]">Veuillez régler ce montant via la bannière ci-dessus.</p>
                         </div>
                       </div>
                     )}
@@ -460,17 +460,17 @@ export function GroupDetail() {
 
               {/* Invitation Code (Admin only) */}
               {group.is_admin && group.status === 'FORMING' && (
-                <div className="bg-[#ECFDF5] p-5 rounded-2xl border border-[#E8E0D0] flex items-center justify-between">
+                <div className="bg-[var(--color-primary-light)] p-5 rounded-[var(--radius-card)] flex items-center justify-between">
                   <div>
-                    <p className="text-[#047857] text-xs font-medium mb-1">Code d'invitation</p>
-                    <p className="text-[#047857] font-bold text-xl tracking-widest">{group.invitation_code}</p>
+                    <p className="text-xs font-medium text-[var(--color-primary)] mb-1">Code d'invitation</p>
+                    <p className="text-[var(--color-primary)] font-bold text-xl tracking-widest">{group.invitation_code}</p>
                   </div>
                   <button 
                     onClick={() => {
                       navigator.clipboard.writeText(group.invitation_code);
                       setSuccessMessage('Code copié !');
                     }}
-                    className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-[#047857] active:bg-[#ECFDF5]"
+                    className="w-10 h-10 bg-[var(--color-surface)] rounded-[var(--radius-btn)] flex items-center justify-center text-[var(--color-primary)] active:bg-[var(--color-surface-inner)]"
                   >
                     <Share2 size={20} />
                   </button>
@@ -479,30 +479,30 @@ export function GroupDetail() {
 
               {/* Members List */}
               <div>
-                <h2 className="text-[#1C1410] font-semibold text-lg mb-4">Membres ({membersList.length})</h2>
-                <div className="bg-white rounded-2xl shadow-sm border border-[#E8E0D0] overflow-hidden">
+                <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">Membres ({membersList.length})</h2>
+                <div className="bg-[var(--color-surface)] rounded-[var(--radius-card)] overflow-hidden">
                   {membersList.map((member) => (
-                    <div key={member.id} className="flex items-center justify-between p-4 border-b border-[#E8E0D0] last:border-0">
+                    <div key={member.id} className="flex items-center justify-between p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#F5F0E8] flex items-center justify-center">
-                          <span className="text-[#7C6F5E] font-bold">{member.name.charAt(0)}</span>
+                        <div className="w-10 h-10 rounded-[var(--radius-avatar)] bg-[var(--color-bg)] flex items-center justify-center">
+                          <span className="text-[var(--color-text-secondary)] font-bold">{member.name.charAt(0)}</span>
                         </div>
                         <div>
-                          <p className="text-[#1C1410] font-medium text-sm flex items-center gap-2">
+                          <p className="text-sm font-medium text-[var(--color-text-primary)] flex items-center gap-2">
                             {member.name}
                             {member.is_admin && (
-                              <span className="bg-[#FDF3DC] text-[#C47820] text-[10px] px-1.5 py-0.5 rounded font-bold">ADMIN</span>
+                              <span className="bg-[var(--color-surface-inner)] text-[var(--color-text-primary)] text-[10px] px-1.5 py-0.5 rounded-[var(--radius-badge)] font-bold">ADMIN</span>
                             )}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[10px] font-bold text-[#D4AF37]">{member.tier}</span>
-                            <span className="text-[#A39887] text-xs">• {member.status === 'ACTIVE' ? 'Actif' : member.status}</span>
+                            <span className="text-[10px] font-bold text-[var(--color-text-primary)]">{member.tier}</span>
+                            <span className="text-xs font-normal text-[var(--color-text-muted)]">• {member.status === 'ACTIVE' ? 'Actif' : member.status}</span>
                           </div>
                         </div>
                       </div>
                       {member.draw_position && (
-                        <div className="w-8 h-8 rounded-full bg-[#F5F0E8] flex items-center justify-center border border-[#E8E0D0]">
-                          <span className="text-xs font-bold text-[#7C6F5E]">{member.draw_position}</span>
+                        <div className="w-8 h-8 rounded-[var(--radius-avatar)] bg-[var(--color-bg)] flex items-center justify-center">
+                          <span className="text-xs font-bold text-[var(--color-text-secondary)]">{member.draw_position}</span>
                         </div>
                       )}
                     </div>
@@ -511,14 +511,14 @@ export function GroupDetail() {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col flex-1 bg-[#F5F0E8]">
+            <div className="flex flex-col flex-1 bg-[var(--color-bg)]">
               {/* Chat Messages Area */}
               <div className="flex-1 p-4 overflow-y-auto space-y-4">
                 {messages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-[#A39887]">
+                  <div className="h-full flex flex-col items-center justify-center text-[var(--color-text-muted)]">
                     <MessageCircle size={48} className="mb-4 opacity-50" />
-                    <p className="text-sm">Aucun message pour le moment.</p>
-                    <p className="text-xs mt-1">Commencez à discuter avec votre Cercle !</p>
+                    <p className="text-sm font-normal text-[var(--color-text-secondary)]">Aucun message pour le moment.</p>
+                    <p className="text-xs font-normal text-[var(--color-text-muted)] mt-1">Commencez à discuter avec votre Cercle !</p>
                   </div>
                 ) : (
                   messages.map((msg) => {
@@ -526,11 +526,11 @@ export function GroupDetail() {
                     const sender = membersList.find(m => m.user_id === msg.user_id);
                     return (
                       <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                        {!isMe && <span className="text-[10px] text-[#7C6F5E] ml-1 mb-1">{sender?.name || 'Membre'}</span>}
-                        <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${isMe ? 'bg-[#047857] text-white rounded-tr-sm' : 'bg-white text-[#1C1410] border border-[#E8E0D0] rounded-tl-sm'}`}>
+                        {!isMe && <span className="text-[10px] text-[var(--color-text-secondary)] ml-1 mb-1">{sender?.name || 'Membre'}</span>}
+                        <div className={`max-w-[80%] p-3 rounded-[var(--radius-inner)] text-sm font-normal ${isMe ? 'bg-[var(--color-primary)] text-white rounded-tr-sm' : 'bg-[var(--color-surface)] text-[var(--color-text-primary)] rounded-tl-sm'}`}>
                           {msg.text}
                         </div>
-                        <span className="text-[10px] text-[#A39887] mt-1 mx-1">
+                        <span className="text-[10px] text-[var(--color-text-muted)] mt-1 mx-1">
                           {new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
@@ -540,19 +540,19 @@ export function GroupDetail() {
               </div>
               
               {/* Chat Input */}
-              <div className="bg-white p-4 border-t border-[#E8E0D0] flex items-center gap-3">
+              <div className="bg-[var(--color-surface)] p-4 flex items-center gap-3">
                 <input 
                   type="text" 
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder="Écrire un message..."
-                  className="flex-1 bg-[#F5F0E8] rounded-full h-10 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#047857]/20"
+                  className="flex-1 bg-[var(--color-bg)] rounded-[var(--radius-field)] h-10 px-4 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
                 />
                 <button 
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim()}
-                  className="w-10 h-10 bg-[#047857] rounded-full flex items-center justify-center text-white disabled:opacity-50 transition-opacity"
+                  className="w-10 h-10 bg-[var(--color-primary)] rounded-[var(--radius-btn)] flex items-center justify-center text-white disabled:opacity-50 transition-opacity"
                 >
                   <Send size={18} className="ml-0.5" />
                 </button>
@@ -564,17 +564,17 @@ export function GroupDetail() {
 
       {/* Action Buttons (Only visible on dashboard tab) */}
       {activeTab === 'dashboard' && group.is_admin && group.status === 'FORMING' && (
-        <div className="p-6 bg-white border-t border-[#E8E0D0] z-20">
+        <div className="p-6 bg-[var(--color-surface)] z-20">
           <div className="max-w-4xl mx-auto w-full">
             <button
               onClick={handleStartGroup}
-              className="w-full bg-[#047857] hover:bg-[#059669] text-white h-14 rounded-xl font-semibold text-lg disabled:opacity-50 transition-colors"
+              className="w-full bg-[var(--color-primary)] hover:opacity-90 text-white h-14 rounded-[var(--radius-btn)] font-semibold text-lg disabled:opacity-50 transition-opacity"
               disabled={membersList.length < group.target_members || loading}
             >
               {loading ? 'Démarrage...' : 'Démarrer le Cercle'}
             </button>
             {membersList.length < group.target_members && (
-              <p className="text-center text-xs text-[#A39887] mt-3">
+              <p className="text-xs font-normal text-center text-[var(--color-text-muted)] mt-3">
                 En attente de {group.target_members - membersList.length} membres pour démarrer
               </p>
             )}
@@ -583,18 +583,18 @@ export function GroupDetail() {
       )}
 
       {activeTab === 'dashboard' && group.status === 'ACTIVE' && memberInfo && activeCycle && (
-        <div className="p-6 bg-white border-t border-[#E8E0D0] z-20">
+        <div className="p-6 bg-[var(--color-surface)] z-20">
           <div className="max-w-4xl mx-auto w-full">
             {userPayment?.status === 'PENDING' ? (
               <button
-                className="w-full bg-[#047857] hover:bg-[#059669] text-white h-14 rounded-xl font-semibold text-lg disabled:opacity-50 transition-colors"
+                className="w-full bg-[var(--color-primary)] hover:opacity-90 text-white h-14 rounded-[var(--radius-btn)] font-semibold text-lg disabled:opacity-50 transition-opacity"
                 onClick={handlePayContribution}
                 disabled={loading}
               >
                 {loading ? 'Traitement...' : `Payer ma cotisation (${formatXOF(group.contribution_amount)})`}
               </button>
             ) : (
-              <div className="w-full bg-[#ECFDF5] text-[#047857] h-14 rounded-xl font-semibold text-lg flex items-center justify-center border border-[#E8E0D0]">
+              <div className="w-full bg-[var(--color-primary-light)] text-[var(--color-primary)] h-14 rounded-[var(--radius-btn)] font-semibold text-lg flex items-center justify-center">
                 Cotisation payée pour ce cycle
               </div>
             )}

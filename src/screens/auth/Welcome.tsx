@@ -1,38 +1,63 @@
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { ArrowRight } from 'lucide-react';
 
 export function Welcome() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full">
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="w-full max-w-sm"
-        >
-          <div className="w-16 h-16 bg-[#047857] rounded-xl flex items-center justify-center mb-8">
-            <span className="text-white text-2xl font-bold">A</span>
-          </div>
-          <h1 className="text-2xl font-bold text-[#1C1410] mb-4 leading-tight">
-            Votre épargne,<br />à votre façon.
-          </h1>
-          <p className="text-sm text-[#7C6F5E] mb-12">
-            Rejoignez des Cercles de confiance ou épargnez dans les Afiya Pools en toute sécurité.
-          </p>
-        </motion.div>
+    <div className="w-full h-full flex flex-col bg-[#FAFAF8] relative">
+      {/* Texture background */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-[0.08]"
+        style={{
+          backgroundImage: 'radial-gradient(#047857 1px, transparent 1px)',
+          backgroundSize: '24px 24px'
+        }}
+      />
+
+      {/* ZONE 1 */}
+      <div className="flex-1 flex flex-col justify-center px-[28px] relative z-10">
+        <div className="w-[10px] h-[10px] bg-[#047857] rounded-full mb-[16px]" />
+        
+        <h1 className="text-[48px] font-[800] text-[#1A1A1A] tracking-[-0.03em] leading-none">
+          Afiya
+        </h1>
+        
+        <p className="text-[15px] font-[500] text-[#6B6B6B] mt-[8px]">
+          Votre épargne, à votre façon.
+        </p>
+        
+        <div className="w-[40px] h-[2px] bg-[#047857] my-[24px]" />
+        
+        <p className="text-[13px] font-[400] text-[#A39887] leading-[1.6]">
+          La tontine que vous connaissez, portée par la confiance et la technologie.
+        </p>
       </div>
-      
-      <div className="p-6 pb-12">
+
+      {/* ZONE 2 */}
+      <div className="px-[28px] pb-[48px] relative z-10">
+        <button
+          onClick={() => navigate('/signup')}
+          className="w-full bg-[#047857] text-[#FFFFFF] rounded-[16px] p-[16px] text-[15px] font-[700] mb-[10px]"
+        >
+          Créer un compte
+        </button>
+        
         <button
           onClick={() => navigate('/login')}
-          className="w-full bg-[#047857] text-white h-14 rounded-2xl font-semibold flex items-center justify-center gap-2 hover:bg-[#059669] transition-colors"
+          className="w-full bg-[#FFFFFF] text-[#1A1A1A] rounded-[16px] p-[16px] text-[15px] font-[700] mb-[16px]"
         >
-          Commencer
-          <ArrowRight size={20} />
+          Se connecter
         </button>
+        
+        <p className="text-center text-[12px] text-[#A39887]">
+          Rejoindre un cercle existant ?{' '}
+          <button 
+            onClick={() => navigate('/group/join')}
+            className="text-[#047857] font-[700]"
+          >
+            Par invitation
+          </button>
+        </p>
       </div>
     </div>
   );

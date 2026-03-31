@@ -176,75 +176,75 @@ export function AdminDashboard() {
   // Renderers
   const renderSynthese = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-[#E8E0D0]">
+      <div className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)]">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-[#ECFDF5] rounded-lg"><Users className="w-5 h-5 text-[#047857]" /></div>
-          <h3 className="text-[#7C6F5E] font-medium">Total Utilisateurs</h3>
+          <div className="p-2 bg-[var(--color-primary-light)] rounded-[var(--radius-inner)]"><Users className="w-5 h-5 text-[var(--color-primary)]" strokeWidth={1.5} /></div>
+          <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">Total Utilisateurs</h3>
         </div>
-        <p className="text-2xl font-bold text-[#1C1410]">{totalUsers}</p>
+        <p className="text-2xl font-bold text-[var(--color-text-primary)]">{totalUsers}</p>
       </div>
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-[#E8E0D0]">
+      <div className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)]">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-emerald-50 rounded-lg"><Wallet className="w-5 h-5 text-emerald-600" /></div>
-          <h3 className="text-[#7C6F5E] font-medium">Total USER_MAIN</h3>
+          <div className="p-2 bg-[var(--color-primary-light)] rounded-[var(--radius-inner)]"><Wallet className="w-5 h-5 text-[var(--color-primary)]" strokeWidth={1.5} /></div>
+          <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">Total USER_MAIN</h3>
         </div>
-        <p className="text-2xl font-bold text-[#1C1410]">{formatXOF(totalUserMainBalance)}</p>
+        <p className="text-2xl font-bold text-[var(--color-text-primary)]">{formatXOF(totalUserMainBalance)}</p>
       </div>
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-[#E8E0D0]">
+      <div className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)]">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-purple-50 rounded-lg"><Shield className="w-5 h-5 text-purple-600" /></div>
-          <h3 className="text-[#7C6F5E] font-medium">Solde GLOBAL_FUND</h3>
+          <div className="p-2 bg-[var(--color-bg)] rounded-[var(--radius-inner)]"><Shield className="w-5 h-5 text-[var(--color-text-primary)]" strokeWidth={1.5} /></div>
+          <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">Solde GLOBAL_FUND</h3>
         </div>
-        <p className="text-2xl font-bold text-[#1C1410]">{formatXOF(globalFundBalance)}</p>
+        <p className="text-2xl font-bold text-[var(--color-text-primary)]">{formatXOF(globalFundBalance)}</p>
       </div>
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-[#E8E0D0]">
+      <div className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)]">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-orange-50 rounded-lg"><Clock className="w-5 h-5 text-orange-600" /></div>
-          <h3 className="text-[#7C6F5E] font-medium">Total ESCROW_CONSTITUTION</h3>
+          <div className="p-2 bg-[var(--color-bg)] rounded-[var(--radius-inner)]"><Clock className="w-5 h-5 text-[var(--color-text-primary)]" strokeWidth={1.5} /></div>
+          <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">Total ESCROW_CONSTITUTION</h3>
         </div>
-        <p className="text-2xl font-bold text-[#1C1410]">{formatXOF(totalEscrow)}</p>
+        <p className="text-2xl font-bold text-[var(--color-text-primary)]">{formatXOF(totalEscrow)}</p>
       </div>
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-[#E8E0D0]">
+      <div className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)]">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-indigo-50 rounded-lg"><Repeat className="w-5 h-5 text-indigo-600" /></div>
-          <h3 className="text-[#7C6F5E] font-medium">Total CONTRIBUTION_POOL</h3>
+          <div className="p-2 bg-[var(--color-bg)] rounded-[var(--radius-inner)]"><Repeat className="w-5 h-5 text-[var(--color-text-primary)]" strokeWidth={1.5} /></div>
+          <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">Total CONTRIBUTION_POOL</h3>
         </div>
-        <p className="text-2xl font-bold text-[#1C1410]">{formatXOF(totalContribPool)}</p>
+        <p className="text-2xl font-bold text-[var(--color-text-primary)]">{formatXOF(totalContribPool)}</p>
       </div>
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-[#E8E0D0]">
+      <div className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)]">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-teal-50 rounded-lg"><Activity className="w-5 h-5 text-teal-600" /></div>
-          <h3 className="text-[#7C6F5E] font-medium">Total GROUP_MINI_FUND</h3>
+          <div className="p-2 bg-[var(--color-bg)] rounded-[var(--radius-inner)]"><Activity className="w-5 h-5 text-[var(--color-text-primary)]" strokeWidth={1.5} /></div>
+          <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">Total GROUP_MINI_FUND</h3>
         </div>
-        <p className="text-2xl font-bold text-[#1C1410]">{formatXOF(totalMiniFund)}</p>
+        <p className="text-2xl font-bold text-[var(--color-text-primary)]">{formatXOF(totalMiniFund)}</p>
       </div>
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-[#E8E0D0] md:col-span-2 lg:col-span-3">
-        <h3 className="text-[#7C6F5E] font-medium mb-4">Statut des Cercles</h3>
+      <div className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)] md:col-span-2 lg:col-span-3">
+        <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] mb-4">Statut des Cercles</h3>
         <div className="flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[120px] p-3 bg-orange-50 rounded-lg border border-orange-100">
-            <p className="text-sm text-orange-600 font-medium">FORMING</p>
-            <p className="text-xl font-bold text-orange-900">{groupsForming}</p>
+          <div className="flex-1 min-w-[120px] p-3 bg-[var(--color-bg)] rounded-[var(--radius-inner)]">
+            <p className="text-sm font-medium text-[var(--color-text-secondary)]">FORMING</p>
+            <p className="text-xl font-bold text-[var(--color-text-primary)]">{groupsForming}</p>
           </div>
-          <div className="flex-1 min-w-[120px] p-3 bg-green-50 rounded-lg border border-green-100">
-            <p className="text-sm text-green-600 font-medium">ACTIVE</p>
-            <p className="text-xl font-bold text-green-900">{groupsActive}</p>
+          <div className="flex-1 min-w-[120px] p-3 bg-[var(--color-primary-light)] rounded-[var(--radius-inner)]">
+            <p className="text-sm font-medium text-[var(--color-primary)]">ACTIVE</p>
+            <p className="text-xl font-bold text-[var(--color-primary)]">{groupsActive}</p>
           </div>
-          <div className="flex-1 min-w-[120px] p-3 bg-[#ECFDF5] rounded-lg border border-[#047857]/20">
-            <p className="text-sm text-[#047857] font-medium">COMPLETED</p>
-            <p className="text-xl font-bold text-[#047857]">{groupsCompleted}</p>
+          <div className="flex-1 min-w-[120px] p-3 bg-[var(--color-bg)] rounded-[var(--radius-inner)]">
+            <p className="text-sm font-medium text-[var(--color-text-secondary)]">COMPLETED</p>
+            <p className="text-xl font-bold text-[var(--color-text-primary)]">{groupsCompleted}</p>
           </div>
-          <div className="flex-1 min-w-[120px] p-3 bg-red-50 rounded-lg border border-red-100">
-            <p className="text-sm text-red-600 font-medium">CANCELLED</p>
-            <p className="text-xl font-bold text-red-900">{groupsCancelled}</p>
+          <div className="flex-1 min-w-[120px] p-3 bg-[var(--color-surface-inner)] rounded-[var(--radius-inner)]">
+            <p className="text-sm font-medium text-[var(--color-text-muted)]">CANCELLED</p>
+            <p className="text-xl font-bold text-[var(--color-text-muted)]">{groupsCancelled}</p>
           </div>
         </div>
       </div>
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-[#E8E0D0] lg:col-span-3">
+      <div className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)] lg:col-span-3">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-[#F5F0E8] rounded-lg"><ArrowRightLeft className="w-5 h-5 text-[#7C6F5E]" /></div>
-          <h3 className="text-[#7C6F5E] font-medium">Transactions (50 dernières)</h3>
+          <div className="p-2 bg-[var(--color-bg)] rounded-[var(--radius-inner)]"><ArrowRightLeft className="w-5 h-5 text-[var(--color-text-secondary)]" strokeWidth={1.5} /></div>
+          <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">Transactions (50 dernières)</h3>
         </div>
-        <p className="text-2xl font-bold text-[#1C1410]">{transactions.length}</p>
+        <p className="text-2xl font-bold text-[var(--color-text-primary)]">{transactions.length}</p>
       </div>
     </div>
   );
@@ -252,19 +252,19 @@ export function AdminDashboard() {
   const renderUtilisateurs = () => (
     <div className="p-4">
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#A39887]" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-muted)]" strokeWidth={1.5} />
         <input 
           type="text" 
           placeholder="Rechercher par nom ou email..." 
           value={searchUser}
           onChange={(e) => setSearchUser(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-[#E8E0D0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#047857]"
+          className="w-full pl-10 pr-4 py-2 rounded-[var(--radius-field)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
         />
       </div>
-      <div className="bg-white rounded-xl shadow-sm border border-[#E8E0D0] overflow-x-auto">
+      <div className="bg-[var(--color-surface)] rounded-[var(--radius-card)] overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-[#F5F0E8] border-b border-[#E8E0D0] text-sm text-[#7C6F5E]">
+            <tr className="bg-[var(--color-bg)] border-b border-[var(--color-divider)] text-sm font-normal text-[var(--color-text-secondary)]">
               <th className="p-4 font-medium">Utilisateur</th>
               <th className="p-4 font-medium">Tier</th>
               <th className="p-4 font-medium">Score Afiya</th>
@@ -276,24 +276,24 @@ export function AdminDashboard() {
             {filteredUsers.map(user => {
               const userWallet = wallets.find(w => w.owner_id === user.id && w.wallet_type === 'USER_MAIN');
               return (
-                <tr key={user.id} className="border-b border-[#F5F0E8] hover:bg-[#F5F0E8]/50">
+                <tr key={user.id} className="border-b border-[var(--color-bg)] hover:bg-[var(--color-surface-inner)]">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#047857] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                      <div className="w-10 h-10 rounded-[var(--radius-avatar)] bg-[var(--color-primary)] text-white flex items-center justify-center text-sm font-bold shrink-0">
                         {getInitials(user.full_name)}
                       </div>
                       <div>
-                        <p className="font-medium text-[#1C1410]">{user.full_name}</p>
-                        <p className="text-xs text-[#7C6F5E]">{user.email}</p>
+                        <p className="font-medium text-[var(--color-text-primary)]">{user.full_name}</p>
+                        <p className="text-xs font-normal text-[var(--color-text-secondary)]">{user.email}</p>
                       </div>
                     </div>
                   </td>
                   <td className="p-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      user.tier === 'PLATINUM' ? 'bg-[#EDE9FE] text-[#5B21B6]' :
-                      user.tier === 'GOLD' ? 'bg-[#FDF3DC] text-[#C47820]' :
-                      user.tier === 'SILVER' ? 'bg-[#F1F5F9] text-[#475569]' :
-                      'bg-[#F5E6D3] text-[#92400E]'
+                    <span className={`px-2 py-1 rounded-[var(--radius-badge)] text-xs font-medium ${
+                      user.tier === 'PLATINUM' ? 'bg-[var(--color-bg)] text-[var(--color-text-primary)]' :
+                      user.tier === 'GOLD' ? 'bg-[var(--color-bg)] text-[var(--color-text-primary)]' :
+                      user.tier === 'SILVER' ? 'bg-[var(--color-bg)] text-[var(--color-text-secondary)]' :
+                      'bg-[var(--color-bg)] text-[var(--color-text-muted)]'
                     }`}>
                       {user.tier || 'BRONZE'}
                     </span>
@@ -301,24 +301,24 @@ export function AdminDashboard() {
                   <td className="p-4">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{user.score_afiya || 50}/100</span>
-                      <div className="w-24 h-2 bg-[#F5F0E8] rounded-full overflow-hidden">
+                      <div className="w-24 h-2 bg-[var(--color-bg)] rounded-[var(--radius-badge)] overflow-hidden">
                         <div 
-                          className="h-full bg-[#047857]" 
+                          className="h-full bg-[var(--color-primary)]" 
                           style={{ width: `${user.score_afiya || 50}%` }}
                         />
                       </div>
                     </div>
                   </td>
                   <td className="p-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      user.kyc_status === 'APPROVED' ? 'bg-green-100 text-green-800' :
-                      user.kyc_status === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                      'bg-orange-100 text-orange-800'
+                    <span className={`px-2 py-1 rounded-[var(--radius-badge)] text-xs font-medium ${
+                      user.kyc_status === 'APPROVED' ? 'bg-[var(--color-primary-light)] text-[var(--color-primary)]' :
+                      user.kyc_status === 'REJECTED' ? 'bg-[var(--color-surface-inner)] text-[var(--color-text-muted)]' :
+                      'bg-[var(--color-bg)] text-[var(--color-text-secondary)]'
                     }`}>
                       {user.kyc_status || 'PENDING'}
                     </span>
                   </td>
-                  <td className="p-4 font-medium text-[#1C1410]">
+                  <td className="p-4 font-medium text-[var(--color-text-primary)]">
                     {formatXOF(userWallet?.balance || 0)}
                   </td>
                 </tr>
@@ -333,15 +333,15 @@ export function AdminDashboard() {
   const renderWallets = () => (
     <div className="p-4 space-y-6">
       {walletGroups.map(group => (
-        <div key={group.type} className="bg-white rounded-xl shadow-sm border border-[#E8E0D0] overflow-hidden">
-          <div className="bg-[#F5F0E8] p-4 border-b border-[#E8E0D0] flex justify-between items-center">
-            <h3 className="font-bold text-[#1C1410]">{group.type}</h3>
-            <span className="font-bold text-[#047857]">{formatXOF(group.total)}</span>
+        <div key={group.type} className="bg-[var(--color-surface)] rounded-[var(--radius-card)] overflow-hidden">
+          <div className="bg-[var(--color-bg)] p-4 border-b border-[var(--color-divider)] flex justify-between items-center">
+            <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{group.type}</h3>
+            <span className="font-bold text-[var(--color-primary)]">{formatXOF(group.total)}</span>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm font-normal">
               <thead>
-                <tr className="text-[#7C6F5E] border-b border-[#F5F0E8]">
+                <tr className="text-[var(--color-text-secondary)] border-b border-[var(--color-bg)]">
                   <th className="p-3 font-medium">ID</th>
                   <th className="p-3 font-medium">Group ID</th>
                   <th className="p-3 font-medium">Balance</th>
@@ -350,11 +350,11 @@ export function AdminDashboard() {
               </thead>
               <tbody>
                 {group.wallets.map(w => (
-                  <tr key={w.id} className="border-b border-[#F5F0E8] hover:bg-[#F5F0E8]/50">
-                    <td className="p-3 font-mono text-xs text-[#7C6F5E]">{w.id.substring(0, 8)}...</td>
-                    <td className="p-3 font-mono text-xs text-[#7C6F5E]">{w.group_id ? `${w.group_id.substring(0, 8)}...` : '-'}</td>
-                    <td className="p-3 font-medium text-[#1C1410]">{formatXOF(w.balance)}</td>
-                    <td className="p-3 text-[#7C6F5E]">{formatDate(w.updated_at)}</td>
+                  <tr key={w.id} className="border-b border-[var(--color-bg)] hover:bg-[var(--color-surface-inner)]">
+                    <td className="p-3 font-mono text-xs font-normal text-[var(--color-text-secondary)]">{w.id.substring(0, 8)}...</td>
+                    <td className="p-3 font-mono text-xs font-normal text-[var(--color-text-secondary)]">{w.group_id ? `${w.group_id.substring(0, 8)}...` : '-'}</td>
+                    <td className="p-3 font-medium text-[var(--color-text-primary)]">{formatXOF(w.balance)}</td>
+                    <td className="p-3 text-[var(--color-text-secondary)]">{formatDate(w.updated_at)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -373,30 +373,30 @@ export function AdminDashboard() {
         const activeCycle = cycles.find(c => c.group_id === group.id && c.status === 'ACTIVE');
         
         return (
-          <div key={group.id} className="bg-white rounded-xl shadow-sm border border-[#E8E0D0] overflow-hidden">
+          <div key={group.id} className="bg-[var(--color-surface)] rounded-[var(--radius-card)] overflow-hidden">
             <div 
-              className="p-4 flex items-center justify-between cursor-pointer hover:bg-[#F5F0E8]"
+              className="p-4 flex items-center justify-between cursor-pointer hover:bg-[var(--color-surface-inner)]"
               onClick={() => toggleGroup(group.id)}
             >
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-1">
-                  <h3 className="font-bold text-[#1C1410]">{group.name}</h3>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                    group.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                    group.status === 'FORMING' ? 'bg-orange-100 text-orange-800' :
-                    group.status === 'COMPLETED' ? 'bg-[#ECFDF5] text-[#047857]' :
-                    group.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
+                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{group.name}</h3>
+                  <span className={`px-2 py-0.5 rounded-[var(--radius-badge)] text-xs font-medium ${
+                    group.status === 'ACTIVE' ? 'bg-[var(--color-primary-light)] text-[var(--color-primary)]' :
+                    group.status === 'FORMING' ? 'bg-[var(--color-bg)] text-[var(--color-text-secondary)]' :
+                    group.status === 'COMPLETED' ? 'bg-[var(--color-surface-inner)] text-[var(--color-text-primary)]' :
+                    group.status === 'CANCELLED' ? 'bg-[var(--color-surface-inner)] text-[var(--color-text-muted)]' :
+                    'bg-[var(--color-bg)] text-[var(--color-text-secondary)]'
                   }`}>
                     {group.status}
                   </span>
                   {group.status === 'FORMING' && group.invitation_code && (
-                    <span className="px-2 py-0.5 bg-[#F5F0E8] text-[#7C6F5E] rounded text-xs font-mono">
+                    <span className="px-2 py-0.5 bg-[var(--color-bg)] text-[var(--color-text-secondary)] rounded text-xs font-mono font-normal">
                       Code: {group.invitation_code}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-4 text-sm text-[#7C6F5E]">
+                <div className="flex items-center gap-4 text-sm font-normal text-[var(--color-text-secondary)]">
                   <span>{formatXOF(group.contribution_amount)}</span>
                   <span>•</span>
                   <span>{group.frequency === 'WEEKLY' ? 'Hebdo' : group.frequency === 'MONTHLY' ? 'Mensuel' : 'Trimestriel'}</span>
@@ -406,36 +406,36 @@ export function AdminDashboard() {
                   <span>Cycle {group.current_cycle || 0} / {group.total_cycles}</span>
                 </div>
               </div>
-              {isExpanded ? <ChevronUp className="w-5 h-5 text-[#A39887]" /> : <ChevronDown className="w-5 h-5 text-[#A39887]" />}
+              {isExpanded ? <ChevronUp className="w-5 h-5 text-[var(--color-text-muted)]" strokeWidth={1.5} /> : <ChevronDown className="w-5 h-5 text-[var(--color-text-muted)]" strokeWidth={1.5} />}
             </div>
             
             {isExpanded && (
-              <div className="p-4 bg-[#F5F0E8] border-t border-[#E8E0D0]">
+              <div className="p-4 bg-[var(--color-bg)] border-t border-[var(--color-divider)]">
                 {activeCycle && (
-                  <div className="mb-4 p-3 bg-white rounded-lg border border-[#E8E0D0]">
-                    <h4 className="text-xs font-bold text-[#7C6F5E] uppercase tracking-wider mb-2">Cycle Actif</h4>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="mb-4 p-3 bg-[var(--color-surface)] rounded-[var(--radius-card)]">
+                    <h4 className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-2">Cycle Actif</h4>
+                    <div className="grid grid-cols-3 gap-4 text-sm font-normal">
                       <div>
-                        <p className="text-[#7C6F5E]">Échéance</p>
-                        <p className="font-medium text-[#1C1410]">{formatDate(activeCycle.payment_due_date)}</p>
+                        <p className="text-[var(--color-text-secondary)]">Échéance</p>
+                        <p className="font-medium text-[var(--color-text-primary)]">{formatDate(activeCycle.payment_due_date)}</p>
                       </div>
                       <div>
-                        <p className="text-[#7C6F5E]">Attendu</p>
-                        <p className="font-medium text-[#1C1410]">{formatXOF(activeCycle.expected_total)}</p>
+                        <p className="text-[var(--color-text-secondary)]">Attendu</p>
+                        <p className="font-medium text-[var(--color-text-primary)]">{formatXOF(activeCycle.expected_total)}</p>
                       </div>
                       <div>
-                        <p className="text-[#7C6F5E]">Récolté</p>
-                        <p className="font-medium text-[#047857]">{formatXOF(activeCycle.actual_total || 0)}</p>
+                        <p className="text-[var(--color-text-secondary)]">Récolté</p>
+                        <p className="font-medium text-[var(--color-primary)]">{formatXOF(activeCycle.actual_total || 0)}</p>
                       </div>
                     </div>
                   </div>
                 )}
                 
-                <h4 className="text-xs font-bold text-[#7C6F5E] uppercase tracking-wider mb-2">Membres ({groupMembers.length})</h4>
-                <div className="bg-white rounded-lg border border-[#E8E0D0] overflow-hidden">
-                  <table className="w-full text-left text-sm">
+                <h4 className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-2">Membres ({groupMembers.length})</h4>
+                <div className="bg-[var(--color-surface)] rounded-[var(--radius-card)] overflow-hidden">
+                  <table className="w-full text-left text-sm font-normal">
                     <thead>
-                      <tr className="bg-[#F5F0E8] border-b border-[#E8E0D0] text-[#7C6F5E]">
+                      <tr className="bg-[var(--color-bg)] border-b border-[var(--color-divider)] text-[var(--color-text-secondary)]">
                         <th className="p-2 font-medium">User ID</th>
                         <th className="p-2 font-medium">Position</th>
                         <th className="p-2 font-medium">Statut</th>
@@ -444,19 +444,19 @@ export function AdminDashboard() {
                     </thead>
                     <tbody>
                       {groupMembers.map(m => (
-                        <tr key={m.id} className="border-b border-[#F5F0E8] last:border-0">
-                          <td className="p-2 font-mono text-xs text-[#7C6F5E]">{m.user_id.substring(0, 8)}...</td>
-                          <td className="p-2 text-[#1C1410]">{m.draw_position || '-'}</td>
+                        <tr key={m.id} className="border-b border-[var(--color-bg)] last:border-0">
+                          <td className="p-2 font-mono text-xs font-normal text-[var(--color-text-secondary)]">{m.user_id.substring(0, 8)}...</td>
+                          <td className="p-2 text-[var(--color-text-primary)]">{m.draw_position || '-'}</td>
                           <td className="p-2">
-                            <span className={`px-2 py-0.5 rounded-full text-xs ${
-                              m.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                              m.status === 'PENDING_PAYMENT' ? 'bg-orange-100 text-orange-800' :
-                              'bg-red-100 text-red-800'
+                            <span className={`px-2 py-0.5 rounded-[var(--radius-badge)] text-xs ${
+                              m.status === 'ACTIVE' ? 'bg-[var(--color-primary-light)] text-[var(--color-primary)]' :
+                              m.status === 'PENDING_PAYMENT' ? 'bg-[var(--color-bg)] text-[var(--color-text-secondary)]' :
+                              'bg-[var(--color-surface-inner)] text-[var(--color-text-muted)]'
                             }`}>
                               {m.status}
                             </span>
                           </td>
-                          <td className="p-2 text-[#1C1410]">{formatXOF(m.initial_deposit)}</td>
+                          <td className="p-2 text-[var(--color-text-primary)]">{formatXOF(m.initial_deposit)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -475,18 +475,18 @@ export function AdminDashboard() {
     
     const getTypeColor = (type: string) => {
       switch(type) {
-        case 'DEPOSIT': return 'bg-green-100 text-green-800';
-        case 'WITHDRAWAL': return 'bg-[#F5F0E8] text-[#7C6F5E]';
-        case 'CONTRIBUTION': return 'bg-[#ECFDF5] text-[#047857]';
-        case 'PAYOUT': return 'bg-emerald-100 text-emerald-800';
-        case 'CAUTION': return 'bg-orange-100 text-orange-800';
-        case 'PENALTY': return 'bg-red-100 text-red-800';
-        case 'REFUND': return 'bg-purple-100 text-purple-800';
-        case 'MINI_FUND_CONTRIB': return 'bg-indigo-100 text-indigo-800';
-        case 'GLOBAL_FUND_CONTRIB': return 'bg-pink-100 text-pink-800';
-        case 'GLOBAL_FUND_USAGE': return 'bg-red-900 text-white';
-        case 'DEPOSIT_SEIZURE': return 'bg-red-100 text-red-800';
-        default: return 'bg-[#F5F0E8] text-[#7C6F5E]';
+        case 'DEPOSIT': return 'bg-[var(--color-primary-light)] text-[var(--color-primary)]';
+        case 'WITHDRAWAL': return 'bg-[var(--color-bg)] text-[var(--color-text-secondary)]';
+        case 'CONTRIBUTION': return 'bg-[var(--color-primary-light)] text-[var(--color-primary)]';
+        case 'PAYOUT': return 'bg-[var(--color-primary-light)] text-[var(--color-primary)]';
+        case 'CAUTION': return 'bg-[var(--color-bg)] text-[var(--color-text-secondary)]';
+        case 'PENALTY': return 'bg-[var(--color-surface-inner)] text-[var(--color-text-muted)]';
+        case 'REFUND': return 'bg-[var(--color-bg)] text-[var(--color-text-primary)]';
+        case 'MINI_FUND_CONTRIB': return 'bg-[var(--color-bg)] text-[var(--color-text-secondary)]';
+        case 'GLOBAL_FUND_CONTRIB': return 'bg-[var(--color-bg)] text-[var(--color-text-secondary)]';
+        case 'GLOBAL_FUND_USAGE': return 'bg-[var(--color-surface-inner)] text-[var(--color-text-muted)]';
+        case 'DEPOSIT_SEIZURE': return 'bg-[var(--color-surface-inner)] text-[var(--color-text-muted)]';
+        default: return 'bg-[var(--color-bg)] text-[var(--color-text-secondary)]';
       }
     };
 
@@ -496,15 +496,15 @@ export function AdminDashboard() {
           <select 
             value={txFilter} 
             onChange={(e) => setTxFilter(e.target.value)}
-            className="w-full md:w-auto px-4 py-2 border border-[#E8E0D0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#047857] bg-white"
+            className="w-full md:w-auto px-4 py-2 rounded-[var(--radius-field)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 bg-[var(--color-surface)]"
           >
             {types.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-[#E8E0D0] overflow-x-auto">
-          <table className="w-full text-left text-sm">
+        <div className="bg-[var(--color-surface)] rounded-[var(--radius-card)] overflow-x-auto">
+          <table className="w-full text-left text-sm font-normal">
             <thead>
-              <tr className="bg-[#F5F0E8] border-b border-[#E8E0D0] text-[#7C6F5E]">
+              <tr className="bg-[var(--color-bg)] border-b border-[var(--color-divider)] text-[var(--color-text-secondary)]">
                 <th className="p-4 font-medium">Type</th>
                 <th className="p-4 font-medium">Montant</th>
                 <th className="p-4 font-medium">Description</th>
@@ -514,24 +514,24 @@ export function AdminDashboard() {
             </thead>
             <tbody>
               {filteredTx.map(tx => (
-                <tr key={tx.id} className="border-b border-[#F5F0E8] hover:bg-[#F5F0E8]/50">
+                <tr key={tx.id} className="border-b border-[var(--color-bg)] hover:bg-[var(--color-surface-inner)]">
                   <td className="p-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getTypeColor(tx.type)}`}>
+                    <span className={`px-2 py-1 rounded-[var(--radius-badge)] text-xs font-medium whitespace-nowrap ${getTypeColor(tx.type)}`}>
                       {tx.type}
                     </span>
                   </td>
-                  <td className="p-4 font-medium text-[#1C1410] whitespace-nowrap">
+                  <td className="p-4 font-medium text-[var(--color-text-primary)] whitespace-nowrap">
                     {formatXOF(tx.amount)}
                   </td>
-                  <td className="p-4 text-[#7C6F5E] max-w-xs truncate" title={tx.description}>
+                  <td className="p-4 text-[var(--color-text-secondary)] max-w-xs truncate" title={tx.description}>
                     {tx.description}
                   </td>
-                  <td className="p-4 font-mono text-xs text-[#7C6F5E] whitespace-nowrap">
+                  <td className="p-4 font-mono text-xs font-normal text-[var(--color-text-secondary)] whitespace-nowrap">
                     {tx.from_wallet_id ? tx.from_wallet_id.substring(0, 8) : 'SYSTEM'} 
                     {' → '} 
                     {tx.to_wallet_id ? tx.to_wallet_id.substring(0, 8) : 'SYSTEM'}
                   </td>
-                  <td className="p-4 text-[#7C6F5E] whitespace-nowrap">
+                  <td className="p-4 text-[var(--color-text-secondary)] whitespace-nowrap">
                     {formatDate(tx.created_at)}
                   </td>
                 </tr>
@@ -544,26 +544,26 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#F5F0E8]">
+    <div className="flex flex-col h-[100dvh] bg-[var(--color-bg)]">
       {/* Header */}
-      <div className="bg-white border-b border-[#E8E0D0] px-4 py-3 flex items-center justify-between shrink-0">
+      <div className="bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <button 
             onClick={() => navigate('/home')}
-            className="p-2 hover:bg-[#F5F0E8] rounded-full transition-colors"
+            className="p-2 hover:bg-[var(--color-bg)] rounded-[var(--radius-btn)] transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-[#7C6F5E]" />
+            <ArrowLeft className="w-5 h-5 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
           </button>
-          <h1 className="text-lg font-bold text-[#1C1410]">Dashboard Admin</h1>
+          <h1 className="text-xl font-bold text-[var(--color-text-primary)]">Dashboard Admin</h1>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-full">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          <span className="text-xs font-bold text-green-700 tracking-wide">LIVE</span>
+        <div className="flex items-center gap-2 px-3 py-1 bg-[var(--color-primary-light)] rounded-[var(--radius-badge)]">
+          <div className="w-2 h-2 bg-[var(--color-primary)] rounded-[var(--radius-badge)] animate-pulse" />
+          <span className="text-xs font-bold text-[var(--color-primary)] tracking-wide">LIVE</span>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-[#E8E0D0] shrink-0 overflow-x-auto hide-scrollbar">
+      <div className="bg-[var(--color-surface)] border-b border-[var(--color-border)] shrink-0 overflow-x-auto hide-scrollbar">
         <div className="flex px-2 min-w-max">
           {['synthèse', 'utilisateurs', 'wallets', 'cercles', 'transactions'].map(tab => (
             <button
@@ -571,8 +571,8 @@ export function AdminDashboard() {
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-3 text-sm font-medium capitalize border-b-2 transition-colors ${
                 activeTab === tab 
-                  ? 'border-[#047857] text-[#047857]' 
-                  : 'border-transparent text-[#7C6F5E] hover:text-[#1C1410]'
+                  ? 'border-[var(--color-primary)] text-[var(--color-primary)]' 
+                  : 'border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
             >
               {tab}

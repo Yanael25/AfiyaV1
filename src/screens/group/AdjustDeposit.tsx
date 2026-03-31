@@ -50,62 +50,62 @@ export function AdjustDeposit() {
   };
 
   if (!memberInfo) {
-    return <div className="flex-1 bg-[#F5F0E8] flex items-center justify-center">Chargement...</div>;
+    return <div className="flex-1 bg-[var(--color-bg)] flex items-center justify-center">Chargement...</div>;
   }
 
   return (
-    <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full">
-      <div className="bg-white px-4 pt-4 pb-4 shadow-sm flex items-center gap-4 z-10">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-[#1C1410]">
+    <div className="flex-1 bg-[var(--color-bg)] flex flex-col h-full">
+      <div className="bg-[var(--color-surface)] px-4 pt-4 pb-4 flex items-center gap-4 z-10">
+        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-[var(--color-text-primary)] rounded-[var(--radius-btn)] hover:bg-[var(--color-surface-inner)] transition-colors">
           <ArrowLeft size={24} />
         </button>
-        <h1 className="text-[#1C1410] text-xl font-bold">Ajustement Caution</h1>
+        <h1 className="text-xl font-bold text-[var(--color-text-primary)]">Ajustement Caution</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+          <div className="bg-[var(--color-surface-inner)] rounded-[var(--radius-inner)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)]">
             {error}
           </div>
         )}
 
         <div className="flex flex-col items-center justify-center py-4">
-          <div className="w-16 h-16 bg-[#D4AF37]/20 rounded-full flex items-center justify-center mb-4">
-            <AlertTriangle size={32} className="text-[#D4AF37]" />
+          <div className="w-16 h-16 bg-[var(--color-primary-light)] rounded-[var(--radius-card)] flex items-center justify-center mb-4">
+            <AlertTriangle size={32} className="text-[var(--color-primary)]" />
           </div>
-          <h2 className="text-[#1C1410] font-bold text-2xl mb-1">Position {memberInfo.draw_position}</h2>
-          <p className="text-[#7C6F5E] text-center text-sm px-4">
+          <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-1">Position {memberInfo.draw_position}</h2>
+          <p className="text-[var(--color-text-secondary)] text-center text-sm font-normal px-4">
             Le tirage au sort vous a attribué une position avantageuse. Un ajustement de votre caution est requis.
           </p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8E0D0] space-y-4">
-          <div className="flex justify-between items-center pb-4 border-b border-[#E8E0D0]">
-            <span className="text-[#7C6F5E]">Caution initiale payée</span>
-            <span className="text-[#1C1410] font-semibold">{formatXOF(memberInfo.initial_deposit)}</span>
+        <div className="bg-[var(--color-surface)] p-5 rounded-[var(--radius-card)] space-y-4">
+          <div className="flex justify-between items-center pb-4">
+            <span className="text-[var(--color-text-secondary)]">Caution initiale payée</span>
+            <span className="text-[var(--color-text-primary)] font-semibold">{formatXOF(memberInfo.initial_deposit)}</span>
           </div>
-          <div className="flex justify-between items-center pb-4 border-b border-[#E8E0D0]">
-            <span className="text-[#7C6F5E]">Caution ajustée requise</span>
-            <span className="text-[#1C1410] font-semibold">{formatXOF(memberInfo.adjusted_deposit)}</span>
+          <div className="flex justify-between items-center pb-4">
+            <span className="text-[var(--color-text-secondary)]">Caution ajustée requise</span>
+            <span className="text-[var(--color-text-primary)] font-semibold">{formatXOF(memberInfo.adjusted_deposit)}</span>
           </div>
           <div className="flex justify-between items-center pt-2">
-            <span className="text-[#1C1410] font-bold text-lg">Différentiel à payer</span>
-            <span className="text-[#D4AF37] font-bold text-xl">{formatXOF(memberInfo.deposit_differential)}</span>
+            <span className="text-[var(--color-text-primary)] font-bold text-lg">Différentiel à payer</span>
+            <span className="text-[var(--color-primary)] font-bold text-xl">{formatXOF(memberInfo.deposit_differential)}</span>
           </div>
         </div>
 
-        <div className="bg-red-50 p-4 rounded-xl border border-red-100">
-          <p className="text-sm text-red-800 leading-relaxed font-medium text-center">
+        <div className="bg-[var(--color-surface-inner)] p-4 rounded-[var(--radius-card)]">
+          <p className="text-sm font-medium text-[var(--color-text-primary)] leading-relaxed text-center">
             Vous avez 48h pour régler ce montant. Passé ce délai, vous serez repositionné automatiquement.
           </p>
         </div>
       </div>
 
-      <div className="p-6 bg-[#F5F0E8] border-t border-[#E8E0D0]">
+      <div className="p-6 bg-[var(--color-bg)]">
         <button
           onClick={handlePayDifferential}
           disabled={loading || memberInfo.deposit_differential_paid}
-          className="w-full bg-[#047857] hover:bg-[#059669] text-white h-14 rounded-xl font-semibold text-lg disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+          className="w-full bg-[var(--color-primary)] hover:opacity-90 text-white h-14 rounded-[var(--radius-btn)] font-semibold text-lg disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
         >
           {loading ? (
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

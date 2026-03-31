@@ -15,12 +15,12 @@ export function StatusBar() {
   }, []);
 
   return (
-    <div className="h-12 w-full flex items-center justify-between px-6 text-[#1C1410] z-50 bg-transparent absolute top-0 left-0 right-0 pointer-events-none">
+    <div className="h-12 w-full flex items-center justify-between px-6 text-[var(--color-text-primary)] z-50 bg-transparent absolute top-0 left-0 right-0 pointer-events-none">
       <div className="text-[15px] font-semibold tracking-tight w-14 text-center">
         {time}
       </div>
       <div className="flex items-center gap-2">
-        <div className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+        <div className="bg-[var(--color-surface-inner)] text-[var(--color-text-primary)] text-[10px] font-bold px-2 py-0.5 rounded-[var(--radius-badge)] uppercase tracking-wider">
           DEV
         </div>
         <Signal size={16} strokeWidth={2.5} />

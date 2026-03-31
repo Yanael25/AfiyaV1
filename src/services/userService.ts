@@ -21,7 +21,7 @@ export interface UserProfile {
   status: 'ACTIVE' | 'RESTRICTED' | 'BANNED' | 'PENDING_REVIEW';
   deposit_coefficient: number;
   retention_coefficient: number;
-  kyc_status: 'APPROVED' | 'PENDING' | 'REJECTED';
+  kyc_status: 'VERIFIED' | 'PENDING' | 'REJECTED';
   last_activity_at: any;
   created_at: any;
   role?: string;

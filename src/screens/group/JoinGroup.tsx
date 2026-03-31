@@ -66,26 +66,26 @@ export function JoinGroup() {
   };
 
   return (
-    <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full">
+    <div className="flex-1 bg-[var(--color-bg)] flex flex-col h-full">
       <div className="p-4 flex items-center">
-        <button onClick={() => navigate('/tontines')} className="p-2 -ml-2 text-[#7C6F5E] hover:bg-[#E8E0D0] rounded-full transition-colors">
+        <button onClick={() => navigate('/tontines')} className="p-2 -ml-2 text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-inner)] rounded-[var(--radius-btn)] transition-colors">
           <X size={24} />
         </button>
       </div>
       
       <div className="flex-1 overflow-y-auto px-6 pt-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 mb-6">
+          <div className="bg-[var(--color-surface-inner)] rounded-[var(--radius-inner)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] mb-6">
             {error}
           </div>
         )}
 
-        <div className="w-16 h-16 bg-[#ECFDF5] rounded-2xl flex items-center justify-center mb-6">
-          <Key size={32} className="text-[#047857]" />
+        <div className="w-16 h-16 bg-[var(--color-primary-light)] rounded-[var(--radius-card)] flex items-center justify-center mb-6">
+          <Key size={32} className="text-[var(--color-primary)]" />
         </div>
         
-        <h1 className="text-[#1C1410] text-3xl font-bold mb-2">Rejoindre un Cercle</h1>
-        <p className="text-[#7C6F5E] text-base mb-8">
+        <h1 className="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight mb-2">Rejoindre un Cercle</h1>
+        <p className="text-[var(--color-text-secondary)] text-base mb-8">
           Entrez le code d'invitation fourni par l'administrateur du Cercle.
         </p>
 
@@ -98,40 +98,40 @@ export function JoinGroup() {
               setGroupInfo(null);
             }}
             placeholder="EX: AFY-123456"
-            className="w-full border-2 border-[#E8E0D0] rounded-xl h-14 px-4 text-[#1C1410] font-bold text-center text-xl tracking-widest focus:border-[#047857] outline-none uppercase"
+            className="w-full rounded-[var(--radius-field)] h-14 px-4 text-[var(--color-text-primary)] font-bold text-center text-xl tracking-widest focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 uppercase bg-[var(--color-bg)]"
             autoFocus
           />
         </div>
 
         {groupInfo && (
-          <div className="mt-8 bg-white p-5 rounded-2xl border border-[#E8E0D0] space-y-4">
-            <h3 className="font-bold text-[#1C1410] text-lg">{groupInfo.name}</h3>
-            <div className="flex justify-between text-sm">
-              <span className="text-[#7C6F5E]">Membres actuels</span>
-              <span className="font-medium">{groupInfo.members_count}/{groupInfo.target_members}</span>
+          <div className="mt-8 bg-[var(--color-surface)] p-5 rounded-[var(--radius-card)] space-y-4">
+            <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{groupInfo.name}</h3>
+            <div className="flex justify-between text-sm font-normal">
+              <span className="text-[var(--color-text-secondary)]">Membres actuels</span>
+              <span className="font-medium text-[var(--color-text-primary)]">{groupInfo.members_count}/{groupInfo.target_members}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-[#7C6F5E]">Cotisation</span>
-              <span className="font-medium">{formatXOF(groupInfo.contribution_amount)}</span>
+            <div className="flex justify-between text-sm font-normal">
+              <span className="text-[var(--color-text-secondary)]">Cotisation</span>
+              <span className="font-medium text-[var(--color-text-primary)]">{formatXOF(groupInfo.contribution_amount)}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-[#7C6F5E]">Caution estimée ({groupInfo.userTier})</span>
-              <span className="font-medium">{formatXOF(groupInfo.caution)}</span>
+            <div className="flex justify-between text-sm font-normal">
+              <span className="text-[var(--color-text-secondary)]">Caution estimée ({groupInfo.userTier})</span>
+              <span className="font-medium text-[var(--color-text-primary)]">{formatXOF(groupInfo.caution)}</span>
             </div>
-            <div className="pt-3 border-t border-[#E8E0D0] flex justify-between">
-              <span className="font-bold text-[#1C1410]">Total à payer</span>
-              <span className="font-bold text-[#047857]">{formatXOF(groupInfo.contribution_amount + groupInfo.caution)}</span>
+            <div className="pt-3 border-t border-[var(--color-divider)] flex justify-between">
+              <span className="font-bold text-[var(--color-text-primary)]">Total à payer</span>
+              <span className="font-bold text-[var(--color-primary)]">{formatXOF(groupInfo.contribution_amount + groupInfo.caution)}</span>
             </div>
           </div>
         )}
       </div>
 
-      <div className="p-6 pb-12 bg-white border-t border-[#E8E0D0]">
+      <div className="p-6 pb-12 bg-[var(--color-surface)]">
         {!groupInfo ? (
           <button
             onClick={handleSearch}
             disabled={code.length < 6 || loading}
-            className="w-full bg-[#047857] hover:bg-[#059669] text-white h-14 rounded-xl font-semibold text-lg disabled:opacity-50 flex items-center justify-center transition-colors"
+            className="w-full bg-[var(--color-primary)] hover:opacity-90 text-white h-14 rounded-[var(--radius-btn)] font-semibold text-lg disabled:opacity-50 flex items-center justify-center transition-opacity"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -143,7 +143,7 @@ export function JoinGroup() {
           <button
             onClick={handleJoin}
             disabled={loading}
-            className="w-full bg-[#047857] hover:bg-[#059669] text-white h-14 rounded-xl font-semibold text-lg disabled:opacity-50 flex items-center justify-center transition-colors"
+            className="w-full bg-[var(--color-primary)] hover:opacity-90 text-white h-14 rounded-[var(--radius-btn)] font-semibold text-lg disabled:opacity-50 flex items-center justify-center transition-opacity"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

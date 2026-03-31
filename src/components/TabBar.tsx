@@ -1,9 +1,9 @@
 import { NavLink } from 'react-router-dom';
-import { Home, CircleDot, Landmark, User } from 'lucide-react';
+import { Wallet, CircleDot, Landmark, User } from 'lucide-react';
 
 export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
   const tabs = [
-    { to: '/home', icon: Home, label: 'Home' },
+    { to: '/home', icon: Wallet, label: 'Wallet' },
     { to: '/tontines', icon: CircleDot, label: 'Cercles' },
     { to: '/patrimoine', icon: Landmark, label: 'Capital' },
     { to: '/profile', icon: User, label: 'Profil' },
@@ -11,7 +11,7 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
 
   if (isSidebar) {
     return (
-      <div className="flex flex-col gap-2 px-4 py-6 bg-[#1C1410] h-full">
+      <div className="flex flex-col gap-2 px-4 py-6 bg-[var(--color-surface)] h-full">
         {tabs.map((tab) => (
           <NavLink
             key={tab.to}
@@ -19,8 +19,8 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
             className={({ isActive }) =>
               `flex items-center gap-4 px-4 py-2.5 transition-all duration-200 ${
                 isActive
-                  ? "text-[#047857] font-semibold"
-                  : "text-[#7C6F5E] font-normal hover:bg-[#2C2018] rounded-xl"
+                  ? "text-[var(--color-primary)] font-semibold"
+                  : "text-[var(--color-text-muted)] font-normal hover:bg-[var(--color-surface-inner)] rounded-[var(--radius-btn)]"
               }`
             }
           >
@@ -28,8 +28,8 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
               <>
                 <tab.icon 
                   size={24} 
-                  strokeWidth={isActive ? 2 : 1.5} 
-                  color={isActive ? '#047857' : '#7C6F5E'} 
+                  strokeWidth={1.5} 
+                  className={isActive ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'} 
                 />
                 <span className="text-base">{tab.label}</span>
               </>
@@ -41,27 +41,21 @@ export function TabBar({ isSidebar = false }: { isSidebar?: boolean }) {
   }
 
   return (
-    <div className="bg-[#1C1410] border-t border-[#2C2018]
-                     flex items-center justify-around
-                     px-4 py-3 pb-5">
+    <div className="fixed bottom-0 left-0 right-0 h-[72px] bg-[var(--color-surface)] border-t border-[var(--color-divider)] px-2 pb-[10px] flex items-center justify-around z-50">
       {tabs.map((tab) => (
         <NavLink
           key={tab.to}
           to={tab.to}
-          className="flex flex-col items-center gap-1"
+          className="flex flex-col items-center justify-center gap-1 w-full h-full"
         >
           {({ isActive }) => (
             <>
               <tab.icon
                 size={22}
-                strokeWidth={isActive ? 2 : 1.5}
-                color={isActive ? '#047857' : '#7C6F5E'}
+                strokeWidth={1.5}
+                className={isActive ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-placeholder)]'}
               />
-              <span className={`text-[10px] tracking-wide
-                ${isActive
-                  ? 'font-semibold text-[#047857]'
-                  : 'font-normal text-[#7C6F5E]'
-                }`}>
+              <span className={`text-[10px] ${isActive ? 'font-bold text-[var(--color-primary)]' : 'font-medium text-[var(--color-text-placeholder)]'}`}>
                 {tab.label}
               </span>
             </>

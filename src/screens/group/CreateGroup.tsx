@@ -108,41 +108,41 @@ export function CreateGroup() {
   };
 
   return (
-    <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full">
-      <div className="bg-white px-4 pt-4 pb-4 shadow-sm flex items-center gap-4 z-10">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-[#1C1410]">
+    <div className="flex-1 bg-[var(--color-bg)] flex flex-col h-full">
+      <div className="bg-[var(--color-surface)] px-4 pt-4 pb-4 flex items-center gap-4 z-10">
+        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-[var(--color-text-primary)] rounded-[var(--radius-btn)] hover:bg-[var(--color-surface-inner)] transition-colors">
           <ArrowLeft size={24} />
         </button>
-        <h1 className="text-[#1C1410] text-xl font-bold">Créer un Cercle</h1>
+        <h1 className="text-xl font-bold text-[var(--color-text-primary)]">Créer un Cercle</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+          <div className="bg-[var(--color-surface-inner)] rounded-[var(--radius-inner)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)]">
             {error}
           </div>
         )}
 
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8E0D0]">
+        <div className="bg-[var(--color-surface)] p-5 rounded-[var(--radius-card)]">
           <div className="space-y-5">
             <div>
-              <label className="text-sm font-medium text-[#7C6F5E] mb-1.5 block">Nom du Cercle</label>
+              <label className="text-sm font-medium text-[var(--color-text-secondary)] mb-1.5 block">Nom du Cercle</label>
               <input 
                 value={formData.name}
                 onChange={e => setFormData({...formData, name: e.target.value})}
                 placeholder="Ex: Famille Dossou"
-                className="w-full border border-[#E8E0D0] rounded-xl h-12 px-4 text-[#1C1410] focus:border-[#047857] outline-none font-medium" 
+                className="w-full rounded-[var(--radius-field)] h-12 px-4 text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 font-medium bg-[var(--color-bg)]" 
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-[#7C6F5E] mb-1.5 flex justify-between">
+              <label className="text-sm font-medium text-[var(--color-text-secondary)] mb-1.5 flex justify-between">
                 <span>Cotisation (FCFA)</span>
-                <span className="text-xs text-[#A39887]">Max: {limits.maxContrib === Infinity ? 'Illimité' : formatXOF(limits.maxContrib)}</span>
+                <span className="text-xs font-normal text-[var(--color-text-muted)]">Max: {limits.maxContrib === Infinity ? 'Illimité' : formatXOF(limits.maxContrib)}</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Coins size={20} className="text-[#A39887]" />
+                  <Coins size={20} className="text-[var(--color-text-muted)]" />
                 </div>
                 <input 
                   type="number"
@@ -150,21 +150,21 @@ export function CreateGroup() {
                   onChange={e => setFormData({...formData, contribution_amount: e.target.value})}
                   onWheel={e => (e.target as HTMLInputElement).blur()}
                   placeholder="10000"
-                  className="w-full border border-[#E8E0D0] rounded-xl h-12 pl-11 pr-4 text-[#1C1410] focus:border-[#047857] outline-none font-bold" 
+                  className="w-full rounded-[var(--radius-field)] h-12 pl-11 pr-4 text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 font-bold bg-[var(--color-bg)]" 
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-[#7C6F5E] mb-1.5 block">Fréquence</label>
+              <label className="text-sm font-medium text-[var(--color-text-secondary)] mb-1.5 block">Fréquence</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Calendar size={20} className="text-[#A39887]" />
+                  <Calendar size={20} className="text-[var(--color-text-muted)]" />
                 </div>
                 <select 
                   value={formData.frequency}
                   onChange={e => setFormData({...formData, frequency: e.target.value})}
-                  className="w-full border border-[#E8E0D0] rounded-xl h-12 pl-11 pr-4 text-[#1C1410] focus:border-[#047857] outline-none font-medium appearance-none bg-white"
+                  className="w-full rounded-[var(--radius-field)] h-12 pl-11 pr-4 text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 font-medium appearance-none bg-[var(--color-bg)]"
                 >
                   <option value="WEEKLY">Hebdomadaire</option>
                   <option value="MONTHLY">Mensuelle</option>
@@ -174,67 +174,67 @@ export function CreateGroup() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-[#7C6F5E] mb-1.5 flex justify-between">
+              <label className="text-sm font-medium text-[var(--color-text-secondary)] mb-1.5 flex justify-between">
                 <span>Nombre de membres</span>
-                <span className="text-xs text-[#A39887]">Max: {limits.maxMembers}</span>
+                <span className="text-xs font-normal text-[var(--color-text-muted)]">Max: {limits.maxMembers}</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Users size={20} className="text-[#A39887]" />
+                  <Users size={20} className="text-[var(--color-text-muted)]" />
                 </div>
                 <input 
                   type="number"
                   value={formData.target_members}
                   onChange={e => setFormData({...formData, target_members: e.target.value})}
-                  className="w-full border border-[#E8E0D0] rounded-xl h-12 pl-11 pr-4 text-[#1C1410] focus:border-[#047857] outline-none font-medium" 
+                  className="w-full rounded-[var(--radius-field)] h-12 pl-11 pr-4 text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 font-medium bg-[var(--color-bg)]" 
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-[#7C6F5E] mb-1.5 flex justify-between">
+              <label className="text-sm font-medium text-[var(--color-text-secondary)] mb-1.5 flex justify-between">
                 <span>Date limite d'inscription</span>
-                <span className="text-xs text-[#A39887]">J+3 à J+30</span>
+                <span className="text-xs font-normal text-[var(--color-text-muted)]">J+3 à J+30</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Clock size={20} className="text-[#A39887]" />
+                  <Clock size={20} className="text-[var(--color-text-muted)]" />
                 </div>
                 <input 
                   type="date"
                   value={formData.constitution_deadline}
                   onChange={e => setFormData({...formData, constitution_deadline: e.target.value})}
-                  className="w-full border border-[#E8E0D0] rounded-xl h-12 pl-11 pr-4 text-[#1C1410] focus:border-[#047857] outline-none font-medium bg-white" 
+                  className="w-full rounded-[var(--radius-field)] h-12 pl-11 pr-4 text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 font-medium bg-[var(--color-bg)]" 
                 />
               </div>
             </div>
           </div>
         </div>
         
-        <div className="bg-[#ECFDF5] p-4 rounded-xl border border-[#047857]/20">
-          <p className="text-sm text-[#047857] leading-relaxed mb-2">
+        <div className="bg-[var(--color-primary-light)] p-4 rounded-[var(--radius-card)]">
+          <p className="text-sm font-normal text-[var(--color-primary)] leading-relaxed mb-2">
             En tant qu'administrateur, vous devrez payer une caution (calculée selon votre tier) pour activer le Cercle.
           </p>
           {contribution > 0 && (
-            <div className="bg-white/60 rounded-lg p-3 mt-2">
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-[#047857]">Caution estimée ({userTier}) :</span>
-                <span className="font-bold text-[#047857]">{formatXOF(estimatedCaution)}</span>
+            <div className="bg-white/60 rounded-[var(--radius-inner)] p-3 mt-2">
+              <div className="flex justify-between text-sm font-normal mb-1">
+                <span className="text-[var(--color-primary)]">Caution estimée ({userTier}) :</span>
+                <span className="font-bold text-[var(--color-primary)]">{formatXOF(estimatedCaution)}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[#047857]">Total à l'activation :</span>
-                <span className="font-bold text-[#047857]">{formatXOF(estimatedCaution + contribution)}</span>
+              <div className="flex justify-between text-sm font-normal">
+                <span className="text-[var(--color-primary)]">Total à l'activation :</span>
+                <span className="font-bold text-[var(--color-primary)]">{formatXOF(estimatedCaution + contribution)}</span>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      <div className="p-6 bg-white border-t border-[#E8E0D0]">
+      <div className="p-6 bg-[var(--color-surface)]">
         <button
           onClick={handleCreate}
           disabled={loading || !formData.name || !formData.contribution_amount}
-          className="w-full bg-[#047857] hover:bg-[#059669] text-white h-14 rounded-xl font-semibold text-lg disabled:opacity-50 flex items-center justify-center transition-colors"
+          className="w-full bg-[var(--color-primary)] hover:opacity-90 text-white h-14 rounded-[var(--radius-btn)] font-semibold text-lg disabled:opacity-50 flex items-center justify-center transition-opacity"
         >
           {loading ? (
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

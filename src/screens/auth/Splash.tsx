@@ -23,17 +23,17 @@ export function Splash() {
   }, [navigate]);
 
   return (
-    <div className="flex-1 bg-[#F5F0E8] flex flex-col items-center justify-center h-full">
+    <div className="flex-1 bg-[var(--color-bg)] flex flex-col items-center justify-center h-full">
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5 }}
         className="flex flex-col items-center"
       >
-        <div className="w-24 h-24 bg-[#047857] rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+        <div className="w-24 h-24 bg-[var(--color-primary)] rounded-2xl flex items-center justify-center mb-4 shadow-sm">
           <span className="text-white text-4xl font-bold">A</span>
         </div>
-        <h1 className="text-2xl font-bold text-[#1C1410]">Afiya</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-[var(--color-text-primary)]">Afiya</h1>
       </motion.div>
     </div>
   );

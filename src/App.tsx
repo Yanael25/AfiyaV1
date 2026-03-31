@@ -28,8 +28,8 @@ import { StatusBar } from './components/StatusBar';
 
 function AuthContainer() {
   return (
-    <div className="min-h-[100dvh] bg-[#F5F0E8] flex justify-center antialiased">
-      <div className="w-full max-w-md h-[100dvh] bg-[#F5F0E8] sm:shadow-sm overflow-hidden relative flex flex-col">
+    <div className="min-h-[100dvh] bg-[var(--color-bg)] flex justify-center antialiased">
+      <div className="w-full max-w-md h-[100dvh] bg-[var(--color-bg)] overflow-hidden relative flex flex-col">
         <div className="md:hidden">
           <StatusBar />
         </div>
@@ -43,8 +43,8 @@ function AuthContainer() {
 
 function AppContainer() {
   return (
-    <div className="min-h-[100dvh] bg-[#F5F0E8] flex justify-center antialiased">
-      <div className="w-full h-[100dvh] bg-[#F5F0E8] overflow-hidden relative flex flex-col">
+    <div className="min-h-[100dvh] bg-[var(--color-bg)] flex justify-center antialiased">
+      <div className="w-full h-[100dvh] bg-[var(--color-bg)] overflow-hidden relative flex flex-col">
         <div className="md:hidden">
           <StatusBar />
         </div>
@@ -58,14 +58,14 @@ function AppContainer() {
 
 function TabLayout() {
   return (
-    <div className="flex flex-col lg:flex-row h-full bg-[#F5F0E8] relative w-full max-w-[1200px] mx-auto">
+    <div className="flex flex-col lg:flex-row h-full bg-[var(--color-bg)] relative w-full max-w-[1200px] mx-auto">
       {/* Sidebar for PC */}
-      <div className="hidden lg:flex w-64 border-r border-[#E8E0D0] bg-[#F5F0E8] h-full flex-col">
+      <div className="hidden lg:flex w-64 border-r border-[var(--color-border)] bg-[var(--color-surface)] h-full flex-col">
         <div className="p-6 flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#047857] rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-[var(--color-primary)] rounded-[var(--radius-card)] flex items-center justify-center">
             <span className="text-white font-bold text-xl">A</span>
           </div>
-          <span className="text-xl font-bold text-[#1C1410]">Afiya</span>
+          <span className="text-xl font-bold text-[var(--color-text-primary)]">Afiya</span>
         </div>
         <TabBar isSidebar={true} />
       </div>

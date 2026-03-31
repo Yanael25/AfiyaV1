@@ -34,7 +34,7 @@ export function Patrimoine() {
   ];
 
   return (
-    <div className="flex-1 bg-[#F5F0E8] flex flex-col h-full overflow-y-auto no-scrollbar pb-24">
+    <div className="flex-1 bg-[var(--color-bg)] flex flex-col h-full overflow-y-auto no-scrollbar pb-24">
       <div className="px-6 max-w-2xl mx-auto w-full pt-16 pb-8">
         
         {/* Header & Assets */}
@@ -42,10 +42,10 @@ export function Patrimoine() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="mb-14 bg-[#064E3B] rounded-3xl p-6 text-white"
+          className="mb-14 bg-[var(--color-primary)] rounded-[var(--radius-card)] p-6 text-white"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#047857] text-white mb-6">
-            <span className="text-xs font-semibold">Bientôt disponible</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-[var(--radius-badge)] bg-white/20 text-white mb-6">
+            <span className="text-xs font-medium">Bientôt disponible</span>
           </div>
           
           <h1 className="text-5xl font-extrabold text-white tracking-tight mb-4">
@@ -60,17 +60,17 @@ export function Patrimoine() {
             {assets.map((asset, idx) => (
               <div 
                 key={idx}
-                className="bg-white border border-[#E8E0D0] rounded-2xl p-5 flex items-start gap-4"
+                className="bg-[var(--color-surface)] rounded-[var(--radius-inner)] p-5 flex items-start gap-4"
               >
-                <div className="w-12 h-12 rounded-full bg-[#F5F0E8] flex items-center justify-center shrink-0">
-                  <asset.icon size={20} className="text-[#047857]" strokeWidth={1.5} />
+                <div className="w-12 h-12 rounded-[var(--radius-avatar)] bg-[var(--color-bg)] flex items-center justify-center shrink-0">
+                  <asset.icon size={20} className="text-[var(--color-primary)]" strokeWidth={1.5} />
                 </div>
                 <div className="flex-1 pt-1">
-                  <h3 className="text-[#1C1410] font-bold text-base mb-1">{asset.title}</h3>
-                  <p className="text-[#7C6F5E] text-sm font-light leading-relaxed mb-3">{asset.desc}</p>
-                  <div className="inline-flex items-center gap-2 bg-[#F5F0E8] px-3 py-1.5 rounded-lg border border-[#E8E0D0]">
-                    <span className="text-[10px] text-[#7C6F5E] uppercase tracking-wider">Rendement estimé</span>
-                    <span className="text-xs font-bold text-[#1C1410]">{asset.yield}</span>
+                  <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">{asset.title}</h3>
+                  <p className="text-sm font-normal text-[var(--color-text-secondary)] leading-relaxed mb-3">{asset.desc}</p>
+                  <div className="inline-flex items-center gap-2 bg-[var(--color-bg)] px-3 py-1.5 rounded-[var(--radius-badge)]">
+                    <span className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider">Rendement estimé</span>
+                    <span className="text-xs font-semibold text-[var(--color-text-primary)]">{asset.yield}</span>
                   </div>
                 </div>
               </div>
@@ -85,12 +85,12 @@ export function Patrimoine() {
           transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
           className="mb-16"
         >
-          <h2 className="text-[#1C1410] text-sm font-semibold mb-8">Comment ça marche ?</h2>
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-8">Comment ça marche ?</h2>
           <div className="flex flex-col gap-6">
             {steps.map((step, idx) => (
               <div key={idx} className="flex items-center gap-4">
-                <span className="text-2xl font-extrabold text-[#047857]">{step.num}.</span>
-                <p className="text-[#7C6F5E] text-sm font-light">{step.text}</p>
+                <span className="text-2xl font-extrabold text-[var(--color-primary)]">{step.num}.</span>
+                <p className="text-sm font-normal text-[var(--color-text-secondary)]">{step.text}</p>
               </div>
             ))}
           </div>
@@ -101,22 +101,22 @@ export function Patrimoine() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
-          className="bg-[#064E3B] rounded-3xl p-6 sm:p-8"
+          className="bg-[var(--color-primary)] rounded-[var(--radius-card)] p-6 sm:p-8"
         >
           {submitted ? (
             <div className="flex flex-col items-center text-center py-4">
-              <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-[var(--radius-avatar)] bg-white/10 flex items-center justify-center mb-4">
                 <CheckCircle2 size={32} className="text-white" />
               </div>
               <h3 className="text-white font-bold text-xl mb-2">Demande enregistrée</h3>
-              <p className="text-white/80 text-sm font-light">
+              <p className="text-sm font-normal text-white/80">
                 Vous êtes sur la liste d'attente VIP. Nous vous contacterons prochainement.
               </p>
             </div>
           ) : (
             <>
               <h3 className="text-white font-bold text-xl mb-2">Rejoindre la liste d'attente</h3>
-              <p className="text-white/80 text-sm font-light mb-6">
+              <p className="text-sm font-normal text-white/80 mb-6">
                 Les places sont limitées pour le lancement de la version bêta privée.
               </p>
               
@@ -126,13 +126,13 @@ export function Patrimoine() {
                   placeholder="Votre adresse email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3.5 text-white placeholder:text-white/50 focus:outline-none focus:border-[#047857] transition-colors"
+                  className="w-full bg-white/10 rounded-[var(--radius-field)] px-4 py-3.5 text-white placeholder:text-white/50 focus:outline-none focus:bg-white/20 transition-colors"
                 />
                 <button 
                   onClick={() => {
                     if (email) setSubmitted(true);
                   }}
-                  className="w-full bg-[#047857] hover:bg-[#059669] text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-colors"
+                  className="w-full bg-[var(--color-surface)] text-[var(--color-primary)] font-bold py-3.5 rounded-[var(--radius-btn)] flex items-center justify-center gap-2 transition-colors"
                 >
                   Demander un accès
                   <ArrowRight size={18} />

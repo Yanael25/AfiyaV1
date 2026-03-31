@@ -214,6 +214,29 @@ export const check_differential_deadlines = async () => {
   }
 };
 
+export const getOrCreateGlobalFund = async () => {
+  const walletsRef = collection(db, 'wallets');
+  const globalFundQuery = query(walletsRef, where('wallet_type', '==', 'GLOBAL_FUND'), limit(1));
+  const globalFundSnapshot = await getDocs(globalFundQuery);
+  
+  if (!globalFundSnapshot.empty) {
+    return globalFundSnapshot.docs[0].ref;
+  }
+
+  const globalFundRef = doc(walletsRef, 'global_fund_main');
+  await setDoc(globalFundRef, {
+    id: 'global_fund_main',
+    owner_id: null,
+    group_id: null,
+    wallet_type: 'GLOBAL_FUND',
+    balance: 0,
+    currency: 'XOF',
+    created_at: new Date().toISOString()
+  });
+  
+  return globalFundRef;
+};
+
 export const start_tontine_group = async (groupId: string) => {
   const groupRef = doc(db, 'tontine_groups', groupId);
   const membersQ = query(collection(db, 'tontine_members'), where('group_id', '==', groupId));
@@ -237,10 +260,7 @@ export const start_tontine_group = async (groupId: string) => {
   if (miniFundSnapshot.empty) throw new Error("Mini-fonds introuvable");
   const miniFundDocRef = miniFundSnapshot.docs[0].ref;
   
-  const globalFundQuery = query(walletsRef, where('wallet_type', '==', 'GLOBAL_FUND'), limit(1));
-  const globalFundSnapshot = await getDocs(globalFundQuery);
-  if (globalFundSnapshot.empty) throw new Error("Fonds global introuvable");
-  const globalFundDocRef = globalFundSnapshot.docs[0].ref;
+  const globalFundDocRef = await getOrCreateGlobalFund();
 
   return await runTransaction(db, async (transaction) => {
     const groupDoc = await transaction.get(groupRef);
@@ -438,10 +458,7 @@ export const process_contribution_payment = async (memberId: string, cycleId: st
   if (miniFundSnapshot.empty) throw new Error('Group mini fund not found');
   const miniFundDocRef = miniFundSnapshot.docs[0].ref;
 
-  const globalFundQuery = query(walletsRef, where('wallet_type', '==', 'GLOBAL_FUND'), limit(1));
-  const globalFundSnapshot = await getDocs(globalFundQuery);
-  if (globalFundSnapshot.empty) throw new Error('Global fund not found');
-  const globalFundDocRef = globalFundSnapshot.docs[0].ref;
+  const globalFundDocRef = await getOrCreateGlobalFund();
 
   const paymentsQuery = query(collection(db, 'payments'), where('cycle_id', '==', cycleId), where('member_id', '==', memberId), limit(1));
   const paymentsSnapshot = await getDocs(paymentsQuery);
@@ -732,10 +749,7 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
   if (miniFundSnapshot.empty) throw new Error('Group mini fund not found');
   const miniFundDocRef = miniFundSnapshot.docs[0].ref;
 
-  const globalFundQuery = query(walletsRef, where('wallet_type', '==', 'GLOBAL_FUND'), limit(1));
-  const globalFundSnapshot = await getDocs(globalFundQuery);
-  if (globalFundSnapshot.empty) throw new Error('Global fund not found');
-  const globalFundDocRef = globalFundSnapshot.docs[0].ref;
+  const globalFundDocRef = await getOrCreateGlobalFund();
 
   return await runTransaction(db, async (t) => {
     const memberDoc = await t.get(memberRef);
@@ -885,10 +899,7 @@ export const restore_member_account = async (memberId: string) => {
   if (contribPoolSnapshot.empty) throw new Error('Contribution pool not found');
   const contribPoolDocRef = contribPoolSnapshot.docs[0].ref;
 
-  const globalFundQuery = query(walletsRef, where('wallet_type', '==', 'GLOBAL_FUND'), limit(1));
-  const globalFundSnapshot = await getDocs(globalFundQuery);
-  if (globalFundSnapshot.empty) throw new Error('Global fund not found');
-  const globalFundDocRef = globalFundSnapshot.docs[0].ref;
+  const globalFundDocRef = await getOrCreateGlobalFund();
 
   const miniFundQuery = query(walletsRef, where('group_id', '==', groupData.id), where('wallet_type', '==', 'GROUP_MINI_FUND'), limit(1));
   const miniFundSnapshot = await getDocs(miniFundQuery);
