@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, LogIn, Search, Users, ArrowRight, History } from 'lucide-react';
+import { Plus, LogIn, Search, Users, Clock } from 'lucide-react';
 import { formatXOF } from '../../lib/utils';
 import { auth, db } from '../../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -11,7 +11,6 @@ export function Tontines() {
   const navigate = useNavigate();
   const [groupsData, setGroupsData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
     loadGroups();
@@ -23,9 +22,6 @@ export function Tontines() {
       const user = auth.currentUser;
       if (!user) return;
 
-      const profile = await getUserProfile(user.uid);
-      setUserProfile(profile);
-
       // 1. Fetch user's memberships
       const membershipsQuery = query(
         collection(db, 'tontine_members'),
@@ -36,7 +32,6 @@ export function Tontines() {
 
       if (memberships.length === 0) {
         setGroupsData([]);
-        setLoading(false);
         return;
       }
 
@@ -44,7 +39,7 @@ export function Tontines() {
       const fetchedGroups = await getUserGroups(user.uid);
       const groupIds = fetchedGroups.map(g => g.id);
 
-      // 3. Fetch active cycles for these groups
+      // 3. Fetch active cycles
       const activeCycles: Record<string, Cycle> = {};
       if (groupIds.length > 0) {
         for (let i = 0; i < groupIds.length; i += 10) {
@@ -62,14 +57,11 @@ export function Tontines() {
         }
       }
 
-      // 4. Fetch beneficiaries names for active cycles
+      // 4. Fetch beneficiaries names
       const beneficiaryIds = Object.values(activeCycles).map(c => c.beneficiary_member_id);
       const beneficiaries: Record<string, string> = {};
       
       if (beneficiaryIds.length > 0) {
-        // We need to fetch the actual user profiles for these members
-        // To keep it simple, we'll just use a placeholder if we can't fetch easily,
-        // but let's try to fetch the member docs first to get the user_id
         for (let i = 0; i < beneficiaryIds.length; i += 10) {
           const chunk = beneficiaryIds.slice(i, i + 10);
           const membersQuery = query(
@@ -99,7 +91,7 @@ export function Tontines() {
             });
 
             Object.entries(memberToUserMap).forEach(([memberId, userId]) => {
-              beneficiaries[memberId] = userProfiles[userId]?.full_name?.split(' ')[0] || 'Un membre';
+              beneficiaries[memberId] = userProfiles[userId]?.full_name?.split(' ')[0] || 'Membre';
             });
           }
         }
@@ -118,7 +110,6 @@ export function Tontines() {
         };
       });
 
-      // Sort by created_at desc
       combinedData.sort((a, b) => {
         const dateA = a.created_at?.toDate?.() || new Date(0);
         const dateB = b.created_at?.toDate?.() || new Date(0);
@@ -142,196 +133,150 @@ export function Tontines() {
   const getDaysLeft = (timestamp: any) => {
     if (!timestamp) return 0;
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    const now = new Date();
-    const diffTime = date.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil((date.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
     return diffDays > 0 ? diffDays : 0;
   };
 
   const activeGroupsCount = groupsData.filter(g => g.status === 'ACTIVE').length;
 
   return (
-    <div className="bg-[#FAFAF8] min-h-screen pb-[80px] flex flex-col font-manrope">
+    <div className="bg-[#FAFAF8] min-h-screen pb-[80px] flex flex-col font-sans">
+      
       {/* HEADER */}
-      <div className="pt-[52px] px-[24px] pb-[24px] flex justify-between items-start">
+      <div className="pt-[52px] px-[24px] mb-[20px] flex justify-between items-start">
         <div>
-          <div className="text-[26px] font-extrabold text-[#1A1A1A] tracking-[-0.02em] mb-[3px]">Mes Cercles</div>
-          <div className="text-[13px] font-medium text-[#A39887]">
-            {activeGroupsCount} cercle{activeGroupsCount !== 1 ? 's' : ''} actif{activeGroupsCount !== 1 ? 's' : ''}
-          </div>
+          <h1 className="text-[26px] font-extrabold text-[#1A1A1A] tracking-tight mb-1">Mes Cercles</h1>
+          <p className="text-[13px] font-medium text-[#A39887]">
+            {activeGroupsCount} cercle{activeGroupsCount > 1 ? 's' : ''} actif{activeGroupsCount > 1 ? 's' : ''}
+          </p>
         </div>
-        <div className="flex gap-[8px] mt-[6px]">
-          <button className="w-[36px] h-[36px] bg-white rounded-[12px] flex items-center justify-center shrink-0 border-none cursor-pointer">
-            <Search size={17} strokeWidth={1.5} className="text-[#6B6B6B]" />
+        <div className="flex gap-2 items-start mt-1.5">
+          <button className="w-9 h-9 bg-white rounded-[12px] flex items-center justify-center transition-opacity active:opacity-80">
+            <Search size={17} strokeWidth={1.5} color="#6B6B6B" />
           </button>
           <button 
             onClick={() => navigate('/cercles/historique')}
-            className="flex items-center gap-[6px] px-[14px] py-[8px] bg-white rounded-[12px] text-[12px] font-bold text-[#6B6B6B] border-none cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white rounded-[12px] transition-opacity active:opacity-80"
           >
-            <History size={14} strokeWidth={1.5} />
-            Historique
+            <Clock size={14} strokeWidth={1.5} color="#6B6B6B" />
+            <span className="text-[12px] font-bold text-[#6B6B6B]">Historique</span>
           </button>
         </div>
       </div>
 
       {/* CTAs */}
-      <div className="px-[16px] grid grid-cols-2 gap-[10px] mb-[28px]">
+      <div className="grid grid-cols-2 gap-2.5 mx-4 mb-7">
         <button 
           onClick={() => navigate('/group/create')}
-          className="bg-[#047857] text-white rounded-[18px] p-[14px_16px] flex items-center gap-[10px] text-[13px] font-bold border-none cursor-pointer"
+          className="bg-[#047857] text-white rounded-[18px] py-3.5 px-4 flex items-center gap-2.5 font-bold text-[13px] transition-opacity active:opacity-80"
         >
-          <div className="w-[28px] h-[28px] rounded-[9px] bg-white/20 flex items-center justify-center shrink-0">
-            <Plus size={14} strokeWidth={2} className="text-white" />
+          <div className="bg-white/20 w-7 h-7 rounded-[9px] flex items-center justify-center">
+            <Plus size={18} color="white" strokeWidth={2.5} />
           </div>
           Créer un cercle
         </button>
         <button 
           onClick={() => navigate('/group/join')}
-          className="bg-white text-[#1A1A1A] rounded-[18px] p-[14px_16px] flex items-center gap-[10px] text-[13px] font-bold border-none cursor-pointer"
+          className="bg-white text-[#1A1A1A] rounded-[18px] py-3.5 px-4 flex items-center gap-2.5 font-bold text-[13px] transition-opacity active:opacity-80"
         >
-          <div className="w-[28px] h-[28px] rounded-[9px] bg-[#F0FDF4] flex items-center justify-center shrink-0">
-            <LogIn size={14} strokeWidth={1.5} className="text-[#047857]" />
+          <div className="bg-[#F0FDF4] w-7 h-7 rounded-[9px] flex items-center justify-center">
+            <LogIn size={18} color="#047857" strokeWidth={1.5} />
           </div>
           Rejoindre
         </button>
       </div>
 
       {/* LISTE CERCLES */}
-      <div className="flex flex-col">
+      <div className="flex flex-col gap-2.5 mx-4">
         {loading ? (
           <div className="text-center py-8 text-[13px] font-medium text-[#A39887]">Chargement...</div>
         ) : groupsData.length === 0 ? (
-          <div className="bg-white rounded-[20px] p-[36px_20px] mx-[16px] text-center">
-            <div className="w-[48px] h-[48px] bg-[#F0FDF4] rounded-[16px] mx-auto mb-[14px] flex items-center justify-center">
-              <Users size={22} strokeWidth={1.5} className="text-[#047857]" />
+          <div className="bg-white rounded-[20px] p-8 text-center">
+            <div className="w-12 h-12 bg-[#F0FDF4] rounded-[16px] flex items-center justify-center mx-auto mb-3.5">
+              <Users size={24} color="#047857" />
             </div>
-            <div className="text-[14px] font-bold text-[#1A1A1A] mb-[6px]">Pas encore de cercle</div>
-            <div className="text-[12px] font-normal text-[#A39887] leading-[1.6]">
+            <h3 className="text-[14px] font-bold text-[#1A1A1A] mb-1.5">Pas encore de cercle</h3>
+            <p className="text-[12px] text-[#A39887] leading-relaxed">
               Créez votre premier cercle ou rejoignez-en un via un code d'invitation.
-            </div>
+            </p>
           </div>
         ) : (
-          groupsData.map((groupData) => {
-            const { userMembership, activeCycle, beneficiaryName } = groupData;
-            // Default to target_members if members_count is not available
-            const membersCount = groupData.members_count || 1; 
-            const isForming = groupData.status === 'FORMING' || groupData.status === 'DRAFT' || groupData.status === 'WAITING_VOTE';
-            const isActive = groupData.status === 'ACTIVE';
-            
-            const isPublic = groupData.is_public === true;
-            const privacyText = isPublic ? 'Cercle public' : 'Cercle privé';
-            const freqText = groupData.frequency === 'WEEKLY' ? 'semaine' : groupData.frequency === 'MONTHLY' ? 'mois' : 'trimestre';
-            
-            const totalPot = groupData.contribution_amount * groupData.target_members;
-            const daysLeft = getDaysLeft(groupData.constitution_deadline);
-
-            // Progress calculations
-            let progressPercent = 0;
-            let progressTextLeft = '';
-            let progressTextRight = '';
-            let isCurrentUserBeneficiary = false;
-
-            if (isForming) {
-              progressPercent = Math.min(100, (membersCount / groupData.target_members) * 100);
-              progressTextLeft = `${membersCount} / ${groupData.target_members} membres`;
-              progressTextRight = `Deadline ${formatShortDate(groupData.constitution_deadline)}`;
-            } else {
-              progressPercent = Math.min(100, (groupData.current_cycle / groupData.total_cycles) * 100);
-              progressTextLeft = `${groupData.current_cycle} / ${groupData.total_cycles} cycles`;
-              if (activeCycle) {
-                isCurrentUserBeneficiary = activeCycle.beneficiary_member_id === userMembership?.id;
-                progressTextRight = isCurrentUserBeneficiary ? 'Vous recevez ce cycle' : `${beneficiaryName || 'Un membre'} reçoit ce cycle`;
-              }
-            }
+          groupsData.map((group) => {
+            const isForming = group.status === 'FORMING' || group.status === 'DRAFT' || group.status === 'WAITING_VOTE';
+            const isActive = group.status === 'ACTIVE';
+            const membersCount = group.members_count || 1;
+            const progress = isForming 
+              ? (membersCount / group.target_members) * 100 
+              : (group.current_cycle / group.total_cycles) * 100;
 
             return (
               <div 
-                key={groupData.id}
-                onClick={() => navigate(`/group/${groupData.id}`)}
-                className="bg-white rounded-[20px] p-[18px_20px] mx-[16px] mb-[10px] cursor-pointer"
+                key={group.id}
+                onClick={() => navigate(`/group/${group.id}`)}
+                className="bg-white rounded-[20px] p-[18px] px-5 cursor-pointer transition-transform active:scale-[0.99]"
               >
-                {/* CARD TOP */}
-                <div className="flex justify-between items-start mb-[3px]">
-                  <div className="text-[15px] font-extrabold text-[#1A1A1A]">{groupData.name}</div>
-                  {isActive ? (
-                    <div className="text-[10px] font-bold tracking-[0.08em] uppercase px-[10px] py-[4px] rounded-[8px] whitespace-nowrap shrink-0 ml-[10px] mt-[1px] bg-[#F0FDF4] text-[#047857]">
-                      Actif
-                    </div>
-                  ) : isForming ? (
-                    <div className="text-[10px] font-bold tracking-[0.08em] uppercase px-[10px] py-[4px] rounded-[8px] whitespace-nowrap shrink-0 ml-[10px] mt-[1px] bg-[#F5F4F2] text-[#6B6B6B]">
-                      Constitution
-                    </div>
-                  ) : (
-                    <div className="text-[10px] font-bold tracking-[0.08em] uppercase px-[10px] py-[4px] rounded-[8px] whitespace-nowrap shrink-0 ml-[10px] mt-[1px] bg-[#F5F4F2] text-[#6B6B6B]">
-                      {groupData.status === 'COMPLETED' ? 'Terminé' : 'Annulé'}
-                    </div>
-                  )}
+                <div className="flex justify-between items-start mb-1">
+                  <h2 className="text-[15px] font-extrabold text-[#1A1A1A] truncate">{group.name}</h2>
+                  <span className={`text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-1 rounded-[8px] ${
+                    isActive ? 'bg-[#F0FDF4] text-[#047857]' : 'bg-[#F5F4F2] text-[#6B6B6B]'
+                  }`}>
+                    {isActive ? 'Actif' : 'Constitution'}
+                  </span>
                 </div>
 
-                {/* META */}
-                <div className="text-[12px] font-medium text-[#A39887] mb-[14px]">
-                  {privacyText} · {isForming ? `${groupData.target_members} membres max` : `${groupData.target_members} membres`} · {formatXOF(groupData.contribution_amount)} / {freqText}
+                <div className="text-[12px] font-medium text-[#A39887] mb-3.5">
+                  {group.is_public ? 'Cercle public' : 'Cercle privé'} · {group.target_members} membres · {formatXOF(group.contribution_amount)} / mois
                 </div>
 
-                {/* STATS */}
-                <div className="grid grid-cols-2 gap-[8px] mb-[14px]">
-                  {isForming ? (
-                    <>
-                      <div className="bg-[#FAFAF8] rounded-[12px] p-[10px_12px]">
-                        <div className="text-[14px] font-extrabold text-[#1A1A1A] mb-[2px]">{membersCount} / {groupData.target_members}</div>
-                        <div className="text-[10px] font-semibold text-[#A39887] uppercase tracking-[0.06em]">Membres rejoints</div>
-                      </div>
-                      <div className="bg-[#FAFAF8] rounded-[12px] p-[10px_12px]">
-                        <div className="text-[14px] font-extrabold text-[#1A1A1A] mb-[2px]">{daysLeft} jours</div>
-                        <div className="text-[10px] font-semibold text-[#A39887] uppercase tracking-[0.06em]">Deadline</div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="bg-[#FAFAF8] rounded-[12px] p-[10px_12px]">
-                        <div className="text-[14px] font-extrabold text-[#1A1A1A] mb-[2px]">{formatXOF(totalPot)}</div>
-                        <div className="text-[10px] font-semibold text-[#A39887] uppercase tracking-[0.06em]">Cagnotte</div>
-                      </div>
-                      <div className="bg-[#FAFAF8] rounded-[12px] p-[10px_12px]">
-                        <div className="text-[14px] font-extrabold text-[#1A1A1A] mb-[2px]">
-                          {userMembership?.draw_position ? `Position ${userMembership.draw_position}` : 'En attente'}
-                        </div>
-                        <div className="text-[10px] font-semibold text-[#A39887] uppercase tracking-[0.06em]">Mon tirage</div>
-                      </div>
-                    </>
-                  )}
+                <div className="grid grid-cols-2 gap-2 mb-3.5">
+                  <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3">
+                    <div className="text-[13px] font-extrabold text-[#1A1A1A]">
+                      {isForming ? `${membersCount} / ${group.target_members}` : formatXOF(group.contribution_amount * group.target_members).replace(' FCFA', '')}
+                    </div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#A39887]">
+                      {isForming ? 'Membres rejoints' : 'Cagnotte FCFA'}
+                    </div>
+                  </div>
+                  <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3">
+                    <div className="text-[13px] font-extrabold text-[#1A1A1A]">
+                      {isForming ? `${getDaysLeft(group.constitution_deadline)} jours` : `#${group.userMembership?.draw_position || '?'}`}
+                    </div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#A39887]">
+                      {isForming ? 'Deadline' : 'Mon tirage'}
+                    </div>
+                  </div>
                 </div>
 
-                {/* BARRE PROGRESSION */}
-                <div className="mb-[12px]">
-                  <div className="h-[4px] bg-[#F0EFED] rounded-full overflow-hidden mb-[6px]">
+                <div className="w-full mb-3">
+                  <div className="bg-[#F0EFED] h-1 rounded-full overflow-hidden mb-1.5">
                     <div 
-                      className={`h-full rounded-full ${isForming ? 'bg-[#C4B8AC]' : 'bg-[#047857]'}`}
-                      style={{ width: `${progressPercent}%` }}
+                      className="bg-[#047857] h-full rounded-full transition-all duration-500" 
+                      style={{ width: `${progress}%` }}
                     />
                   </div>
-                  <div className="text-[11px] font-semibold text-[#A39887] flex justify-between">
-                    <span>{progressTextLeft}</span>
-                    <span className={isActive ? "text-[#047857] font-bold" : ""}>{progressTextRight}</span>
+                  <div className="flex justify-between text-[11px] font-semibold text-[#A39887]">
+                    <span>{isForming ? `${membersCount} / ${group.target_members} membres` : `${group.current_cycle} / ${group.total_cycles} cycles`}</span>
+                    {isActive && (
+                      <span className="text-[#047857] font-bold">Bénéficiaire : {group.beneficiaryName || '...'}</span>
+                    )}
                   </div>
                 </div>
 
-                {/* NEXT ACTION */}
-                {isForming ? (
-                  <div className="flex justify-between items-center rounded-[12px] p-[10px_14px] bg-[#F5F4F2]">
-                    <div className="text-[12px] font-semibold text-[#6B6B6B]">
-                      {Math.max(0, groupData.target_members - membersCount)} places restantes · Inviter des membres
-                    </div>
-                    <div className="text-[13px] font-extrabold text-[#6B6B6B]">→</div>
+                {isActive ? (
+                  <div className="bg-[#F0FDF4] rounded-[12px] px-3.5 py-2.5 flex justify-between items-center">
+                    <span className="text-[12px] font-semibold text-[#047857]">
+                      Prochaine cotisation {group.activeCycle?.payment_due_date ? `· ${formatShortDate(group.activeCycle.payment_due_date)}` : ''}
+                    </span>
+                    <span className="text-[13px] font-extrabold text-[#047857]">
+                      -{formatXOF(group.contribution_amount).replace(' FCFA', '')}
+                    </span>
                   </div>
                 ) : (
-                  <div className="flex justify-between items-center rounded-[12px] p-[10px_14px] bg-[#F0FDF4]">
-                    <div className="text-[12px] font-semibold text-[#047857]">
-                      Prochaine cotisation {activeCycle?.payment_due_date ? `· ${formatShortDate(activeCycle.payment_due_date)}` : ''}
-                    </div>
-                    <div className="text-[13px] font-extrabold text-[#047857]">
-                      -{formatXOF(groupData.contribution_amount)}
-                    </div>
+                  <div className="bg-[#F5F4F2] rounded-[12px] px-3.5 py-2.5 flex justify-between items-center">
+                    <span className="text-[12px] font-semibold text-[#6B6B6B]">
+                      {group.target_members - membersCount} places restantes · Inviter
+                    </span>
+                    <span className="text-[#6B6B6B] font-bold">→</span>
                   </div>
                 )}
               </div>
@@ -339,7 +284,7 @@ export function Tontines() {
           })
         )}
       </div>
+      
     </div>
   );
 }
-

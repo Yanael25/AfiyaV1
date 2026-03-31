@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { formatXOF } from '../../lib/utils';
-import { auth, db } from '../../lib/firebase';
+import { auth } from '../../lib/firebase';
 import { getGroupMembers, payDepositDifferential, getTontineGroup, repositionMember } from '../../services/tontineService';
 import { getUserProfile } from '../../services/userService';
 
@@ -49,7 +49,6 @@ export function AdjustDeposit() {
       if (!user) throw new Error("Utilisateur non connecté");
 
       await payDepositDifferential(memberInfo.id, user.uid);
-
       navigate(`/group/${id}`);
     } catch (e: any) {
       setError(e.message || "Une erreur est survenue");
@@ -65,8 +64,8 @@ export function AdjustDeposit() {
       const user = auth.currentUser;
       if (!user) throw new Error("Utilisateur non connecté");
 
+      // Logique de repositionnement dans la seconde moitié
       await repositionMember(memberInfo.id, groupInfo.target_members);
-      
       navigate(-1);
     } catch (e: any) {
       setError(e.message || "Une erreur est survenue");
@@ -78,7 +77,7 @@ export function AdjustDeposit() {
   if (!memberInfo || !groupInfo || !userProfile) {
     return (
       <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-[#047857] border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[#047857] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -88,23 +87,24 @@ export function AdjustDeposit() {
     : 'U';
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] font-manrope pb-10">
+    <div className="min-h-screen bg-[#FAFAF8] font-sans pb-10">
+      
       {/* TOP BAR */}
-      <div className="pt-[52px] px-6 mb-5 flex items-start gap-3">
+      <div className="pt-[52px] px-[24px] mb-[20px] flex items-start gap-3">
         <button 
           onClick={() => navigate(-1)}
-          className="w-9 h-9 bg-white rounded-[12px] flex items-center justify-center shrink-0"
+          className="w-9 h-9 bg-white rounded-[12px] flex items-center justify-center shrink-0 transition-opacity active:opacity-80"
         >
           <ArrowLeft size={18} stroke="#6B6B6B" strokeWidth={1.5} />
         </button>
         <div>
           <h1 className="text-[22px] font-extrabold text-[#1A1A1A] tracking-tight mb-1">Compléter ma caution</h1>
-          <p className="text-[13px] font-medium text-[#A39887]">{groupInfo.name}</p>
+          <p className="text-[13px] text-[#A39887]">{groupInfo.name}</p>
         </div>
       </div>
 
       {error && (
-        <div className="mx-4 mb-4 bg-[#FFF5F5] border border-[#EF4444] rounded-[12px] p-3 text-[13px] font-medium text-[#EF4444]">
+        <div className="mx-4 mb-4 bg-[#FFF5F5] border border-[#EDECEA] rounded-[14px] p-3 text-[12px] font-semibold text-[#6B6B6B] text-center">
           {error}
         </div>
       )}
@@ -116,14 +116,14 @@ export function AdjustDeposit() {
         </div>
         <div>
           <h2 className="text-[16px] font-extrabold text-[#1A1A1A] mb-0.5">Moi · Position #{memberInfo.draw_position}</h2>
-          <p className="text-[12px] font-medium text-[#A39887]">{groupInfo.name} · Tier {userProfile.tier}</p>
+          <p className="text-[12px] text-[#A39887]">{groupInfo.name} · Tier {userProfile.tier}</p>
         </div>
       </div>
 
       {/* BLOC CAUTION */}
       <div className="bg-white rounded-[20px] overflow-hidden mx-4 mb-2.5">
         <div className="px-5 pt-4 mb-3">
-          <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A39887]">CAUTION BLOQUÉE</h3>
+          <label className="text-[11px] font-bold uppercase tracking-widest text-[#A39887]">CAUTION BLOQUÉE</label>
         </div>
         
         <div className="mx-5 mb-4 flex flex-col gap-2">
@@ -148,10 +148,10 @@ export function AdjustDeposit() {
             
             <div className="flex justify-between items-start gap-2.5">
               <div>
-                <div className="text-[12px] font-semibold text-[#6B6B6B] mb-0.5">Complément requis</div>
-                <div className="text-[10px] italic text-[#C4B8AC]">Selon votre position de tirage</div>
+                <p className="text-[12px] font-semibold text-[#6B6B6B] mb-0.5">Complément requis</p>
+                <p className="text-[10px] italic text-[#C4B8AC]">Selon votre position de tirage</p>
               </div>
-              <div className="text-[14px] font-extrabold text-[#1A1A1A]">+{formatXOF(memberInfo.deposit_differential)}</div>
+              <span className="text-[14px] font-extrabold text-[#1A1A1A]">+{formatXOF(memberInfo.deposit_differential)}</span>
             </div>
           </div>
         </div>
@@ -161,7 +161,7 @@ export function AdjustDeposit() {
       <div className="bg-[#FAFAF8] rounded-[16px] mx-4 mb-2.5 p-3.5 flex items-start gap-2.5">
         <div className="w-1.5 h-1.5 bg-[#A39887] rounded-full flex-shrink-0 mt-1.5" />
         <p className="text-[12px] font-medium text-[#6B6B6B] leading-relaxed">
-          Vous avez 48h pour compléter. Sans paiement, votre position sera automatiquement déplacée dans la seconde moitié du groupe, sans pénalité.
+          Vous avez <span className="font-bold text-[#1A1A1A]">48h</span> pour compléter. Sans paiement, votre position sera automatiquement déplacée dans la seconde moitié du groupe, sans pénalité.
         </p>
       </div>
 
@@ -172,7 +172,7 @@ export function AdjustDeposit() {
       </div>
 
       {/* NOTE SÉCURITÉ */}
-      <div className="bg-[#F0FDF4] rounded-[16px] mx-4 mb-2.5 p-3.5 flex items-start gap-2.5">
+      <div className="bg-[#F0FDF4] rounded-[16px] mx-4 mb-5 p-3.5 flex items-start gap-2.5">
         <div className="w-1.5 h-1.5 bg-[#047857] rounded-full flex-shrink-0 mt-1.5" />
         <p className="text-[12px] font-medium text-[#047857] leading-relaxed">
           Ce complément est bloqué comme votre caution initiale. Restitué intégralement en fin de cercle si aucun incident.
@@ -180,31 +180,26 @@ export function AdjustDeposit() {
       </div>
 
       {/* CTAs */}
-      <div className="mx-4 mt-2">
+      <div className="mx-4 mt-2 space-y-2.5">
         <button
           onClick={handlePayDifferential}
           disabled={loading || memberInfo.deposit_differential_paid}
-          className="w-full bg-[#047857] text-white rounded-[16px] py-4 text-[15px] font-bold mb-2.5 disabled:opacity-50 flex items-center justify-center"
+          className="w-full bg-[#047857] text-white rounded-[16px] py-4 text-[15px] font-bold flex items-center justify-center active:opacity-80 transition-opacity disabled:opacity-50"
         >
-          {loading ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : memberInfo.deposit_differential_paid ? (
-            'Déjà payé'
-          ) : (
-            `Payer ${formatXOF(memberInfo.deposit_differential)}`
-          )}
+          {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : `Payer ${formatXOF(memberInfo.deposit_differential)}`}
         </button>
         
         {!memberInfo.deposit_differential_paid && (
           <button
             onClick={handleRefuse}
             disabled={loading}
-            className="w-full bg-white text-[#1A1A1A] rounded-[16px] py-4 text-[15px] font-bold disabled:opacity-50"
+            className="w-full bg-white text-[#1A1A1A] rounded-[16px] py-4 text-[15px] font-bold active:bg-gray-50 transition-colors disabled:opacity-50"
           >
             Refuser et être repositionné
           </button>
         )}
       </div>
+
     </div>
   );
 }

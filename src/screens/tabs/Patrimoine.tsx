@@ -1,12 +1,18 @@
+import React from 'react';
 import { TrendingUp, Building2, BarChart2, PiggyBank, Briefcase } from 'lucide-react';
 
 export function Patrimoine() {
   return (
-    <div className="bg-[#FAFAF8] min-h-screen pb-[80px] flex flex-col font-['Manrope']">
+    <div className="bg-[#FAFAF8] min-h-screen pb-[80px] flex flex-col font-sans">
+      
       {/* HEADER */}
-      <div className="pt-[52px] px-6 mb-0">
-        <h1 className="text-[26px] font-extrabold text-[#1A1A1A] tracking-tight mb-1">Afiya Capital</h1>
-        <p className="text-[13px] font-medium text-[#A39887]">Faites fructifier votre épargne.</p>
+      <div className="pt-[52px] px-[24px] mb-0">
+        <h1 className="text-[26px] font-extrabold text-[#1A1A1A] tracking-tight mb-1">
+          Afiya Capital
+        </h1>
+        <p className="text-[13px] font-medium text-[#A39887]">
+          Faites fructifier votre épargne.
+        </p>
       </div>
 
       {/* CONTENU CENTRÉ */}

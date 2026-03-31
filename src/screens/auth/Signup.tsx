@@ -15,7 +15,7 @@ export function Signup() {
     if (!email || !password) return;
     
     if (password.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caractères");
+      setError("Le mot de passe doit contenir au moins 8 caractères.");
       return;
     }
 
@@ -26,9 +26,9 @@ export function Signup() {
       navigate('/kyc');
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
-        setError("Cet email est déjà utilisé");
+        setError("Cet email est déjà utilisé.");
       } else {
-        setError("Une erreur est survenue lors de l'inscription");
+        setError("Une erreur est survenue lors de l'inscription.");
       }
     } finally {
       setLoading(false);
@@ -36,19 +36,20 @@ export function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] flex flex-col">
+    <div className="min-h-screen bg-[#FAFAF8] flex flex-col font-sans">
+      
       {/* 1. BOUTON RETOUR */}
       <div className="pt-[52px] px-[24px]">
         <button 
           onClick={() => navigate('/welcome')} 
-          className="w-9 h-9 bg-white rounded-xl flex items-center justify-center"
+          className="w-9 h-9 bg-white rounded-xl flex items-center justify-center transition-opacity active:opacity-80"
         >
           <ChevronLeft size={18} strokeWidth={1.5} color="#6B6B6B" />
         </button>
       </div>
       
       {/* 2. HEADER */}
-      <div className="px-[28px] pb-[28px] border-b border-[#F0EFED] mb-[32px] relative mt-6">
+      <div className="px-[28px] pb-[28px] border-b border-[#F0EFED] mb-[32px] relative mt-[24px]">
         <div className="absolute left-0 top-2 bottom-2 w-[3px] bg-[#047857] rounded-r-[4px]" />
         <div className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#047857] mb-3">
           AFIYA
@@ -78,7 +79,7 @@ export function Signup() {
             value={email}
             onChange={e => { setEmail(e.target.value); setError(null); }}
             placeholder="fifame.dossou@gmail.com"
-            className="w-full bg-[#FAFAF8] border-2 border-transparent focus:border-[#047857]/20 rounded-[14px] px-4 py-[14px] text-[15px] font-semibold text-[#1A1A1A] outline-none placeholder:text-[#C4B8AC] placeholder:font-normal transition-colors"
+            className="w-full bg-[#FAFAF8] border-2 border-transparent rounded-[14px] px-4 py-[14px] text-[15px] font-semibold text-[#1A1A1A] outline-none placeholder:text-[#C4B8AC] placeholder:font-normal"
           />
         </div>
 
@@ -92,11 +93,11 @@ export function Signup() {
               value={password}
               onChange={e => { setPassword(e.target.value); setError(null); }}
               placeholder="••••••••"
-              className="w-full bg-[#FAFAF8] border-2 border-transparent focus:border-[#047857]/20 rounded-[14px] pl-4 pr-12 py-[14px] text-[15px] font-semibold text-[#1A1A1A] outline-none placeholder:text-[#C4B8AC] placeholder:font-normal transition-colors"
+              className="w-full bg-[#FAFAF8] border-2 border-transparent rounded-[14px] pl-4 pr-12 py-[14px] text-[15px] font-semibold text-[#1A1A1A] outline-none placeholder:text-[#C4B8AC] placeholder:font-normal"
             />
             <button 
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center"
+              className="absolute inset-y-0 right-0 pr-4 flex items-center transition-opacity active:opacity-80"
             >
               {showPassword ? (
                 <EyeOff size={20} strokeWidth={1.5} color="#C4B8AC" />
@@ -114,7 +115,7 @@ export function Signup() {
       {/* 5. BLOC BAS */}
       <div className="px-[28px] mt-auto pb-[40px]">
         {error && (
-          <div className="bg-[#FAFAF8] rounded-[14px] p-3 text-[12px] font-semibold text-[#1A1A1A] mb-4 border border-red-100">
+          <div className="bg-[#FAFAF8] rounded-[14px] p-3 text-[12px] font-semibold text-[#1A1A1A] mb-4 text-center">
             {error}
           </div>
         )}
@@ -122,25 +123,26 @@ export function Signup() {
         <button
           onClick={handleSignup}
           disabled={loading || !email || !password || password.length < 8}
-          className={`w-full rounded-[16px] py-4 text-[15px] font-bold mb-2.5 transition-colors ${
+          className={`w-full rounded-[16px] py-4 text-[15px] font-bold mb-2.5 transition-opacity ${
             loading || !email || !password || password.length < 8
               ? 'bg-[#E8E6E3] text-[#C4B8AC] cursor-not-allowed'
-              : 'bg-[#047857] text-white'
+              : 'bg-[#047857] text-white active:opacity-80'
           }`}
         >
           {loading ? 'Création...' : 'Continuer →'}
         </button>
 
-        <p className="text-[13px] text-[#A39887] text-center">
+        <p className="text-[13px] text-[#A39887] text-center mt-4">
           Déjà membre ?{' '}
           <button 
             onClick={() => navigate('/login')}
-            className="text-[#047857] font-bold"
+            className="text-[#047857] font-bold transition-opacity active:opacity-80"
           >
             Se connecter
           </button>
         </p>
       </div>
+      
     </div>
   );
 }

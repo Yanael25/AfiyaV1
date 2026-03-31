@@ -51,7 +51,6 @@ export function KycStep3() {
       setIsSubmitted(true);
     } catch (error) {
       console.error("Erreur lors de l'envoi des documents KYC:", error);
-      // Gérer l'erreur si nécessaire (ex: afficher un toast)
     } finally {
       setLoading(false);
     }
@@ -63,7 +62,7 @@ export function KycStep3() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-[#FAFAF8] flex flex-col font-sans px-7 justify-center">
+      <div className="min-h-screen bg-[#FAFAF8] flex flex-col font-sans px-[28px] justify-center">
         <div className="w-[72px] h-[72px] bg-[#F0FDF4] rounded-full mx-auto mb-4 flex items-center justify-center">
           <Clock size={32} stroke="#047857" strokeWidth={1.5} />
         </div>
@@ -75,7 +74,7 @@ export function KycStep3() {
           Vous recevrez une notification dès que votre identité est confirmée.
         </p>
 
-        <div className="bg-white rounded-[20px] p-5 mt-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+        <div className="bg-white rounded-[20px] p-5 mt-6">
           <div className="text-[11px] font-bold tracking-widest uppercase text-[#A39887] mb-4">
             EN ATTENDANT
           </div>
@@ -97,7 +96,7 @@ export function KycStep3() {
 
         <button
           onClick={() => navigate('/home')}
-          className="mt-10 w-full bg-[#047857] text-white rounded-[16px] py-4 text-[15px] font-bold transition-colors"
+          className="mt-10 w-full bg-[#047857] text-white rounded-[16px] py-4 text-[15px] font-bold transition-opacity active:opacity-80"
         >
           Accéder à Afiya
         </button>
@@ -107,18 +106,19 @@ export function KycStep3() {
 
   return (
     <div className="min-h-screen bg-[#FAFAF8] flex flex-col font-sans">
+      
       {/* 1. BOUTON RETOUR */}
-      <div className="pt-[48px] px-6">
+      <div className="pt-[48px] px-[24px]">
         <button 
           onClick={() => navigate(-1)} 
-          className="w-9 h-9 bg-white rounded-xl flex items-center justify-center"
+          className="w-9 h-9 bg-white rounded-xl flex items-center justify-center transition-opacity active:opacity-80"
         >
           <ArrowLeft size={18} stroke="#6B6B6B" strokeWidth={1.5} />
         </button>
       </div>
       
       {/* 2. HEADER */}
-      <div className="relative px-7 pb-7 border-b border-[#F0EFED] mb-7 mt-6">
+      <div className="relative px-[28px] pb-[28px] border-b border-[#F0EFED] mb-[28px] mt-[24px]">
         <div className="absolute left-0 top-2 bottom-2 w-[3px] bg-[#047857] rounded-r-[4px]" />
         <div className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#047857] mb-3">
           AFIYA
@@ -132,7 +132,7 @@ export function KycStep3() {
       </div>
 
       {/* 3. INDICATEUR DE PROGRESSION */}
-      <div className="px-7 mb-7">
+      <div className="px-[28px] mb-[28px]">
         <div className="flex gap-1.5">
           <div className="flex-1 h-1 rounded-full bg-[#047857]" />
           <div className="flex-1 h-1 rounded-full bg-[#047857]" />
@@ -141,11 +141,11 @@ export function KycStep3() {
       </div>
 
       {/* 4. UPLOAD CARDS */}
-      <div className="px-7 flex flex-col gap-2.5">
+      <div className="px-[28px] flex flex-col gap-2.5">
         {/* Document Card */}
         <div 
           onClick={() => docInputRef.current?.click()}
-          className="bg-white rounded-[20px] p-[18px] flex items-center gap-3.5 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+          className="bg-white rounded-[20px] p-[18px] flex items-center gap-3.5 cursor-pointer transition-opacity active:opacity-80"
         >
           <div className={`w-11 h-11 rounded-[14px] flex items-center justify-center shrink-0 ${documentFile ? 'bg-[#F0FDF4]' : 'bg-[#FAFAF8]'}`}>
             {documentFile ? (
@@ -165,7 +165,7 @@ export function KycStep3() {
               {documentFile ? documentFile.name : "Carte d'identité, passeport, permis"}
             </div>
           </div>
-          <div className={`text-[12px] shrink-0 ${documentFile ? 'font-semibold text-[#A39887]' : 'font-bold text-[#047857]'}`}>
+          <div className={documentFile ? 'text-[12px] font-semibold text-[#A39887] shrink-0' : 'text-[12px] font-bold text-[#047857] shrink-0'}>
             {documentFile ? 'Changer' : '+ Ajouter'}
           </div>
           <input 
@@ -180,7 +180,7 @@ export function KycStep3() {
         {/* Selfie Card */}
         <div 
           onClick={() => selfieInputRef.current?.click()}
-          className="bg-white rounded-[20px] p-[18px] flex items-center gap-3.5 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+          className="bg-white rounded-[20px] p-[18px] flex items-center gap-3.5 cursor-pointer transition-opacity active:opacity-80"
         >
           <div className={`w-11 h-11 rounded-[14px] flex items-center justify-center shrink-0 ${selfieFile ? 'bg-[#F0FDF4]' : 'bg-[#FAFAF8]'}`}>
             {selfieFile ? (
@@ -200,7 +200,7 @@ export function KycStep3() {
               {selfieFile ? selfieFile.name : "Visage visible, bonne luminosité"}
             </div>
           </div>
-          <div className={`text-[12px] shrink-0 ${selfieFile ? 'font-semibold text-[#A39887]' : 'font-bold text-[#047857]'}`}>
+          <div className={selfieFile ? 'text-[12px] font-semibold text-[#A39887] shrink-0' : 'text-[12px] font-bold text-[#047857] shrink-0'}>
             {selfieFile ? 'Changer' : '+ Ajouter'}
           </div>
           <input 
@@ -215,7 +215,7 @@ export function KycStep3() {
       </div>
 
       {/* 5. NOTE CONFIDENTIALITÉ */}
-      <div className="px-7 mt-2.5">
+      <div className="px-[28px] mt-[10px]">
         <div className="bg-[#FAFAF8] rounded-[14px] p-3 flex items-start gap-2">
           <div className="w-1.5 h-1.5 bg-[#A39887] rounded-full mt-1 flex-shrink-0" />
           <p className="text-[11px] font-medium text-[#A39887] leading-relaxed">
@@ -225,25 +225,26 @@ export function KycStep3() {
       </div>
 
       {/* 6. BLOC BAS */}
-      <div className="px-7 pb-10 mt-auto flex flex-col">
+      <div className="px-[28px] pb-[40px] mt-auto flex flex-col">
         <button
           onClick={handleSubmit}
           disabled={!documentFile || !selfieFile || loading}
-          className={`w-full rounded-[16px] py-4 text-[15px] font-bold mb-2.5 transition-colors ${
+          className={`w-full rounded-[16px] py-4 text-[15px] font-bold mb-2.5 transition-opacity ${
             !documentFile || !selfieFile || loading
               ? 'bg-[#E8E6E3] text-[#C4B8AC] cursor-not-allowed'
-              : 'bg-[#047857] text-white'
+              : 'bg-[#047857] text-white active:opacity-80'
           }`}
         >
           {loading ? 'Envoi...' : 'Envoyer pour vérification'}
         </button>
         <button
           onClick={handleSkip}
-          className="w-full bg-transparent border-none text-[13px] font-semibold text-[#A39887] py-3 transition-colors"
+          className="w-full bg-transparent border-none text-[13px] font-semibold text-[#A39887] py-3 transition-opacity active:opacity-80"
         >
           Faire ça plus tard
         </button>
       </div>
+      
     </div>
   );
 }

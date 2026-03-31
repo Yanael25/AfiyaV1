@@ -45,7 +45,7 @@ export function Kyc() {
         full_name: `${firstName} ${lastName}`.trim(),
         kyc_status: 'PENDING',
       });
-      navigate('/kyc-step-3');
+      navigate('/home'); // Modifié selon les consignes du prompt (au lieu de /kyc-step-3)
     } catch (e: any) {
       setError(e.message || "Une erreur est survenue");
     } finally {
@@ -55,18 +55,19 @@ export function Kyc() {
 
   return (
     <div className="min-h-screen bg-[#FAFAF8] flex flex-col font-sans">
+      
       {/* 1. BOUTON RETOUR */}
-      <div className="pt-[48px] px-6">
+      <div className="pt-[48px] px-[24px]">
         <button 
           onClick={() => navigate(-1)} 
-          className="w-9 h-9 bg-white rounded-xl flex items-center justify-center"
+          className="w-9 h-9 bg-white rounded-xl flex items-center justify-center transition-opacity active:opacity-80"
         >
           <ArrowLeft size={18} stroke="#6B6B6B" strokeWidth={1.5} />
         </button>
       </div>
       
       {/* 2. HEADER */}
-      <div className="relative px-7 pb-7 border-b border-[#F0EFED] mb-7 mt-6">
+      <div className="relative px-[28px] pb-[28px] border-b border-[#F0EFED] mb-[28px] mt-[24px]">
         <div className="absolute left-0 top-2 bottom-2 w-[3px] bg-[#047857] rounded-r-[4px]" />
         <div className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#047857] mb-3">
           AFIYA
@@ -80,7 +81,7 @@ export function Kyc() {
       </div>
 
       {/* 3. INDICATEUR DE PROGRESSION */}
-      <div className="px-7 mb-7">
+      <div className="px-[28px] mb-[28px]">
         <div className="flex gap-1.5">
           <div className="flex-1 h-1 rounded-full bg-[#047857]" />
           <div className="flex-1 h-1 rounded-full bg-[#047857] opacity-40" />
@@ -89,23 +90,23 @@ export function Kyc() {
       </div>
 
       {/* 4. AVATAR PREVIEW */}
-      <div className="px-7 mb-6 flex flex-col items-center">
+      <div className="px-[28px] mb-[24px] flex flex-col items-center">
         <div className="w-14 h-14 bg-[#047857] rounded-[18px] flex items-center justify-center">
           <span className={`text-[20px] font-extrabold ${getInitials() === '?' ? 'text-[#C4B8AC]' : 'text-white'}`}>
             {getInitials()}
           </span>
         </div>
-        <p className="text-[11px] text-[#C4B8AC] mt-2 italic">
+        <p className="text-[11px] text-[#C4B8AC] mt-2 italic text-center">
           Votre avatar se génère automatiquement
         </p>
       </div>
 
       {/* 5. FORMULAIRE */}
-      <div className="px-7 flex-1 flex flex-col justify-between pb-8">
+      <div className="px-[28px] flex-1 flex flex-col justify-between pb-[32px]">
         <div className="space-y-4">
           <div>
             <label className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-2 block">
-              Prénom
+              PRÉNOM
             </label>
             <input 
               type="text"
@@ -118,7 +119,7 @@ export function Kyc() {
 
           <div>
             <label className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-2 block">
-              Nom de famille
+              NOM DE FAMILLE
             </label>
             <input 
               type="text"
@@ -132,7 +133,7 @@ export function Kyc() {
 
         <div className="mt-8">
           {error && (
-            <div className="bg-[#FAFAF8] rounded-[14px] p-3 text-[12px] font-semibold text-[#1A1A1A] mb-4">
+            <div className="bg-[#FAFAF8] rounded-[14px] p-3 text-[12px] font-semibold text-[#1A1A1A] mb-4 text-center">
               {error}
             </div>
           )}
@@ -147,16 +148,17 @@ export function Kyc() {
           <button
             onClick={handleKyc}
             disabled={loading || !firstName || !lastName}
-            className={`w-full rounded-[16px] py-4 text-[15px] font-bold mb-2.5 transition-colors ${
+            className={`w-full rounded-[16px] py-4 text-[15px] font-bold transition-opacity ${
               !firstName || !lastName || loading
                 ? 'bg-[#E8E6E3] text-[#C4B8AC] cursor-not-allowed'
-                : 'bg-[#047857] text-white'
+                : 'bg-[#047857] text-white active:opacity-80'
             }`}
           >
             {loading ? 'Enregistrement...' : "C'est parti →"}
           </button>
         </div>
       </div>
+      
     </div>
   );
 }

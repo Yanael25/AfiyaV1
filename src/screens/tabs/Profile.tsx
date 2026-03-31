@@ -1,5 +1,8 @@
-import { useState, useEffect } from 'react';
-import { User, Shield, Bell, Globe, MessageCircle, FileText, LogOut, Share2, Lock, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  User, Shield, Bell, Globe, MessageCircle, FileText, 
+  LogOut, Share2, Lock, ChevronRight 
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../../lib/firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
@@ -21,7 +24,6 @@ export function Profile() {
     const loadData = async (uid: string) => {
       try {
         setLoading(true);
-        // 1. Load Profile
         const p = await getUserProfile(uid);
         setProfile(p || { 
           email: auth.currentUser?.email || '', 
@@ -32,7 +34,6 @@ export function Profile() {
           kyc_status: 'PENDING'
         });
 
-        // 2. Load Wallets
         const walletsQuery = query(
           collection(db, 'wallets'),
           where('owner_id', '==', uid)
@@ -48,7 +49,6 @@ export function Profile() {
         });
 
         setWallets({ main, cercles, capital });
-
       } catch (error) {
         console.error("Error loading profile data:", error);
       } finally {
@@ -101,18 +101,20 @@ export function Profile() {
   const benefits = getTierBenefits(profile?.tier || 'BRONZE');
   const nextTier = getNextTierInfo(profile?.tier || 'BRONZE', profile?.score_afiya || 50);
   const totalPatrimoine = wallets.main + wallets.cercles + wallets.capital;
+  const initials = profile?.full_name ? profile.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'U';
 
   return (
-    <div className="bg-[#FAFAF8] min-h-screen pb-[80px] flex flex-col">
+    <div className="bg-[#FAFAF8] min-h-screen pb-[100px] flex flex-col font-sans">
+      
       {/* HEADER */}
-      <div className="pt-[52px] px-6 mb-0">
+      <div className="pt-[52px] px-[24px] mb-0">
         <h1 className="text-[26px] font-extrabold text-[#1A1A1A] tracking-tight">Mon profil</h1>
       </div>
 
       {/* CARD IDENTITÉ */}
-      <div className="bg-white rounded-[24px] p-5 mx-4 mt-5 mb-2.5 flex items-center gap-4 shadow-sm">
+      <div className="bg-white rounded-[24px] p-5 mx-4 mt-5 mb-2.5 flex items-center gap-4">
         <div className="w-[60px] h-[60px] bg-[#047857] rounded-[20px] flex items-center justify-center text-[20px] font-extrabold text-white flex-shrink-0">
-          {(profile?.full_name || profile?.email || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+          {initials}
         </div>
         <div className="flex-1">
           <h2 className="text-[18px] font-extrabold text-[#1A1A1A] tracking-tight mb-1">
@@ -132,7 +134,7 @@ export function Profile() {
       {profile?.kyc_status !== 'VERIFIED' && (
         <div 
           onClick={() => navigate('/kyc-step3')}
-          className="bg-white border border-[#E8E6E3] rounded-[20px] mx-4 mb-2.5 p-4 flex items-center gap-3 cursor-pointer shadow-sm active:scale-[0.98] transition-transform"
+          className="bg-white border border-[#E8E6E3] rounded-[20px] mx-4 mb-2.5 p-4 flex items-center gap-3 cursor-pointer active:opacity-80 transition-opacity"
         >
           <div className="w-[38px] h-[38px] bg-[#F5F4F2] rounded-[12px] flex items-center justify-center flex-shrink-0">
             <Lock size={18} strokeWidth={1.5} className="text-[#1A1A1A]" />
@@ -146,7 +148,7 @@ export function Profile() {
       )}
 
       {/* SCORE AFIYA */}
-      <div className="bg-white rounded-[24px] p-5 mx-4 mb-2.5 shadow-sm">
+      <div className="bg-white rounded-[24px] p-5 mx-4 mb-2.5">
         <div className="flex justify-between items-start mb-4">
           <div>
             <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-1.5">SCORE AFIYA</h3>
@@ -182,19 +184,19 @@ export function Profile() {
         </div>
 
         <div className="grid grid-cols-2 gap-2 mb-4">
-          <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3">
+          <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3 text-left">
             <div className="text-[13px] font-extrabold text-[#1A1A1A] mb-0.5">{benefits.max}</div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#A39887]">Cotisation max</div>
           </div>
-          <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3">
+          <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3 text-left">
             <div className="text-[13px] font-extrabold text-[#1A1A1A] mb-0.5">{benefits.members}</div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#A39887]">Membres max</div>
           </div>
-          <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3">
+          <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3 text-left">
             <div className="text-[13px] font-extrabold text-[#1A1A1A] mb-0.5">{benefits.caution}</div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#A39887]">Coeff. caution</div>
           </div>
-          <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3">
+          <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3 text-left">
             <div className="text-[13px] font-extrabold text-[#1A1A1A] mb-0.5">{benefits.frais}</div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#A39887]">Frais de gestion</div>
           </div>
@@ -202,14 +204,14 @@ export function Profile() {
 
         {nextTier && (
           <div className="bg-[#F0FDF4] rounded-[12px] px-3.5 py-2.5 flex justify-between items-center">
-            <span className="text-[12px] font-semibold text-[#047857]">Prochaine palier — {nextTier.name}</span>
+            <span className="text-[12px] font-semibold text-[#047857]">Prochain palier — {nextTier.name}</span>
             <span className="text-[13px] font-extrabold text-[#047857]">+ {nextTier.points} pts</span>
           </div>
         )}
       </div>
 
       {/* PATRIMOINE TOTAL */}
-      <div className="bg-white rounded-[20px] p-5 mx-4 mb-2.5 shadow-sm">
+      <div className="bg-white rounded-[24px] p-5 mx-4 mb-2.5">
         <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-1.5">PATRIMOINE TOTAL</h3>
         <div className="text-[28px] font-extrabold text-[#1A1A1A] tracking-tight mb-1">
           {formatXOF(totalPatrimoine)}
@@ -241,28 +243,28 @@ export function Profile() {
 
       {/* MENU SECTIONS */}
       <div className="mt-4">
-        <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mx-4 mb-2">MON COMPTE</h3>
-        <div className="bg-white rounded-[20px] overflow-hidden mx-4 mb-5 shadow-sm">
-          <div className="flex items-center gap-3.5 px-[18px] py-[15px] border-b border-[#F8F7F6] cursor-pointer active:bg-gray-50">
+        <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mx-4 mb-2 px-1">MON COMPTE</h3>
+        <div className="bg-white rounded-[20px] overflow-hidden mx-4 mb-5">
+          <div className="flex items-center gap-3.5 px-[18px] py-[15px] border-b border-[#F8F7F6] cursor-pointer active:bg-gray-50 transition-colors">
             <div className="w-[34px] h-[34px] rounded-[11px] bg-[#F5F4F2] flex items-center justify-center">
               <User size={18} strokeWidth={1.5} className="text-[#1A1A1A]" />
             </div>
             <span className="text-[14px] font-semibold text-[#1A1A1A]">Informations personnelles</span>
             <ChevronRight size={18} strokeWidth={1.5} className="text-[#C4B8AC] ml-auto" />
           </div>
-          <div className="flex items-center gap-3.5 px-[18px] py-[15px] border-b border-[#F8F7F6] cursor-pointer active:bg-gray-50">
+          <div className="flex items-center gap-3.5 px-[18px] py-[15px] border-b border-[#F8F7F6] cursor-pointer active:bg-gray-50 transition-colors">
             <div className="w-[34px] h-[34px] rounded-[11px] bg-[#F5F4F2] flex items-center justify-center">
               <Lock size={18} strokeWidth={1.5} className="text-[#1A1A1A]" />
             </div>
             <span className="text-[14px] font-semibold text-[#1A1A1A]">Vérification d'identité</span>
-            <div className="ml-auto flex items-center">
+            <div className="ml-auto flex items-center gap-2">
               {profile?.kyc_status === 'VERIFIED' && (
-                <span className="bg-[#F5F4F2] text-[#6B6B6B] text-[10px] font-bold px-2 py-0.5 rounded-[6px] mr-1">Vérifié</span>
+                <span className="bg-[#F5F4F2] text-[#6B6B6B] text-[10px] font-bold px-2 py-0.5 rounded-[6px]">Vérifié</span>
               )}
               <ChevronRight size={18} strokeWidth={1.5} className="text-[#C4B8AC]" />
             </div>
           </div>
-          <div className="flex items-center gap-3.5 px-[18px] py-[15px] cursor-pointer active:bg-gray-50">
+          <div className="flex items-center gap-3.5 px-[18px] py-[15px] cursor-pointer active:bg-gray-50 transition-colors">
             <div className="w-[34px] h-[34px] rounded-[11px] bg-[#F5F4F2] flex items-center justify-center">
               <Shield size={18} strokeWidth={1.5} className="text-[#1A1A1A]" />
             </div>
@@ -271,16 +273,16 @@ export function Profile() {
           </div>
         </div>
 
-        <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mx-4 mb-2">PRÉFÉRENCES</h3>
-        <div className="bg-white rounded-[20px] overflow-hidden mx-4 mb-5 shadow-sm">
-          <div className="flex items-center gap-3.5 px-[18px] py-[15px] border-b border-[#F8F7F6] cursor-pointer active:bg-gray-50">
+        <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mx-4 mb-2 px-1">PRÉFÉRENCES</h3>
+        <div className="bg-white rounded-[20px] overflow-hidden mx-4 mb-5">
+          <div className="flex items-center gap-3.5 px-[18px] py-[15px] border-b border-[#F8F7F6] cursor-pointer active:bg-gray-50 transition-colors">
             <div className="w-[34px] h-[34px] rounded-[11px] bg-[#F0FDF4] flex items-center justify-center">
               <Bell size={18} strokeWidth={1.5} className="text-[#047857]" />
             </div>
             <span className="text-[14px] font-semibold text-[#1A1A1A]">Notifications</span>
             <ChevronRight size={18} strokeWidth={1.5} className="text-[#C4B8AC] ml-auto" />
           </div>
-          <div className="flex items-center gap-3.5 px-[18px] py-[15px] cursor-pointer active:bg-gray-50">
+          <div className="flex items-center gap-3.5 px-[18px] py-[15px] cursor-pointer active:bg-gray-50 transition-colors">
             <div className="w-[34px] h-[34px] rounded-[11px] bg-[#F5F4F2] flex items-center justify-center">
               <Globe size={18} strokeWidth={1.5} className="text-[#1A1A1A]" />
             </div>
@@ -292,16 +294,16 @@ export function Profile() {
           </div>
         </div>
 
-        <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mx-4 mb-2">SUPPORT</h3>
-        <div className="bg-white rounded-[20px] overflow-hidden mx-4 mb-6 shadow-sm">
-          <div className="flex items-center gap-3.5 px-[18px] py-[15px] border-b border-[#F8F7F6] cursor-pointer active:bg-gray-50">
+        <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mx-4 mb-2 px-1">SUPPORT</h3>
+        <div className="bg-white rounded-[20px] overflow-hidden mx-4 mb-6">
+          <div className="flex items-center gap-3.5 px-[18px] py-[15px] border-b border-[#F8F7F6] cursor-pointer active:bg-gray-50 transition-colors">
             <div className="w-[34px] h-[34px] rounded-[11px] bg-[#F5F4F2] flex items-center justify-center">
               <MessageCircle size={18} strokeWidth={1.5} className="text-[#1A1A1A]" />
             </div>
             <span className="text-[14px] font-semibold text-[#1A1A1A]">Nous contacter</span>
             <ChevronRight size={18} strokeWidth={1.5} className="text-[#C4B8AC] ml-auto" />
           </div>
-          <div className="flex items-center gap-3.5 px-[18px] py-[15px] cursor-pointer active:bg-gray-50">
+          <div className="flex items-center gap-3.5 px-[18px] py-[15px] cursor-pointer active:bg-gray-50 transition-colors">
             <div className="w-[34px] h-[34px] rounded-[11px] bg-[#F5F4F2] flex items-center justify-center">
               <FileText size={18} strokeWidth={1.5} className="text-[#1A1A1A]" />
             </div>
@@ -312,14 +314,14 @@ export function Profile() {
       </div>
 
       {/* BOUTONS BAS */}
-      <div className="mx-4 mt-1">
-        <button className="w-full bg-white rounded-[16px] py-3.5 flex items-center justify-center gap-2.5 text-[14px] font-bold text-[#047857] mb-2 shadow-sm active:scale-[0.98] transition-transform">
+      <div className="mx-4 mt-2 space-y-2">
+        <button className="w-full bg-white rounded-[16px] py-4 flex items-center justify-center gap-2.5 text-[14px] font-bold text-[#047857] active:opacity-80 transition-opacity">
           <Share2 size={18} strokeWidth={2} className="text-[#047857]" />
           Partager Afiya
         </button>
         <button 
           onClick={handleSignOut}
-          className="w-full bg-white rounded-[16px] py-3.5 flex items-center justify-center gap-2.5 text-[14px] font-bold text-[#A39887] mb-2 shadow-sm active:scale-[0.98] transition-transform"
+          className="w-full bg-white rounded-[16px] py-4 flex items-center justify-center gap-2.5 text-[14px] font-bold text-[#A39887] active:opacity-80 transition-opacity"
         >
           <LogOut size={18} strokeWidth={2} className="text-[#A39887]" />
           Se déconnecter
@@ -327,10 +329,9 @@ export function Profile() {
       </div>
 
       {/* VERSION */}
-      <div className="text-[11px] text-[#C4B8AC] text-center py-2 mt-2">
+      <div className="text-[11px] text-[#C4B8AC] text-center py-4">
         Afiya v1.0.0
       </div>
     </div>
   );
 }
-
