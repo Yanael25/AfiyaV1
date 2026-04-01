@@ -162,9 +162,14 @@ export function CreateGroup() {
             <div className="flex items-center gap-2.5">
               <div className={`flex items-center gap-1.5 bg-[#FAFAF8] border-2 rounded-[14px] px-3.5 py-3 flex-1 ${isAmountError ? 'border-[#EF4444] bg-[#FFF5F5]' : 'border-transparent'}`}>
                 <input 
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={formData.contribution_amount}
-                  onChange={e => setFormData({...formData, contribution_amount: e.target.value})}
+                  onChange={e => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    setFormData({...formData, contribution_amount: val});
+                  }}
                   placeholder="50 000"
                   className="w-full bg-transparent border-none text-[15px] font-bold text-[#1A1A1A] outline-none"
                 />
@@ -204,16 +209,16 @@ export function CreateGroup() {
           <div className="bg-white rounded-[20px] p-[18px] mx-4 mb-2.5">
             <label className="block text-[11px] font-bold text-[#A39887] uppercase tracking-widest mb-2.5">DATE LIMITE DE CONSTITUTION</label>
             <div className="relative flex justify-between items-center bg-[#FAFAF8] rounded-[14px] px-4 py-3.5 cursor-pointer">
-              <input 
-                type="date" 
-                value={formData.constitution_deadline}
-                onChange={e => setFormData({...formData, constitution_deadline: e.target.value})}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
               <span className={`text-[14px] font-semibold ${formData.constitution_deadline ? 'text-[#1A1A1A]' : 'text-[#C4B8AC]'}`}>
                 {formData.constitution_deadline ? new Date(formData.constitution_deadline).toLocaleDateString('fr-FR') : "Choisir une date"}
               </span>
               <Calendar size={18} stroke="#C4B8AC" />
+              <input 
+                type="date" 
+                value={formData.constitution_deadline}
+                onChange={e => setFormData({...formData, constitution_deadline: e.target.value})}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
             </div>
           </div>
 
