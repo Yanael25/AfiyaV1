@@ -4,6 +4,7 @@ import { ArrowLeft, FileText, Check, User, Clock } from 'lucide-react';
 import { auth, storage } from '../../lib/firebase';
 import { ref, uploadBytes } from 'firebase/storage';
 import { updateProfile } from '../../services/userService';
+import { motion } from 'motion/react';
 
 export function KycStep3() {
   const navigate = useNavigate();
@@ -62,12 +63,17 @@ export function KycStep3() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-[#FAFAF8] flex flex-col font-sans px-[28px] justify-center">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }} 
+        animate={{ opacity: 1, scale: 1 }} 
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="min-h-screen bg-[#FAFAF8] flex flex-col font-sans px-[28px] justify-center"
+      >
         <div className="w-[72px] h-[72px] bg-[#F0FDF4] rounded-full mx-auto mb-4 flex items-center justify-center">
           <Clock size={32} stroke="#047857" strokeWidth={1.5} />
         </div>
         
-        <h1 className="text-[24px] font-extrabold text-[#1A1A1A] text-center tracking-tight mb-2">
+        <h1 className="font-display text-[24px] font-extrabold text-[#1A1A1A] text-center tracking-tight mb-2">
           Vérification en cours.
         </h1>
         <p className="text-[13px] text-[#A39887] text-center leading-relaxed max-w-[240px] mx-auto">
@@ -100,12 +106,18 @@ export function KycStep3() {
         >
           Accéder à Afiya
         </button>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] flex flex-col font-sans">
+    <motion.div 
+      initial={{ opacity: 0, x: 20 }} 
+      animate={{ opacity: 1, x: 0 }} 
+      exit={{ opacity: 0, x: -20 }} 
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="min-h-screen bg-[#FAFAF8] flex flex-col font-sans"
+    >
       
       {/* 1. BOUTON RETOUR */}
       <div className="pt-[48px] px-[24px]">
@@ -123,7 +135,7 @@ export function KycStep3() {
         <div className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#047857] mb-3">
           AFIYA
         </div>
-        <h1 className="text-[26px] font-extrabold text-[#1A1A1A] tracking-tight leading-tight mb-1.5">
+        <h1 className="font-display text-[26px] font-extrabold text-[#1A1A1A] tracking-tight leading-tight mb-1.5">
           Vérifiez votre identité.
         </h1>
         <p className="text-[13px] text-[#A39887]">
@@ -245,6 +257,6 @@ export function KycStep3() {
         </button>
       </div>
       
-    </div>
+    </motion.div>
   );
 }

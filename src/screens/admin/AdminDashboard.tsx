@@ -9,6 +9,7 @@ import {
 import { auth } from '../../lib/firebase';
 import { subscribeToCollection } from '../../lib/firestore';
 import { formatXOF } from '../../lib/utils';
+import { motion } from 'motion/react';
 
 // Types
 interface Profile {
@@ -181,61 +182,61 @@ export function AdminDashboard() {
           <div className="p-2 bg-[var(--color-primary-light)] rounded-[var(--radius-inner)]"><Users className="w-5 h-5 text-[var(--color-primary)]" strokeWidth={1.5} /></div>
           <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">Total Utilisateurs</h3>
         </div>
-        <p className="text-2xl font-bold text-[var(--color-text-primary)]">{totalUsers}</p>
+        <p className="font-display text-2xl font-bold text-[var(--color-text-primary)]">{totalUsers}</p>
       </div>
       <div className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)]">
         <div className="flex items-center gap-3 mb-2">
           <div className="p-2 bg-[var(--color-primary-light)] rounded-[var(--radius-inner)]"><Wallet className="w-5 h-5 text-[var(--color-primary)]" strokeWidth={1.5} /></div>
           <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">Total USER_MAIN</h3>
         </div>
-        <p className="text-2xl font-bold text-[var(--color-text-primary)]">{formatXOF(totalUserMainBalance)}</p>
+        <p className="font-display text-2xl font-bold text-[var(--color-text-primary)]">{formatXOF(totalUserMainBalance)}</p>
       </div>
       <div className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)]">
         <div className="flex items-center gap-3 mb-2">
           <div className="p-2 bg-[var(--color-bg)] rounded-[var(--radius-inner)]"><Shield className="w-5 h-5 text-[var(--color-text-primary)]" strokeWidth={1.5} /></div>
           <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">Solde GLOBAL_FUND</h3>
         </div>
-        <p className="text-2xl font-bold text-[var(--color-text-primary)]">{formatXOF(globalFundBalance)}</p>
+        <p className="font-display text-2xl font-bold text-[var(--color-text-primary)]">{formatXOF(globalFundBalance)}</p>
       </div>
       <div className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)]">
         <div className="flex items-center gap-3 mb-2">
           <div className="p-2 bg-[var(--color-bg)] rounded-[var(--radius-inner)]"><Clock className="w-5 h-5 text-[var(--color-text-primary)]" strokeWidth={1.5} /></div>
           <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">Total ESCROW_CONSTITUTION</h3>
         </div>
-        <p className="text-2xl font-bold text-[var(--color-text-primary)]">{formatXOF(totalEscrow)}</p>
+        <p className="font-display text-2xl font-bold text-[var(--color-text-primary)]">{formatXOF(totalEscrow)}</p>
       </div>
       <div className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)]">
         <div className="flex items-center gap-3 mb-2">
           <div className="p-2 bg-[var(--color-bg)] rounded-[var(--radius-inner)]"><Repeat className="w-5 h-5 text-[var(--color-text-primary)]" strokeWidth={1.5} /></div>
           <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">Total CONTRIBUTION_POOL</h3>
         </div>
-        <p className="text-2xl font-bold text-[var(--color-text-primary)]">{formatXOF(totalContribPool)}</p>
+        <p className="font-display text-2xl font-bold text-[var(--color-text-primary)]">{formatXOF(totalContribPool)}</p>
       </div>
       <div className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)]">
         <div className="flex items-center gap-3 mb-2">
           <div className="p-2 bg-[var(--color-bg)] rounded-[var(--radius-inner)]"><Activity className="w-5 h-5 text-[var(--color-text-primary)]" strokeWidth={1.5} /></div>
           <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">Total GROUP_MINI_FUND</h3>
         </div>
-        <p className="text-2xl font-bold text-[var(--color-text-primary)]">{formatXOF(totalMiniFund)}</p>
+        <p className="font-display text-2xl font-bold text-[var(--color-text-primary)]">{formatXOF(totalMiniFund)}</p>
       </div>
       <div className="bg-[var(--color-surface)] p-4 rounded-[var(--radius-card)] md:col-span-2 lg:col-span-3">
         <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] mb-4">Statut des Cercles</h3>
         <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-[120px] p-3 bg-[var(--color-bg)] rounded-[var(--radius-inner)]">
             <p className="text-sm font-medium text-[var(--color-text-secondary)]">FORMING</p>
-            <p className="text-xl font-bold text-[var(--color-text-primary)]">{groupsForming}</p>
+            <p className="font-display text-xl font-bold text-[var(--color-text-primary)]">{groupsForming}</p>
           </div>
           <div className="flex-1 min-w-[120px] p-3 bg-[var(--color-primary-light)] rounded-[var(--radius-inner)]">
             <p className="text-sm font-medium text-[var(--color-primary)]">ACTIVE</p>
-            <p className="text-xl font-bold text-[var(--color-primary)]">{groupsActive}</p>
+            <p className="font-display text-xl font-bold text-[var(--color-primary)]">{groupsActive}</p>
           </div>
           <div className="flex-1 min-w-[120px] p-3 bg-[var(--color-bg)] rounded-[var(--radius-inner)]">
             <p className="text-sm font-medium text-[var(--color-text-secondary)]">COMPLETED</p>
-            <p className="text-xl font-bold text-[var(--color-text-primary)]">{groupsCompleted}</p>
+            <p className="font-display text-xl font-bold text-[var(--color-text-primary)]">{groupsCompleted}</p>
           </div>
           <div className="flex-1 min-w-[120px] p-3 bg-[var(--color-surface-inner)] rounded-[var(--radius-inner)]">
             <p className="text-sm font-medium text-[var(--color-text-muted)]">CANCELLED</p>
-            <p className="text-xl font-bold text-[var(--color-text-muted)]">{groupsCancelled}</p>
+            <p className="font-display text-xl font-bold text-[var(--color-text-muted)]">{groupsCancelled}</p>
           </div>
         </div>
       </div>
@@ -244,7 +245,7 @@ export function AdminDashboard() {
           <div className="p-2 bg-[var(--color-bg)] rounded-[var(--radius-inner)]"><ArrowRightLeft className="w-5 h-5 text-[var(--color-text-secondary)]" strokeWidth={1.5} /></div>
           <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">Transactions (50 dernières)</h3>
         </div>
-        <p className="text-2xl font-bold text-[var(--color-text-primary)]">{transactions.length}</p>
+        <p className="font-display text-2xl font-bold text-[var(--color-text-primary)]">{transactions.length}</p>
       </div>
     </div>
   );
@@ -544,7 +545,13 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[var(--color-bg)]">
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }} 
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="flex flex-col h-[100dvh] bg-[var(--color-bg)]"
+    >
       {/* Header */}
       <div className="bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
@@ -554,7 +561,7 @@ export function AdminDashboard() {
           >
             <ArrowLeft className="w-5 h-5 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
           </button>
-          <h1 className="text-xl font-bold text-[var(--color-text-primary)]">Dashboard Admin</h1>
+          <h1 className="font-display text-xl font-bold text-[var(--color-text-primary)]">Dashboard Admin</h1>
         </div>
         <div className="flex items-center gap-2 px-3 py-1 bg-[var(--color-primary-light)] rounded-[var(--radius-badge)]">
           <div className="w-2 h-2 bg-[var(--color-primary)] rounded-[var(--radius-badge)] animate-pulse" />
@@ -589,6 +596,6 @@ export function AdminDashboard() {
         {activeTab === 'cercles' && renderCercles()}
         {activeTab === 'transactions' && renderTransactions()}
       </div>
-    </div>
+    </motion.div>
   );
 }

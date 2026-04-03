@@ -5,6 +5,7 @@ import { formatXOF } from '../../lib/utils';
 import { auth, db } from '../../lib/firebase';
 import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore';
 import { TontineMember, TontineGroup, Cycle } from '../../services/tontineService';
+import { motion } from 'motion/react';
 
 type FilterType = 'Tous' | 'Actifs' | 'Terminés';
 
@@ -109,7 +110,12 @@ export function HistoriqueCercles() {
   };
 
   return (
-    <div className="bg-[#FAFAF8] min-h-screen pb-10 font-sans">
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="bg-[#FAFAF8] min-h-screen pb-10 font-sans"
+    >
       
       {/* TOP BAR */}
       <div className="pt-[52px] px-6 mb-5 flex items-center gap-3">
@@ -119,7 +125,7 @@ export function HistoriqueCercles() {
         >
           <ArrowLeft size={18} stroke="#6B6B6B" strokeWidth={1.5} />
         </button>
-        <h1 className="text-[22px] font-extrabold text-[#1A1A1A] tracking-tight">Historique</h1>
+        <h1 className="font-display text-[24px] font-extrabold text-[#1A1A1A] tracking-tight">Historique</h1>
       </div>
 
       {/* FILTRE PILLS */}
@@ -148,7 +154,7 @@ export function HistoriqueCercles() {
             <div className="w-12 h-12 bg-[#F0FDF4] rounded-[16px] flex items-center justify-center mx-auto mb-3.5">
               <Clock size={24} stroke="#047857" strokeWidth={1.5} />
             </div>
-            <h3 className="text-[14px] font-bold text-[#1A1A1A] mb-1.5">Aucun cercle pour le moment</h3>
+            <h3 className="font-display text-[16px] font-bold text-[#1A1A1A] mb-1.5">Aucun cercle pour le moment</h3>
             <p className="text-[12px] text-[#A39887] leading-relaxed">
               Vos cercles passés et en cours apparaîtront ici.
             </p>
@@ -158,20 +164,23 @@ export function HistoriqueCercles() {
             <div key={year} className="mb-6">
               <h2 className="text-[13px] font-bold text-[#A39887] mx-4 mb-3 mt-2 tracking-wide">{year}</h2>
               <div className="flex flex-col gap-2.5 mx-4">
-                {groupedByYear[year].map((group) => {
+                {groupedByYear[year].map((group, index) => {
                   const isActif = group.status === 'ACTIVE';
                   const isCompleted = group.status === 'COMPLETED';
                   const progress = isCompleted ? 100 : (group.current_cycle / group.total_cycles) * 100;
                   const totalPot = group.contribution_amount * group.target_members;
 
                   return (
-                    <div 
+                    <motion.div 
                       key={group.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
                       onClick={() => navigate(`/group/${group.id}`)}
                       className="bg-white rounded-[20px] p-[18px] px-5 cursor-pointer transition-transform active:scale-[0.99]"
                     >
                       <div className="flex justify-between items-start mb-1">
-                        <h2 className="text-[15px] font-extrabold text-[#1A1A1A] truncate max-w-[70%]">{group.name}</h2>
+                        <h2 className="font-display text-[18px] font-extrabold text-[#1A1A1A] truncate max-w-[70%]">{group.name}</h2>
                         <span className={`text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-1 rounded-[8px] ${
                           isActif ? 'bg-[#F0FDF4] text-[#047857]' : isCompleted ? 'bg-[#F5F4F2] text-[#6B6B6B]' : 'bg-[#F5F4F2] text-[#6B6B6B]'
                         }`}>
@@ -185,7 +194,7 @@ export function HistoriqueCercles() {
 
                       <div className="grid grid-cols-2 gap-2 mb-3.5">
                         <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3">
-                          <div className="text-[13px] font-extrabold text-[#1A1A1A]">
+                          <div className="font-display text-[16px] font-extrabold text-[#1A1A1A]">
                             {formatXOF(isCompleted ? totalPot : totalPot).replace(' FCFA', '')}
                           </div>
                           <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#A39887]">
@@ -193,7 +202,7 @@ export function HistoriqueCercles() {
                           </div>
                         </div>
                         <div className="bg-[#FAFAF8] rounded-[12px] p-2.5 px-3">
-                          <div className="text-[13px] font-extrabold text-[#1A1A1A]">
+                          <div className="font-display text-[16px] font-extrabold text-[#1A1A1A]">
                             {isCompleted ? `${group.total_cycles}/${group.total_cycles}` : `#${group.userMembership?.draw_position || '?'}`}
                           </div>
                           <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#A39887]">
@@ -234,7 +243,7 @@ export function HistoriqueCercles() {
                           <ArrowRight size={14} className="text-[#6B6B6B]" />
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -242,6 +251,6 @@ export function HistoriqueCercles() {
           ))
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

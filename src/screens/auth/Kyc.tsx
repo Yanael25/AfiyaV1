@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import { auth } from '../../lib/firebase';
 import { getUserProfile, updateProfile } from '../../services/userService';
+import { motion } from 'motion/react';
 
 export function Kyc() {
   const navigate = useNavigate();
@@ -54,15 +55,21 @@ export function Kyc() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] flex flex-col font-sans">
+    <motion.div 
+      initial={{ opacity: 0, x: 20 }} 
+      animate={{ opacity: 1, x: 0 }} 
+      exit={{ opacity: 0, x: -20 }} 
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="min-h-screen bg-[#FAFAF8] flex flex-col font-sans"
+    >
       
       {/* 1. BOUTON RETOUR */}
       <div className="pt-[48px] px-[24px]">
         <button 
           onClick={() => navigate(-1)} 
-          className="w-9 h-9 bg-white rounded-xl flex items-center justify-center transition-opacity active:opacity-80"
+          className="w-9 h-9 bg-white rounded-xl flex items-center justify-center transition-opacity active:opacity-80 shadow-sm border border-[#F0EFED]"
         >
-          <ArrowLeft size={18} stroke="#6B6B6B" strokeWidth={1.5} />
+          <ArrowLeft size={18} stroke="#1A1A1A" strokeWidth={1.5} />
         </button>
       </div>
       
@@ -72,40 +79,40 @@ export function Kyc() {
         <div className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#047857] mb-3">
           AFIYA
         </div>
-        <h1 className="text-[26px] font-extrabold text-[#1A1A1A] tracking-tight leading-tight mb-1.5">
+        <h1 className="font-display text-[32px] font-extrabold text-[#1A1A1A] tracking-tight leading-tight mb-2">
           Faisons connaissance.
         </h1>
-        <p className="text-[13px] text-[#A39887]">
+        <p className="text-[14px] font-medium text-[#A39887]">
           Votre nom, c'est tout ce dont on a besoin pour commencer.
         </p>
       </div>
 
       {/* 3. INDICATEUR DE PROGRESSION */}
-      <div className="px-[28px] mb-[28px]">
-        <div className="flex gap-1.5">
-          <div className="flex-1 h-1 rounded-full bg-[#047857]" />
-          <div className="flex-1 h-1 rounded-full bg-[#047857] opacity-40" />
-          <div className="flex-1 h-1 rounded-full bg-[#E8E6E3]" />
+      <div className="px-[28px] mb-[32px]">
+        <div className="flex gap-2">
+          <div className="flex-1 h-1.5 rounded-full bg-[#047857]" />
+          <div className="flex-1 h-1.5 rounded-full bg-[#047857] opacity-40" />
+          <div className="flex-1 h-1.5 rounded-full bg-[#E8E6E3]" />
         </div>
       </div>
 
       {/* 4. AVATAR PREVIEW */}
-      <div className="px-[28px] mb-[24px] flex flex-col items-center">
-        <div className="w-14 h-14 bg-[#047857] rounded-[18px] flex items-center justify-center">
-          <span className={`text-[20px] font-extrabold ${getInitials() === '?' ? 'text-[#C4B8AC]' : 'text-white'}`}>
+      <div className="px-[28px] mb-[32px] flex flex-col items-center">
+        <div className="w-16 h-16 bg-[#047857] rounded-[20px] flex items-center justify-center shadow-[0_8px_20px_rgba(4,120,87,0.25)]">
+          <span className={`text-[24px] font-extrabold ${getInitials() === '?' ? 'text-white/50' : 'text-white'}`}>
             {getInitials()}
           </span>
         </div>
-        <p className="text-[11px] text-[#C4B8AC] mt-2 italic text-center">
+        <p className="text-[12px] font-medium text-[#A39887] mt-3 text-center">
           Votre avatar se génère automatiquement
         </p>
       </div>
 
       {/* 5. FORMULAIRE */}
-      <div className="px-[28px] flex-1 flex flex-col justify-between pb-[32px]">
-        <div className="space-y-4">
+      <div className="px-[28px] flex-1 flex flex-col justify-between pb-[40px]">
+        <div className="space-y-6">
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-2 block">
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-2.5 ml-1">
               PRÉNOM
             </label>
             <input 
@@ -113,12 +120,12 @@ export function Kyc() {
               value={firstName}
               onChange={e => setFirstName(e.target.value)}
               placeholder="Fifamè"
-              className="w-full bg-[#FFFFFF] border-none rounded-[14px] px-4 py-[14px] text-[15px] font-semibold text-[#1A1A1A] outline-none placeholder:text-[#C4B8AC] placeholder:font-normal" 
+              className="w-full bg-white border border-[#F0EFED] rounded-[16px] px-5 py-[18px] text-[15px] font-semibold text-[#1A1A1A] outline-none placeholder:text-[#C4B8AC] placeholder:font-normal focus:border-[#047857] focus:ring-4 focus:ring-[#047857]/10 transition-all shadow-sm" 
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-2 block">
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-2.5 ml-1">
               NOM DE FAMILLE
             </label>
             <input 
@@ -126,39 +133,39 @@ export function Kyc() {
               value={lastName}
               onChange={e => setLastName(e.target.value)}
               placeholder="Dossou"
-              className="w-full bg-[#FFFFFF] border-none rounded-[14px] px-4 py-[14px] text-[15px] font-semibold text-[#1A1A1A] outline-none placeholder:text-[#C4B8AC] placeholder:font-normal" 
+              className="w-full bg-white border border-[#F0EFED] rounded-[16px] px-5 py-[18px] text-[15px] font-semibold text-[#1A1A1A] outline-none placeholder:text-[#C4B8AC] placeholder:font-normal focus:border-[#047857] focus:ring-4 focus:ring-[#047857]/10 transition-all shadow-sm" 
             />
           </div>
         </div>
 
         <div className="mt-8">
           {error && (
-            <div className="bg-[#FAFAF8] rounded-[14px] p-3 text-[12px] font-semibold text-[#1A1A1A] mb-4 text-center">
+            <div className="bg-[#FFF5F5] border border-[#FCA5A5] rounded-[16px] p-4 text-[13px] font-semibold text-[#DC2626] mb-5 text-center shadow-sm">
               {error}
             </div>
           )}
 
-          <div className="bg-[#F0FDF4] rounded-[14px] p-3 flex items-start gap-2 mb-4">
-            <div className="w-1.5 h-1.5 bg-[#047857] rounded-full mt-1 flex-shrink-0" />
-            <p className="text-[11px] font-medium text-[#047857] leading-relaxed">
-              Vos informations sont protégées et ne seront jamais partagées sans votre accord.
+          <div className="flex items-center gap-2 mb-6 ml-1">
+            <ShieldCheck size={16} className="text-[#047857]" />
+            <p className="text-[12px] font-medium text-[#047857]">
+              Vos données sont chiffrées selon les standards bancaires.
             </p>
           </div>
 
           <button
             onClick={handleKyc}
             disabled={loading || !firstName || !lastName}
-            className={`w-full rounded-[16px] py-4 text-[15px] font-bold transition-opacity ${
+            className={`w-full rounded-[16px] py-[18px] text-[16px] font-bold transition-all ${
               !firstName || !lastName || loading
-                ? 'bg-[#E8E6E3] text-[#C4B8AC] cursor-not-allowed'
-                : 'bg-[#047857] text-white active:opacity-80'
+                ? 'bg-[#E8E6E3] text-[#A39887] cursor-not-allowed'
+                : 'bg-[#047857] text-white active:scale-[0.98] shadow-[0_8px_20px_rgba(4,120,87,0.25)]'
             }`}
           >
-            {loading ? 'Enregistrement...' : "C'est parti →"}
+            {loading ? 'Enregistrement...' : "C'est parti"}
           </button>
         </div>
       </div>
       
-    </div>
+    </motion.div>
   );
 }

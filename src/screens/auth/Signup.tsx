@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Eye, EyeOff } from 'lucide-react';
 import { signUpWithEmail } from '../../services/userService';
+import { motion } from 'motion/react';
 
 export function Signup() {
   const navigate = useNavigate();
@@ -36,7 +37,13 @@ export function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] flex flex-col font-sans">
+    <motion.div 
+      initial={{ opacity: 0, x: 20 }} 
+      animate={{ opacity: 1, x: 0 }} 
+      exit={{ opacity: 0, x: -20 }} 
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="min-h-screen bg-[#FAFAF8] flex flex-col font-sans"
+    >
       
       {/* 1. BOUTON RETOUR */}
       <div className="pt-[52px] px-[24px]">
@@ -54,95 +61,97 @@ export function Signup() {
         <div className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#047857] mb-3">
           AFIYA
         </div>
-        <h1 className="text-[26px] font-extrabold text-[#1A1A1A] tracking-tight leading-tight mb-1.5">
+        <h1 className="font-display text-[32px] font-extrabold text-[#1A1A1A] tracking-tight leading-tight mb-2">
           Créons votre compte.
         </h1>
-        <p className="text-[13px] font-normal text-[#A39887]">
+        <p className="text-[14px] font-medium text-[#A39887]">
           Ça prend moins de 2 minutes.
         </p>
       </div>
 
       {/* 3. INDICATEUR DE PROGRESSION */}
-      <div className="px-[28px] mb-[32px] flex gap-1.5">
-        <div className="flex-1 h-1 rounded-full bg-[#047857]" />
-        <div className="flex-1 h-1 rounded-full bg-[#E8E6E3]" />
+      <div className="px-[28px] mb-[32px] flex gap-2">
+        <div className="flex-1 h-1.5 rounded-full bg-[#047857]" />
+        <div className="flex-1 h-1.5 rounded-full bg-[#E8E6E3]" />
       </div>
 
       {/* 4. FORMULAIRE */}
-      <div className="px-[28px] flex-1">
-        <div className="mb-5">
-          <label className="block text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-2">
-            ADRESSE EMAIL
-          </label>
-          <input 
-            type="email"
-            value={email}
-            onChange={e => { setEmail(e.target.value); setError(null); }}
-            placeholder="fifame.dossou@gmail.com"
-            className="w-full bg-[#FAFAF8] border-2 border-transparent rounded-[14px] px-4 py-[14px] text-[15px] font-semibold text-[#1A1A1A] outline-none placeholder:text-[#C4B8AC] placeholder:font-normal"
-          />
+      <div className="px-[28px] flex-1 flex flex-col justify-between">
+        <div>
+          <div className="mb-6">
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-2.5 ml-1">
+              ADRESSE EMAIL
+            </label>
+            <input 
+              type="email"
+              value={email}
+              onChange={e => { setEmail(e.target.value); setError(null); }}
+              placeholder="fifame.dossou@gmail.com"
+              className="w-full bg-white border border-[#F0EFED] rounded-[16px] px-5 py-[18px] text-[15px] font-semibold text-[#1A1A1A] outline-none placeholder:text-[#C4B8AC] placeholder:font-normal focus:border-[#047857] focus:ring-4 focus:ring-[#047857]/10 transition-all shadow-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-2.5 ml-1">
+              MOT DE PASSE
+            </label>
+            <div className="relative">
+              <input 
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={e => { setPassword(e.target.value); setError(null); }}
+                placeholder="••••••••"
+                className="w-full bg-white border border-[#F0EFED] rounded-[16px] pl-5 pr-14 py-[18px] text-[15px] font-semibold text-[#1A1A1A] outline-none placeholder:text-[#C4B8AC] placeholder:font-normal focus:border-[#047857] focus:ring-4 focus:ring-[#047857]/10 transition-all shadow-sm"
+              />
+              <button 
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-5 flex items-center transition-opacity active:opacity-80"
+              >
+                {showPassword ? (
+                  <EyeOff size={20} strokeWidth={1.5} color="#A39887" />
+                ) : (
+                  <Eye size={20} strokeWidth={1.5} color="#A39887" />
+                )}
+              </button>
+            </div>
+            <p className="text-[12px] font-medium text-[#A39887] mt-3 ml-1">
+              8 caractères minimum
+            </p>
+          </div>
         </div>
 
-        <div>
-          <label className="block text-[11px] font-bold uppercase tracking-widest text-[#A39887] mb-2">
-            MOT DE PASSE
-          </label>
-          <div className="relative">
-            <input 
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={e => { setPassword(e.target.value); setError(null); }}
-              placeholder="••••••••"
-              className="w-full bg-[#FAFAF8] border-2 border-transparent rounded-[14px] pl-4 pr-12 py-[14px] text-[15px] font-semibold text-[#1A1A1A] outline-none placeholder:text-[#C4B8AC] placeholder:font-normal"
-            />
+        {/* 5. BLOC BAS */}
+        <div className="mt-auto pb-[40px] pt-8">
+          {error && (
+            <div className="bg-[#FFF5F5] border border-[#FCA5A5] rounded-[16px] p-4 text-[13px] font-semibold text-[#DC2626] mb-5 text-center shadow-sm">
+              {error}
+            </div>
+          )}
+
+          <button
+            onClick={handleSignup}
+            disabled={loading || !email || !password || password.length < 8}
+            className={`w-full rounded-[16px] py-[18px] text-[16px] font-bold mb-4 transition-all ${
+              loading || !email || !password || password.length < 8
+                ? 'bg-[#E8E6E3] text-[#A39887] cursor-not-allowed'
+                : 'bg-[#047857] text-white active:scale-[0.98] shadow-[0_8px_20px_rgba(4,120,87,0.25)]'
+            }`}
+          >
+            {loading ? 'Création...' : 'Continuer'}
+          </button>
+
+          <p className="text-[14px] text-[#A39887] text-center mt-6">
+            Déjà membre ?{' '}
             <button 
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center transition-opacity active:opacity-80"
+              onClick={() => navigate('/login')}
+              className="text-[#1A1A1A] font-bold transition-opacity active:opacity-80 underline decoration-[#F0EFED] underline-offset-4"
             >
-              {showPassword ? (
-                <EyeOff size={20} strokeWidth={1.5} color="#C4B8AC" />
-              ) : (
-                <Eye size={20} strokeWidth={1.5} color="#C4B8AC" />
-              )}
+              Se connecter
             </button>
-          </div>
-          <p className="text-[11px] text-[#C4B8AC] mt-1.5">
-            8 caractères minimum
           </p>
         </div>
       </div>
-
-      {/* 5. BLOC BAS */}
-      <div className="px-[28px] mt-auto pb-[40px]">
-        {error && (
-          <div className="bg-[#FAFAF8] rounded-[14px] p-3 text-[12px] font-semibold text-[#1A1A1A] mb-4 text-center">
-            {error}
-          </div>
-        )}
-
-        <button
-          onClick={handleSignup}
-          disabled={loading || !email || !password || password.length < 8}
-          className={`w-full rounded-[16px] py-4 text-[15px] font-bold mb-2.5 transition-opacity ${
-            loading || !email || !password || password.length < 8
-              ? 'bg-[#E8E6E3] text-[#C4B8AC] cursor-not-allowed'
-              : 'bg-[#047857] text-white active:opacity-80'
-          }`}
-        >
-          {loading ? 'Création...' : 'Continuer →'}
-        </button>
-
-        <p className="text-[13px] text-[#A39887] text-center mt-4">
-          Déjà membre ?{' '}
-          <button 
-            onClick={() => navigate('/login')}
-            className="text-[#047857] font-bold transition-opacity active:opacity-80"
-          >
-            Se connecter
-          </button>
-        </p>
-      </div>
       
-    </div>
+    </motion.div>
   );
 }

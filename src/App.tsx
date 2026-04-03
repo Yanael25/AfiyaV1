@@ -33,10 +33,12 @@ function AuthContainer() {
   return (
     <div className="min-h-[100dvh] bg-[var(--color-bg)] flex justify-center antialiased">
       <div className="w-full max-w-md h-[100dvh] bg-[var(--color-bg)] overflow-hidden relative flex flex-col">
-        <div className="md:hidden">
+        {/* StatusBar fixée en haut, opaque, qui masque tout ce qui passe dessous */}
+        <div className="md:hidden absolute top-0 left-0 right-0 z-[999] bg-[var(--color-bg)]">
           <StatusBar />
         </div>
-        <div className="flex-1 overflow-y-auto pt-10 md:pt-0">
+        {/* Suppression du pt-10 pour laisser les écrans gérer leur propre padding */}
+        <div className="flex-1 overflow-y-auto">
           <Outlet />
         </div>
       </div>
@@ -48,10 +50,12 @@ function AppContainer() {
   return (
     <div className="min-h-[100dvh] bg-[var(--color-bg)] flex justify-center antialiased">
       <div className="w-full h-[100dvh] bg-[var(--color-bg)] overflow-hidden relative flex flex-col">
-        <div className="md:hidden">
+        {/* StatusBar fixée en haut, opaque, qui masque tout ce qui passe dessous */}
+        <div className="md:hidden absolute top-0 left-0 right-0 z-[999] bg-[var(--color-bg)]">
           <StatusBar />
         </div>
-        <div className="flex-1 overflow-y-auto pt-10 md:pt-0">
+        {/* Suppression du pt-10 pour laisser les écrans gérer leur propre padding */}
+        <div className="flex-1 overflow-y-auto">
           <Outlet />
         </div>
       </div>
