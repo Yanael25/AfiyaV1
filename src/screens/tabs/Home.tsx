@@ -185,7 +185,7 @@ export function Home() {
   // ── Skeleton ────────────────────────────────────────────────────────────────
   if (balance === null && !profile) {
     return (
-      <div className="bg-[#FAFAF8] min-h-screen flex flex-col pb-20 font-sans px-6 pt-[52px]">
+      <div className="bg-[#F5F4F0] min-h-screen flex flex-col pb-20 font-sans px-6 pt-[52px]">
         <div className="h-3.5 w-20 bg-[#E8E6E3] rounded-full animate-pulse mb-2" />
         <div className="h-7 w-44 bg-[#E8E6E3] rounded-full animate-pulse mb-3" />
         <div className="flex gap-2 mb-8">
@@ -206,7 +206,7 @@ export function Home() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
-      className="bg-[#FAFAF8] min-h-screen flex flex-col pb-20 font-sans selection:bg-[#047857]/20"
+      className="bg-[#F5F4F0] min-h-screen flex flex-col pb-20 font-sans selection:bg-[#047857]/20"
     >
 
       {/* ── 1. HEADER ─────────────────────────────────────────────────────── */}
@@ -239,7 +239,7 @@ export function Home() {
             width: 42, height: 42,
             borderRadius: 13,
             background: '#047857',
-            boxShadow: '0 4px 12px rgba(4,120,87,0.2)',
+  
           }}
         >
           {initial}
