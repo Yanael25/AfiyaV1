@@ -140,7 +140,7 @@ export function Home() {
   // Skeleton Loader
   if (balance === null && !profile) {
     return (
-      <div className="bg-[#FAFAF8] min-h-screen flex flex-col pb-[100px] font-sans px-6 pt-[52px]">
+      <div className="bg-[#F5F4F0] min-h-screen flex flex-col pb-[100px] font-sans px-6 pt-[52px]">
         <div className="h-4 w-24 bg-[#E8E6E3] rounded-full animate-pulse mb-2" />
         <div className="h-8 w-48 bg-[#E8E6E3] rounded-full animate-pulse mb-4" />
         <div className="flex gap-2 mb-8">
@@ -163,7 +163,7 @@ export function Home() {
       initial={{ opacity: 0, y: 10 }} 
       animate={{ opacity: 1, y: 0 }} 
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="bg-[#FAFAF8] min-h-screen flex flex-col pb-[100px] font-sans selection:bg-[#047857]/20"
+      className="bg-[#F5F4F0] min-h-screen flex flex-col pb-[100px] font-sans selection:bg-[#047857]/20"
     >
       
       {/* HEADER */}
@@ -181,7 +181,7 @@ export function Home() {
         </div>
         
         <button 
-          className="w-[48px] h-[48px] rounded-[16px] bg-[#047857] flex items-center justify-center font-display text-[20px] font-extrabold text-white shrink-0 transition-transform active:scale-95 shadow-[0_4px_12px_rgba(4,120,87,0.2)]" 
+          className="w-[48px] h-[48px] rounded-[16px] bg-[#047857] flex items-center justify-center font-display text-[20px] font-extrabold text-white shrink-0 transition-transform active:scale-95"
           onClick={() => navigate('/profile')}
         >
           {initial}
@@ -225,7 +225,7 @@ export function Home() {
             </div>
             <p className="text-[13px] font-medium text-[#A39887] mb-8">Fonds disponibles</p>
             
-            <div className="bg-[#FAFAF8] rounded-[16px] p-4 mt-auto">
+            <div className="bg-[#F5F4F0] rounded-[16px] p-4 mt-auto">
               <p className="text-[10px] font-bold tracking-widest uppercase text-[#C4B8AC] mb-1.5">À venir</p>
               <p className="text-[13px] font-semibold text-[#1A1A1A]">Aucun mouvement prévu</p>
             </div>
@@ -245,7 +245,7 @@ export function Home() {
             </div>
             <p className="text-[13px] font-medium text-[#A39887] mb-8">Fonds des cercles</p>
             
-            <div className="bg-[#FAFAF8] rounded-[16px] p-4 mt-auto min-h-[76px] flex flex-col justify-center">
+            <div className="bg-[#F5F4F0] rounded-[16px] p-4 mt-auto min-h-[76px] flex flex-col justify-center">
               <p className="text-[10px] font-bold tracking-widest uppercase text-[#C4B8AC] mb-1.5">À venir · {cycleInfo?.groupName || 'Ce mois'}</p>
               {cycleInfo ? (
                 <div className="flex items-baseline gap-1">
@@ -274,7 +274,7 @@ export function Home() {
             </div>
             <p className="text-[13px] font-medium text-[#A39887] mb-8">Fonds investis</p>
             
-            <div className="bg-[#FAFAF8] rounded-[16px] p-4 mt-auto">
+            <div className="bg-[#F5F4F0] rounded-[16px] p-4 mt-auto">
               <p className="text-[10px] font-bold tracking-widest uppercase text-[#C4B8AC] mb-1.5">À venir</p>
               <p className="text-[13px] font-semibold text-[#1A1A1A]">Bientôt disponible</p>
             </div>
@@ -302,14 +302,14 @@ export function Home() {
         </button>
         
         <button className="bg-white rounded-[20px] py-4 flex flex-col items-center justify-center gap-2.5 transition-transform active:scale-95 group">
-          <div className="w-10 h-10 rounded-full bg-[#FAFAF8] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-[#F5F4F0] flex items-center justify-center">
             <ArrowDownLeft size={20} strokeWidth={2} className="text-[#1A1A1A]" />
           </div>
           <span className="text-[12px] font-bold text-[#1A1A1A]">Retirer</span>
         </button>
         
         <button className="bg-white rounded-[20px] py-4 flex flex-col items-center justify-center gap-2.5 transition-transform active:scale-95 group">
-          <div className="w-10 h-10 rounded-full bg-[#FAFAF8] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-[#F5F4F0] flex items-center justify-center">
             <QrCode size={20} strokeWidth={2} className="text-[#1A1A1A]" />
           </div>
           <span className="text-[12px] font-bold text-[#1A1A1A]">Recevoir</span>
@@ -333,7 +333,7 @@ export function Home() {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="bg-white rounded-[20px] p-6 text-center flex flex-col items-center justify-center"
             >
-              <div className="w-12 h-12 bg-[#FAFAF8] rounded-[16px] flex items-center justify-center mb-3">
+              <div className="w-12 h-12 bg-[#F5F4F0] rounded-[16px] flex items-center justify-center mb-3">
                 <Inbox size={20} strokeWidth={1.5} className="text-[#C4B8AC]" />
               </div>
               <p className="text-[14px] font-bold text-[#1A1A1A] mb-1">Aucune transaction</p>
@@ -348,7 +348,7 @@ export function Home() {
                 transition={{ delay: idx * 0.05 }}
                 className="bg-white rounded-[20px] p-4 flex items-center gap-4 active:scale-[0.99] transition-transform cursor-pointer"
               >
-                <div className={`w-12 h-12 rounded-[14px] shrink-0 flex items-center justify-center ${isCredit(tx.type) ? 'bg-[#F0FDF4]' : 'bg-[#FAFAF8]'}`}>
+                <div className={`w-12 h-12 rounded-[14px] shrink-0 flex items-center justify-center ${isCredit(tx.type) ? 'bg-[#F0FDF4]' : 'bg-[#F5F4F0]'}`}>
                   {isCredit(tx.type) ? (
                     <ArrowDownLeft size={20} strokeWidth={1.5} className="text-[#047857]" />
                   ) : (
@@ -396,7 +396,7 @@ export function Home() {
             onClick={() => navigate('/profile')}
             className="bg-white rounded-[20px] p-4 flex items-center gap-4 active:scale-[0.99] transition-transform cursor-pointer"
           >
-            <div className="w-12 h-12 rounded-[14px] shrink-0 flex items-center justify-center bg-[#FAFAF8]">
+            <div className="w-12 h-12 rounded-[14px] shrink-0 flex items-center justify-center bg-[#F5F4F0]">
               <ShieldCheck size={22} strokeWidth={1.5} className="text-[#1A1A1A]" />
             </div>
             <div className="flex-1 min-w-0">
