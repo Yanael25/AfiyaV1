@@ -1,7 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowUpRight, ArrowDownLeft, QrCode, Inbox, CreditCard, Users, LineChart, ChevronRight, Compass, ShieldCheck } from 'lucide-react';
-import { motion } from 'motion/react';
+import { 
+  ArrowUpRight, 
+  ArrowDownLeft, 
+  QrCode, 
+  Inbox, 
+  ArrowLeftRight, 
+  ArrowDownToLine, 
+  ArrowUpFromLine, 
+  Users, 
+  TrendingUp,
+  Plus
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { formatXOF } from '../../lib/utils';
 import { auth } from '../../lib/firebase';
 import { getUserProfile, UserProfile } from '../../services/userService';
@@ -15,20 +26,36 @@ import {
 import { subscribeToCollection } from '../../lib/firestore';
 import { where, orderBy, limit } from 'firebase/firestore';
 
+// --- TYPES & HELPERS ---
+type WalletType = 0 | 1 | 2; // 0: Principal, 1: Cercles, 2: Capital
+
+interface Transaction {
+  id: string;
+  type: string;
+  description?: string;
+  amount: number;
+  created_at: any;
+}
+
 export function Home() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [balance, setBalance] = useState<number | null>(null);
+  
+  const [balanceMain, setBalanceMain] = useState<number | null>(null);
   const [balanceCercles, setBalanceCercles] = useState<number | null>(null);
   const [balanceCapital, setBalanceCapital] = useState<number | null>(null);
+  
   const [cycleInfo, setCycleInfo] = useState<{
     groupName: string;
     type: 'À payer' | 'À recevoir';
     amount: number;
     dueDate: Date;
   } | null>(null);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [activeCard, setActiveCard] = useState(0);
+  
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [userGroups, setUserGroups] = useState<any[]>([]);
+  const [activeCard, setActiveCard] = useState<WalletType>(0);
+  
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,19 +64,20 @@ export function Home() {
 
     getUserProfile(user.uid).then(setProfile);
 
-    const unsubWallet = subscribeToUserWallet(user.uid, w => {
-      if (w) setBalance(w.balance);
+    const unsubMain = subscribeToUserWallet(user.uid, w => {
+      if (w) setBalanceMain(w.balance);
     });
 
-    const unsubCercles = subscribeToUserCerclesWallet(
-      user.uid, w => { if (w) setBalanceCercles(w.balance); }
-    );
+    const unsubCercles = subscribeToUserCerclesWallet(user.uid, w => {
+      if (w) setBalanceCercles(w.balance);
+    });
 
-    const unsubCapital = subscribeToUserCapitalWallet(
-      user.uid, w => { if (w) setBalanceCapital(w.balance); }
-    );
+    const unsubCapital = subscribeToUserCapitalWallet(user.uid, w => {
+      if (w) setBalanceCapital(w.balance);
+    });
 
     getUserGroups(user.uid).then(async data => {
+      setUserGroups(data);
       const filtered = data.filter(g =>
         g.status === 'ACTIVE' ||
         g.status === 'FORMING' ||
@@ -64,39 +92,28 @@ export function Home() {
       [
         where('user_id', '==', user.uid),
         orderBy('created_at', 'desc'),
-        limit(3) // Limité à 3 pour ne pas pousser la section suggestion trop bas
+        limit(5)
       ],
       setTransactions
     );
 
     return () => {
-      unsubWallet();
+      unsubMain();
       unsubCercles();
       unsubCapital();
       unsubTx();
     };
   }, [navigate]);
 
+  // --- LOGIQUE SCROLL & UI ---
   const handleScroll = () => {
     if (scrollContainerRef.current) {
       const scrollLeft = scrollContainerRef.current.scrollLeft;
-      const cardNode = scrollContainerRef.current.firstChild as HTMLElement;
-      const cardWidth = cardNode ? cardNode.offsetWidth + 16 : 316;
+      const cardWidth = window.innerWidth * 0.85 > 320 ? 320 + 16 : (window.innerWidth * 0.85) + 16; 
       const newActiveCard = Math.round(scrollLeft / cardWidth);
       if (newActiveCard !== activeCard && newActiveCard >= 0 && newActiveCard <= 2) {
-        setActiveCard(newActiveCard);
+        setActiveCard(newActiveCard as WalletType);
       }
-    }
-  };
-
-  const scrollToCard = (index: number) => {
-    if (scrollContainerRef.current) {
-      const cardWidth = 300 + 16;
-      scrollContainerRef.current.scrollTo({
-        left: index * cardWidth,
-        behavior: 'smooth'
-      });
-      setActiveCard(index);
     }
   };
 
@@ -105,309 +122,394 @@ export function Home() {
     return formatXOF(val).replace(/\s?FCFA/gi, '').trim();
   };
 
+  const isCredit = (type: string) => ['DEPOSIT','PAYOUT','REFUND'].includes(type);
+
+  // --- FORMATTERS ---
   const firstName = profile?.full_name?.split(' ')[0] || '';
   const initial = firstName ? firstName.charAt(0).toUpperCase() : 'U';
 
   const greeting = (() => {
     const h = new Date().getHours();
-    if (h >= 5 && h < 12) return 'Bonjour';
-    if (h >= 12 && h < 18) return 'Bon après-midi';
-    if (h >= 18 && h < 22) return 'Bonsoir';
-    return 'Bonne nuit';
+    if (h < 12) return 'Bon matin';
+    if (h < 18) return 'Bon après-midi';
+    return 'Bonsoir';
   })();
 
-  const isCredit = (type: string) => ['DEPOSIT','PAYOUT','REFUND'].includes(type);
+  const todayStr = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
 
-  const formatDate = (ts: any) => {
-    if (!ts) return '';
-    const d = ts.toDate ? ts.toDate() : new Date(ts);
-    const now = new Date();
-    const isToday = d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const isYesterday = d.getDate() === yesterday.getDate() && d.getMonth() === yesterday.getMonth() && d.getFullYear() === yesterday.getFullYear();
+  const getTierBadgeProps = (tier?: string) => {
+    switch(tier?.toUpperCase()) {
+      case 'PLATINUM': return { bg: 'bg-[#F8FAFC]', text: 'text-[#334155]', border: 'border-[0.5px] border-[#CBD5E1]' };
+      case 'GOLD': return { bg: 'bg-[#FEF9C3]', text: 'text-[#A16207]', border: '' };
+      case 'SILVER': return { bg: 'bg-[#F1F5F9]', text: 'text-[#475569]', border: '' };
+      default: return { bg: 'bg-[#FEF3C7]', text: 'text-[#92400E]', border: '' }; // BRONZE
+    }
+  };
+  const tierProps = getTierBadgeProps(profile?.tier);
+
+  // --- GROUPING TRANSACTIONS ---
+  const groupTransactionsByDate = () => {
+    const groups: { label: string, txs: Transaction[] }[] = [];
     
-    const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+    transactions.forEach(tx => {
+      if (!tx.created_at) return;
+      const d = tx.created_at.toDate ? tx.created_at.toDate() : new Date(tx.created_at);
+      const now = new Date();
+      
+      let label = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }).toUpperCase();
+      
+      if (d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+        label = "AUJOURD'HUI";
+      } else {
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (d.getDate() === yesterday.getDate() && d.getMonth() === yesterday.getMonth() && d.getFullYear() === yesterday.getFullYear()) {
+          label = "HIER";
+        }
+      }
+
+      const existingGroup = groups.find(g => g.label === label);
+      if (existingGroup) existingGroup.txs.push(tx);
+      else groups.push({ label, txs: [tx] });
+    });
     
-    if (isToday) return `Aujourd'hui · ${time}`;
-    if (isYesterday) return `Hier · ${time}`;
-    return `${d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })} · ${time}`;
+    return groups;
   };
 
-  const today = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-  const tabs = ['Principal', 'Cercles', 'Capital'];
+  const txGroups = groupTransactionsByDate();
 
-  // Skeleton Loader
-  if (balance === null && !profile) {
-    return (
-      <div className="bg-[#F5F4F0] min-h-screen flex flex-col pb-[100px] font-sans px-6 pt-[52px]">
-        <div className="h-4 w-24 bg-[#E8E6E3] rounded-full animate-pulse mb-2" />
-        <div className="h-8 w-48 bg-[#E8E6E3] rounded-full animate-pulse mb-4" />
-        <div className="flex gap-2 mb-8">
-          <div className="h-3 w-12 bg-[#E8E6E3] rounded-full animate-pulse" />
-          <div className="h-3 w-16 bg-[#E8E6E3] rounded-full animate-pulse" />
-        </div>
-        <div className="h-4 w-64 bg-[#E8E6E3] rounded-full animate-pulse mb-6" />
-        <div className="h-[220px] w-full bg-[#E8E6E3] rounded-[24px] animate-pulse mb-8" />
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          <div className="h-[88px] bg-[#E8E6E3] rounded-[20px] animate-pulse" />
-          <div className="h-[88px] bg-[#E8E6E3] rounded-[20px] animate-pulse" />
-          <div className="h-[88px] bg-[#E8E6E3] rounded-[20px] animate-pulse" />
-        </div>
-      </div>
-    );
-  }
+  // --- ACTIONS CONTEXTUELLES ---
+  const getContextualActions = () => {
+    switch (activeCard) {
+      case 0:
+        return [
+          { label: 'Transférer', icon: ArrowLeftRight, isPrimary: true },
+          { label: 'Recevoir', icon: QrCode, isPrimary: false },
+          { label: 'Recharger', icon: ArrowDownToLine, isPrimary: false },
+          { label: 'Retirer', icon: ArrowUpFromLine, isPrimary: false },
+        ];
+      case 1:
+        return [
+          { label: 'Transférer', icon: ArrowLeftRight, isPrimary: false },
+          { label: 'Recevoir', icon: QrCode, isPrimary: false },
+          { label: 'Cotiser', icon: Users, isPrimary: true },
+          { label: 'Mes cercles', icon: Users, isPrimary: false },
+        ];
+      case 2:
+        return [
+          { label: 'Transférer', icon: ArrowLeftRight, isPrimary: false },
+          { label: 'Recevoir', icon: QrCode, isPrimary: false },
+          { label: 'Explorer', icon: TrendingUp, isPrimary: false },
+        ];
+      default: return [];
+    }
+  };
+
+  // --- REPARTITION CALCULS ---
+  const totalBalance = (balanceMain || 0) + (balanceCercles || 0) + (balanceCapital || 0);
+  const pMain = totalBalance ? ((balanceMain || 0) / totalBalance) * 100 : 0;
+  const pCercles = totalBalance ? ((balanceCercles || 0) / totalBalance) * 100 : 0;
+  const pCapital = totalBalance ? ((balanceCapital || 0) / totalBalance) * 100 : 0;
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }} 
-      animate={{ opacity: 1, y: 0 }} 
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className="bg-[#F5F4F0] min-h-screen flex flex-col pb-[100px] font-sans selection:bg-[#047857]/20"
-    >
+    <div className="bg-[#F5F4F0] min-h-screen flex flex-col font-sans pb-20">
       
-      {/* HEADER */}
+      {/* 1. HEADER */}
       <div className="pt-[52px] px-6 pb-6 flex justify-between items-start">
         <div>
-          <p className="text-[13px] font-medium text-[#A39887] mb-1">{greeting},</p>
-          <h1 className="font-display text-[28px] font-extrabold text-[#1A1A1A] tracking-tight mb-2 leading-none">{firstName}</h1>
-          <div className="flex items-center gap-2">
-            <span className="text-[12px] font-semibold text-[#A39887]">{today}</span>
-            <div className="w-1 h-1 bg-[#C4B8AC] rounded-full" />
-            <span className="text-[12px] font-bold text-[#047857]">{profile?.score_afiya || 0} pts</span>
-            <div className="w-1 h-1 bg-[#C4B8AC] rounded-full" />
-            <span className="text-[12px] font-semibold text-[#A39887]">{profile?.tier || 'BRONZE'}</span>
+          <p className="text-[13px] font-[500] text-[#A39887] mb-0.5">{greeting},</p>
+          <h1 className="text-[24px] font-[800] text-[#1A1A1A] tracking-[-0.02em] leading-tight mb-2">
+            {firstName}
+          </h1>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[12px] font-[500] text-[#A39887]">{todayStr}</span>
+            <span className="text-[#C4B8AC]">·</span>
+            <span className="text-[12px] font-[700] text-[#047857]">{profile?.score_afiya || 50} pts</span>
+            <span className="text-[#C4B8AC]">·</span>
+            <span className={`px-1.5 py-0.5 rounded-[4px] text-[10px] font-[700] uppercase tracking-wider ${tierProps.bg} ${tierProps.text} ${tierProps.border}`}>
+              {profile?.tier || 'BRONZE'}
+            </span>
           </div>
         </div>
         
-        <button 
-          className="w-[48px] h-[48px] rounded-[16px] bg-[#047857] flex items-center justify-center font-display text-[20px] font-extrabold text-white shrink-0 transition-transform active:scale-95"
+        <div 
           onClick={() => navigate('/profile')}
+          className="w-[42px] h-[42px] rounded-[13px] bg-[#047857] flex items-center justify-center text-[17px] font-[800] text-white cursor-pointer"
         >
           {initial}
-        </button>
+        </div>
       </div>
 
-      {/* MENU TEXTUEL PAGINATION */}
-      <div className="flex gap-6 px-6 mb-4">
-        {tabs.map((tab, idx) => (
-          <button 
-            key={tab}
-            onClick={() => scrollToCard(idx)}
-            className={`text-[14px] transition-colors duration-300 ${
-              activeCard === idx 
-                ? 'font-extrabold text-[#1A1A1A]' 
-                : 'font-semibold text-[#C4B8AC] hover:text-[#A39887]'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* CARDS SWIPEABLES */}
-      <div 
-        ref={scrollContainerRef}
-        onScroll={handleScroll}
-        className="pl-6 overflow-x-auto flex gap-4 pb-2 snap-x snap-mandatory scrollbar-hide"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {/* Card Principal */}
-        <div className="min-w-[85vw] max-w-[320px] bg-white rounded-[24px] p-6 shrink-0 flex flex-col snap-center relative overflow-hidden">
-          <CreditCard className="absolute -right-4 -bottom-4 text-[#F0EFED] w-32 h-32 opacity-50 pointer-events-none" strokeWidth={1} />
-          <div className="relative z-10">
-            <h2 className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#A39887] mb-4">Compte Principal</h2>
-            <div className="flex items-baseline gap-1.5 mb-1">
-              <span className="font-display text-[40px] font-extrabold text-[#1A1A1A] tracking-tighter leading-none">
-                {cleanAmount(balance)}
-              </span>
-              <span className="text-[14px] font-bold text-[#A39887]">FCFA</span>
+      {/* 2. CARDS SWIPEABLES */}
+      <div className="relative mb-6">
+        <div 
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="pl-6 pr-6 overflow-x-auto flex gap-4 snap-x snap-mandatory hide-scrollbar"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {/* CARD 1 - PRINCIPAL */}
+          <div className="w-[85vw] max-w-[320px] h-[160px] bg-white rounded-[20px] border-[0.5px] border-[#EDECEA] p-[18px] shrink-0 snap-center flex flex-col">
+            <div className="flex justify-between items-start mb-1">
+              <span className="text-[9px] font-[700] uppercase text-[#A39887] tracking-[0.1em]">Compte Principal</span>
             </div>
-            <p className="text-[13px] font-medium text-[#A39887] mb-8">Fonds disponibles</p>
+            <div className="flex items-baseline gap-1 mb-0.5">
+              <span className="text-[30px] font-[800] text-[#1A1A1A] leading-none">
+                {cleanAmount(balanceMain)}
+              </span>
+            </div>
+            <p className="text-[11px] font-[500] text-[#A39887] mb-auto">Fonds disponibles</p>
             
-            <div className="bg-[#F5F4F0] rounded-[16px] p-4 mt-auto">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-[#C4B8AC] mb-1.5">À venir</p>
-              <p className="text-[13px] font-semibold text-[#1A1A1A]">Aucun mouvement prévu</p>
+            <div className="bg-[#F5F4F0] rounded-[10px] p-[10px]">
+              <p className="text-[12px] font-[600] text-[#1A1A1A]">Aucun mouvement prévu</p>
             </div>
           </div>
-        </div>
 
-        {/* Card Cercles */}
-        <div className="min-w-[85vw] max-w-[320px] bg-white rounded-[24px] p-6 shrink-0 flex flex-col snap-center relative overflow-hidden">
-          <Users className="absolute -right-4 -bottom-4 text-[#F0EFED] w-32 h-32 opacity-50 pointer-events-none" strokeWidth={1} />
-          <div className="relative z-10">
-            <h2 className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#A39887] mb-4">Compte Cercles</h2>
-            <div className="flex items-baseline gap-1.5 mb-1">
-              <span className="font-display text-[40px] font-extrabold text-[#1A1A1A] tracking-tighter leading-none">
+          {/* CARD 2 - CERCLES */}
+          <div className="w-[85vw] max-w-[320px] h-[160px] bg-white rounded-[20px] border-[0.5px] border-[#EDECEA] p-[18px] shrink-0 snap-center flex flex-col">
+            <div className="flex justify-between items-start mb-1">
+              <span className="text-[9px] font-[700] uppercase text-[#A39887] tracking-[0.1em]">Compte Cercles</span>
+            </div>
+            <div className="flex items-baseline gap-1 mb-0.5">
+              <span className="text-[30px] font-[800] text-[#1A1A1A] leading-none">
                 {cleanAmount(balanceCercles)}
               </span>
-              <span className="text-[14px] font-bold text-[#A39887]">FCFA</span>
             </div>
-            <p className="text-[13px] font-medium text-[#A39887] mb-8">Fonds des cercles</p>
+            <p className="text-[11px] font-[500] text-[#A39887] mb-auto">Fonds des cercles</p>
             
-            <div className="bg-[#F5F4F0] rounded-[16px] p-4 mt-auto min-h-[76px] flex flex-col justify-center">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-[#C4B8AC] mb-1.5">À venir · {cycleInfo?.groupName || 'Ce mois'}</p>
+            <div className="bg-[#F5F4F0] rounded-[10px] p-[10px]">
               {cycleInfo ? (
-                <div className="flex items-baseline gap-1">
-                  <span className={`font-display text-[16px] font-extrabold ${cycleInfo.type === 'À recevoir' ? 'text-[#047857]' : 'text-[#1A1A1A]'}`}>
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-[500] text-[#6B6B6B] truncate pr-2">{cycleInfo.groupName}</span>
+                  <span className={`text-[12px] font-[700] ${cycleInfo.type === 'À recevoir' ? 'text-[#047857]' : 'text-[#1A1A1A]'}`}>
                     {cycleInfo.type === 'À recevoir' ? '+' : '-'}{cleanAmount(cycleInfo.amount)}
                   </span>
-                  <span className={`text-[12px] font-bold ${cycleInfo.type === 'À recevoir' ? 'text-[#047857]' : 'text-[#1A1A1A]'}`}>FCFA</span>
                 </div>
               ) : (
-                <p className="text-[13px] font-semibold text-[#1A1A1A]">Aucun mouvement prévu</p>
+                <p className="text-[12px] font-[600] text-[#1A1A1A]">Aucune cotisation active</p>
               )}
             </div>
           </div>
-        </div>
 
-        {/* Card Capital */}
-        <div className="min-w-[85vw] max-w-[320px] bg-white rounded-[24px] p-6 shrink-0 flex flex-col snap-center mr-6 relative overflow-hidden">
-          <LineChart className="absolute -right-4 -bottom-4 text-[#F0EFED] w-32 h-32 opacity-50 pointer-events-none" strokeWidth={1} />
-          <div className="relative z-10">
-            <h2 className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#A39887] mb-4">Afiya Capital</h2>
-            <div className="flex items-baseline gap-1.5 mb-1">
-              <span className="font-display text-[40px] font-extrabold text-[#1A1A1A] tracking-tighter leading-none">
+          {/* CARD 3 - CAPITAL */}
+          <div className="w-[85vw] max-w-[320px] h-[160px] bg-white rounded-[20px] border-[0.5px] border-[#EDECEA] p-[18px] shrink-0 snap-center flex flex-col mr-6">
+            <div className="flex justify-between items-start mb-1">
+              <span className="text-[9px] font-[700] uppercase text-[#A39887] tracking-[0.1em]">Afiya Capital</span>
+            </div>
+            <div className="flex items-baseline gap-1 mb-0.5">
+              <span className="text-[30px] font-[800] text-[#1A1A1A] leading-none">
                 {cleanAmount(balanceCapital)}
               </span>
-              <span className="text-[14px] font-bold text-[#A39887]">FCFA</span>
             </div>
-            <p className="text-[13px] font-medium text-[#A39887] mb-8">Fonds investis</p>
+            <p className="text-[11px] font-[500] text-[#A39887] mb-auto">Compte capital</p>
             
-            <div className="bg-[#F5F4F0] rounded-[16px] p-4 mt-auto">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-[#C4B8AC] mb-1.5">À venir</p>
-              <p className="text-[13px] font-semibold text-[#1A1A1A]">Bientôt disponible</p>
+            <div className="bg-[#F5F4F0] rounded-[10px] p-[10px]">
+              <p className="text-[12px] font-[600] text-[#C4B8AC]">Bientôt disponible</p>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* INDICATEURS PAGINATION */}
-      <div className="flex justify-center gap-1.5 mt-4 mb-6">
-        {[0, 1, 2].map((i) => (
-          <div 
-            key={i} 
-            className={`h-1.5 rounded-full transition-all duration-300 ${activeCard === i ? 'w-5 bg-[#047857]' : 'w-1.5 bg-[#E8E6E3]'}`}
-          />
-        ))}
-      </div>
-
-      {/* ACTIONS UNIFORMISÉES */}
-      <div className="mx-6 mb-8 grid grid-cols-3 gap-3">
-        <button className="bg-white rounded-[20px] py-4 flex flex-col items-center justify-center gap-2.5 transition-transform active:scale-95 group">
-          <div className="w-10 h-10 rounded-full bg-[#F0FDF4] flex items-center justify-center">
-            <ArrowUpRight size={20} strokeWidth={2} className="text-[#047857]" />
-          </div>
-          <span className="text-[12px] font-bold text-[#1A1A1A]">Envoyer</span>
-        </button>
-        
-        <button className="bg-white rounded-[20px] py-4 flex flex-col items-center justify-center gap-2.5 transition-transform active:scale-95 group">
-          <div className="w-10 h-10 rounded-full bg-[#F5F4F0] flex items-center justify-center">
-            <ArrowDownLeft size={20} strokeWidth={2} className="text-[#1A1A1A]" />
-          </div>
-          <span className="text-[12px] font-bold text-[#1A1A1A]">Retirer</span>
-        </button>
-        
-        <button className="bg-white rounded-[20px] py-4 flex flex-col items-center justify-center gap-2.5 transition-transform active:scale-95 group">
-          <div className="w-10 h-10 rounded-full bg-[#F5F4F0] flex items-center justify-center">
-            <QrCode size={20} strokeWidth={2} className="text-[#1A1A1A]" />
-          </div>
-          <span className="text-[12px] font-bold text-[#1A1A1A]">Recevoir</span>
-        </button>
-      </div>
-
-      {/* TRANSACTIONS */}
-      <div className="mx-6 mb-8">
-        <div className="flex justify-between items-end mb-4">
-          <h2 className="font-display text-[18px] font-extrabold text-[#1A1A1A]">Transactions récentes</h2>
-          {transactions.length > 0 && (
-            <button className="text-[13px] font-bold text-[#047857] active:opacity-70 transition-opacity pb-0.5">
-              Voir tout
-            </button>
-          )}
-        </div>
-        
-        <div className="flex flex-col gap-2">
-          {transactions.length === 0 ? (
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              className="bg-white rounded-[20px] p-6 text-center flex flex-col items-center justify-center"
-            >
-              <div className="w-12 h-12 bg-[#F5F4F0] rounded-[16px] flex items-center justify-center mb-3">
-                <Inbox size={20} strokeWidth={1.5} className="text-[#C4B8AC]" />
-              </div>
-              <p className="text-[14px] font-bold text-[#1A1A1A] mb-1">Aucune transaction</p>
-              <p className="text-[12px] text-[#A39887]">Vos mouvements apparaîtront ici.</p>
-            </motion.div>
-          ) : (
-            transactions.map((tx, idx) => (
-              <motion.div 
-                key={tx.id || idx} 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                className="bg-white rounded-[20px] p-4 flex items-center gap-4 active:scale-[0.99] transition-transform cursor-pointer"
-              >
-                <div className={`w-12 h-12 rounded-[14px] shrink-0 flex items-center justify-center ${isCredit(tx.type) ? 'bg-[#F0FDF4]' : 'bg-[#F5F4F0]'}`}>
-                  {isCredit(tx.type) ? (
-                    <ArrowDownLeft size={20} strokeWidth={1.5} className="text-[#047857]" />
-                  ) : (
-                    <ArrowUpRight size={20} strokeWidth={1.5} className="text-[#1A1A1A]" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[15px] font-bold text-[#1A1A1A] mb-0.5 truncate">{tx.description || tx.type}</p>
-                  <p className="text-[12px] font-medium text-[#A39887]">{formatDate(tx.created_at)}</p>
-                </div>
-                <div className="flex items-baseline gap-1 shrink-0">
-                  <span className={`font-display text-[16px] font-extrabold ${isCredit(tx.type) ? 'text-[#047857]' : 'text-[#1A1A1A]'}`}>
-                    {isCredit(tx.type) ? '+' : '-'}{cleanAmount(tx.amount)}
-                  </span>
-                  <span className={`text-[11px] font-bold ${isCredit(tx.type) ? 'text-[#047857]' : 'text-[#A39887]'}`}>
-                    FCFA
-                  </span>
-                </div>
-              </motion.div>
-            ))
-          )}
+        {/* DOTS PAGINATION */}
+        <div className="flex justify-center gap-1.5 mt-4">
+          {[0, 1, 2].map((i) => (
+            <div 
+              key={i} 
+              className={`transition-all duration-300 ${
+                activeCard === i 
+                  ? 'w-[18px] h-[5px] bg-[#047857] rounded-full' 
+                  : 'w-[5px] h-[5px] bg-[#D1D0CD] rounded-full'
+              }`}
+            />
+          ))}
         </div>
       </div>
 
-      {/* SECTION: POUR VOUS (Remplissage intelligent du vide) */}
-      <div className="mx-6 flex-1 flex flex-col justify-end">
-        <h2 className="font-display text-[18px] font-extrabold text-[#1A1A1A] mb-4">Pour vous</h2>
-        
-        <div 
-          onClick={() => navigate('/group/join')}
-          className="bg-white rounded-[20px] p-4 flex items-center gap-4 active:scale-[0.99] transition-transform cursor-pointer mb-3"
-        >
-          <div className="w-12 h-12 rounded-[14px] shrink-0 flex items-center justify-center bg-[#F0FDF4]">
-            <Compass size={22} strokeWidth={1.5} className="text-[#047857]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[14px] font-bold text-[#1A1A1A] mb-0.5">Cercles publics</p>
-            <p className="text-[12px] font-medium text-[#A39887]">Rejoignez une communauté d'épargne.</p>
-          </div>
-          <ChevronRight size={18} className="text-[#C4B8AC]" />
-        </div>
-
-        {profile?.kyc_status !== 'VERIFIED' && (
-          <div 
-            onClick={() => navigate('/profile')}
-            className="bg-white rounded-[20px] p-4 flex items-center gap-4 active:scale-[0.99] transition-transform cursor-pointer"
+      {/* 3. ACTIONS RAPIDES CONTEXTUELLES */}
+      <div className="px-6 mb-8">
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={activeCard}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.15 }}
+            className={`grid gap-3 ${activeCard === 2 ? 'grid-cols-3' : 'grid-cols-4'}`}
           >
-            <div className="w-12 h-12 rounded-[14px] shrink-0 flex items-center justify-center bg-[#F5F4F0]">
-              <ShieldCheck size={22} strokeWidth={1.5} className="text-[#1A1A1A]" />
+            {getContextualActions().map((action, idx) => (
+              <button key={idx} className="flex flex-col items-center gap-1.5 group">
+                <div className={`w-[50px] h-[50px] rounded-[15px] flex items-center justify-center transition-transform active:scale-95 ${
+                  action.isPrimary ? 'bg-[#ECFDF5]' : 'bg-[#F5F4F0]'
+                }`}>
+                  <action.icon className={`w-[20px] h-[20px] ${action.isPrimary ? 'text-[#047857]' : 'text-[#6B6B6B]'}`} strokeWidth={2} />
+                </div>
+                <span className="text-[11px] font-[700] text-[#1A1A1A]">{action.label}</span>
+              </button>
+            ))}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* 4. SECTION RÉPARTITION */}
+      <div className="px-6 mb-8">
+        <div className="bg-white rounded-[20px] border-[0.5px] border-[#EDECEA] p-[14px]">
+          <div className="flex justify-between items-end mb-3">
+            <span className="text-[8px] font-[700] uppercase text-[#A39887] tracking-[0.1em]">Répartition</span>
+            <span className="text-[14px] font-[800] text-[#1A1A1A]">{cleanAmount(totalBalance)} FCFA</span>
+          </div>
+          
+          <div className="flex w-full h-[4px] rounded-full overflow-hidden mb-4 bg-[#F5F4F0]">
+            {totalBalance > 0 ? (
+              <>
+                <div style={{ width: `${pMain}%` }} className="bg-[#047857] h-full" />
+                <div style={{ width: `${pCercles}%` }} className="bg-[#34D399] h-full" />
+                <div style={{ width: `${pCapital}%` }} className="bg-[#E8E6E3] h-full" />
+              </>
+            ) : (
+              <div className="w-full bg-[#E8E6E3] h-full" />
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            {/* Ligne Principal */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[#047857]" />
+                <span className="text-[12px] font-[600] text-[#1A1A1A]">Principal</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`text-[12px] font-[700] ${balanceMain === 0 ? 'text-[#C4B8AC]' : 'text-[#1A1A1A]'}`}>
+                  {cleanAmount(balanceMain)}
+                </span>
+                <span className={`text-[11px] font-[600] w-8 text-right ${balanceMain === 0 ? 'text-[#C4B8AC]' : 'text-[#A39887]'}`}>
+                  {pMain.toFixed(0)}%
+                </span>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-bold text-[#1A1A1A] mb-0.5">Sécurisez votre compte</p>
-              <p className="text-[12px] font-medium text-[#A39887]">Vérifiez votre identité à 100%.</p>
+            
+            {/* Ligne Cercles */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[#34D399]" />
+                <span className="text-[12px] font-[600] text-[#1A1A1A]">Cercles</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`text-[12px] font-[700] ${balanceCercles === 0 ? 'text-[#C4B8AC]' : 'text-[#1A1A1A]'}`}>
+                  {cleanAmount(balanceCercles)}
+                </span>
+                <span className={`text-[11px] font-[600] w-8 text-right ${balanceCercles === 0 ? 'text-[#C4B8AC]' : 'text-[#A39887]'}`}>
+                  {pCercles.toFixed(0)}%
+                </span>
+              </div>
             </div>
-            <ChevronRight size={18} className="text-[#C4B8AC]" />
+
+            {/* Ligne Capital */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[#E8E6E3]" />
+                <span className="text-[12px] font-[600] text-[#1A1A1A]">Capital</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`text-[12px] font-[700] ${balanceCapital === 0 ? 'text-[#C4B8AC]' : 'text-[#1A1A1A]'}`}>
+                  {cleanAmount(balanceCapital)}
+                </span>
+                <span className={`text-[11px] font-[600] w-8 text-right ${balanceCapital === 0 ? 'text-[#C4B8AC]' : 'text-[#A39887]'}`}>
+                  {pCapital.toFixed(0)}%
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. TRANSACTIONS RÉCENTES */}
+      <div className="px-6 mb-8">
+        <div className="flex justify-between items-baseline mb-4">
+          <h2 className="text-[16px] font-[700] text-[#1A1A1A]">Transactions récentes</h2>
+          {transactions.length > 0 && (
+            <button className="text-[13px] font-[700] text-[#047857]">Voir tout</button>
+          )}
+        </div>
+
+        {transactions.length === 0 ? (
+          <div className="bg-white rounded-[20px] p-6 text-center flex flex-col items-center justify-center border-[0.5px] border-[#EDECEA]">
+            <div className="w-12 h-12 bg-[#F5F4F0] rounded-[14px] flex items-center justify-center mb-3">
+              <Inbox size={20} strokeWidth={1.5} className="text-[#C4B8AC]" />
+            </div>
+            <p className="text-[14px] font-[600] text-[#1A1A1A] mb-1">Aucune transaction</p>
+            <p className="text-[12px] font-[500] text-[#A39887]">Vos mouvements apparaîtront ici.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-5">
+            {txGroups.map((group, gIdx) => (
+              <div key={gIdx}>
+                <h3 className="text-[9px] font-[700] uppercase text-[#A39887] tracking-[0.1em] mb-2.5">
+                  {group.label}
+                </h3>
+                <div className="flex flex-col gap-3">
+                  {group.txs.map((tx, tIdx) => {
+                    const credit = isCredit(tx.type);
+                    const txTime = tx.created_at?.toDate ? tx.created_at.toDate().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h') : '';
+                    
+                    return (
+                      <div key={tIdx} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-[40px] h-[40px] rounded-[12px] flex items-center justify-center shrink-0 ${
+                            credit ? 'bg-[#D1FAE5]' : 'bg-[#F5F4F0]'
+                          }`}>
+                            {credit ? (
+                              <ArrowDownLeft size={18} strokeWidth={2} className="text-[#047857]" />
+                            ) : (
+                              <ArrowUpRight size={18} strokeWidth={2} className="text-[#6B6B6B]" />
+                            )}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[14px] font-[600] text-[#1A1A1A] mb-0.5">{tx.description || (credit ? 'Dépôt' : 'Paiement')}</span>
+                            <span className="text-[12px] font-[500] text-[#A39887]">{txTime} · Principal</span>
+                          </div>
+                        </div>
+                        <span className={`text-[14px] font-[700] ${credit ? 'text-[#047857]' : 'text-[#1A1A1A]'}`}>
+                          {credit ? '+' : '−'}{cleanAmount(tx.amount)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
-      
-    </motion.div>
+
+      {/* 6. POUR VOUS */}
+      <div className="px-6 mb-4 flex-1 flex flex-col justify-end">
+        <h2 className="text-[16px] font-[700] text-[#1A1A1A] mb-3">Pour vous</h2>
+        
+        {userGroups.length === 0 ? (
+          <div 
+            onClick={() => navigate('/tontines')}
+            className="bg-white rounded-[20px] p-[16px] border-[0.5px] border-[#EDECEA] flex items-center gap-3 active:scale-[0.98] transition-transform cursor-pointer"
+          >
+            <div className="w-[42px] h-[42px] bg-[#ECFDF5] rounded-[12px] flex items-center justify-center shrink-0">
+              <Users size={20} strokeWidth={2} className="text-[#047857]" />
+            </div>
+            <div>
+              <p className="text-[14px] font-[700] text-[#1A1A1A] mb-0.5">Premier cercle</p>
+              <p className="text-[12px] font-[500] text-[#A39887]">Créez ou rejoignez votre premier cercle</p>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-[#F5F4F0] border-[0.5px] border-[#EDECEA] rounded-[20px] p-[16px] flex items-center gap-3">
+             <div className="w-[42px] h-[42px] bg-white rounded-[12px] flex items-center justify-center shrink-0">
+              <TrendingUp size={20} strokeWidth={2} className="text-[#C4B8AC]" />
+            </div>
+            <div>
+              <p className="text-[14px] font-[700] text-[#C4B8AC] mb-0.5">Nouveautés à venir</p>
+              <p className="text-[12px] font-[500] text-[#C4B8AC]">Restez à l'affût des prochaines offres.</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+    </div>
   );
 }

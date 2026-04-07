@@ -9,10 +9,10 @@ export function Splash() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      // Petit délai pour laisser l'animation du splash screen se jouer
+      // Délai strict de 2 secondes pour le splash screen
       setTimeout(async () => {
         if (user) {
-          // Déconnexion forcée pour éviter la connexion automatique demandée par l'utilisateur
+          // Déconnexion forcée pour éviter la connexion automatique demandée
           await signOut(auth);
         }
         navigate('/welcome', { replace: true });
@@ -23,21 +23,28 @@ export function Splash() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen w-full bg-[#047857] flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Cercles décoratifs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-white/5 blur-3xl" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-black/10 blur-3xl" />
-
+    // Fond plein écran #047857 strict, centré verticalement et horizontalement
+    <div className="min-h-screen w-full bg-[#047857] flex flex-col items-center justify-center font-sans">
+      
+      {/* Animation : fade in 0.6s au montage */}
       <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-col items-center relative z-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+        className="flex flex-col items-center"
       >
-        <div className="w-24 h-24 bg-white rounded-[24px] flex items-center justify-center mb-6 shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
-          <span className="text-[#047857] font-display text-[48px] font-extrabold leading-none">A</span>
+        {/* Logo : carré blanc 80x80px / radius 20px */}
+        <div className="w-[80px] h-[80px] bg-white rounded-[20px] flex items-center justify-center">
+          {/* Lettre "A" en #047857 / 36px / 800 */}
+          <span className="text-[#047857] text-[36px] font-[800] leading-none">
+            A
+          </span>
         </div>
-        <h1 className="font-display text-[40px] font-extrabold tracking-tight text-white">Afiya</h1>
+        
+        {/* Nom "Afiya" : white / 28px / 800 / letter-spacing -0.02em / margin-top 16px */}
+        <h1 className="text-white text-[28px] font-[800] tracking-[-0.02em] mt-[16px] leading-none">
+          Afiya
+        </h1>
       </motion.div>
     </div>
   );
