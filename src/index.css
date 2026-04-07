@@ -1,12 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
-  --color-bg: #F5F4F0;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --color-bg: #FAFAF8;
   --color-surface: #FFFFFF;
-  --color-surface-inner: #F5F4F0;
+  --color-surface-inner: #FAFAF8;
   --color-primary: #047857;
   --color-primary-light: #F0FDF4;
   --color-primary-text: #047857;
@@ -16,7 +16,7 @@
   --color-text-placeholder: #C4B8AC;
   --color-divider: #F0EFED;
   --color-border: #E8E6E3;
-
+  
   --radius-card: 24px;
   --radius-inner: 18px;
   --radius-field: 14px;
@@ -27,10 +27,10 @@
 }
 
 body {
-  font-family: "Manrope", sans-serif;
+  font-family: "Inter", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #F5F4F0;
+  background-color: #FAFAF8;
   color: #1A1A1A;
 }
 

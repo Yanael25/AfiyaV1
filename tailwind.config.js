@@ -3,8 +3,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Manrope", "sans-serif"],
-        display: ["Manrope", "sans-serif"],
+        sans: ["Sora", "sans-serif"],
       },
       colors: {
         afiya: {
