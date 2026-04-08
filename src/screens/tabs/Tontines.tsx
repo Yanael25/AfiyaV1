@@ -1,20 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, LogIn, Search, Users, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { formatXOF } from '../../lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 import { auth, db } from '../../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getUserGroups, TontineMember, Cycle } from '../../services/tontineService';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function cleanAmount(val: number) {
-  return formatXOF(val).replace(/\s?FCFA/gi, '').trim();
-}
+// Nouvelle fonction de formatage des montants avec espace pour les milliers
+const formatAmount = (n: number): string => {
+  return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(n);
+};
 
 function shortDate(ts: any) {
-  if (!ts) return '--';
+  if (!ts) return null;
   const d = ts.toDate ? ts.toDate() : new Date(ts);
   return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
 }
@@ -162,10 +162,10 @@ export function Tontines() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-[#F5F4F0] min-h-screen flex flex-col font-sans pb-20 selection:bg-[#047857]/20">
+    <div className="bg-[#F5F4F0] min-h-screen flex flex-col font-['Manrope',sans-serif] pb-20 selection:bg-[#047857]/20">
 
       {/* ── HEADER ──────────────────────────────────────────────────────── */}
-      <div className="pt-[52px] px-4 pb-3 flex items-center justify-between gap-3">
+      <div className="pt-[52px] px-[16px] pb-3 flex items-center justify-between gap-3">
         <AnimatePresence mode="wait">
           {searchOpen ? (
             <motion.div
@@ -182,7 +182,7 @@ export function Tontines() {
                 value={searchQuery}
                 onChange={(e: any) => setSearchQuery(e.target.value)}
                 placeholder="Rechercher un cercle…"
-                className="flex-1 bg-transparent text-[13px] font-medium text-[#1A1A1A] placeholder-[#C4B8AC] outline-none"
+                className="flex-1 bg-transparent text-[13px] font-[500] text-[#1A1A1A] placeholder-[#C4B8AC] outline-none"
               />
               <button onClick={() => { setSearchOpen(false); setSearchQuery(''); }}>
                 <X size={14} style={{ color: '#A39887' }} />
@@ -195,7 +195,7 @@ export function Tontines() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="text-[26px] font-extrabold text-[#1A1A1A]"
+              className="text-[26px] font-[800] text-[#1A1A1A]"
               style={{ letterSpacing: '-0.02em' }}
             >
               Cercles
@@ -206,7 +206,7 @@ export function Tontines() {
         {!searchOpen && (
           <button
             onClick={() => setSearchOpen(true)}
-            className="flex items-center justify-center shrink-0"
+            className="flex items-center justify-center shrink-0 active:scale-95 transition-transform"
             style={{
               width: 36, height: 36, borderRadius: 10,
               background: '#FFFFFF', border: '0.5px solid #EDECEA',
@@ -218,7 +218,7 @@ export function Tontines() {
       </div>
 
       {/* ── SOUS-ONGLETS ────────────────────────────────────────────────── */}
-      <div className="flex px-4" style={{ borderBottom: '1px solid #EDECEA' }}>
+      <div className="flex px-[16px]" style={{ borderBottom: '1px solid #EDECEA' }}>
         {(['cercles', 'pools'] as const).map(tab => {
           const active = activeTab === tab;
           const label = tab === 'cercles' ? 'Mes cercles' : 'Afiya Pools';
@@ -226,7 +226,7 @@ export function Tontines() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className="mr-6 pb-3 text-[14px] font-bold transition-colors"
+              className="mr-6 pb-3 text-[14px] font-[700] transition-colors"
               style={{
                 color: active ? '#047857' : '#A39887',
                 borderBottom: active ? '2px solid #047857' : '2px solid transparent',
@@ -241,58 +241,58 @@ export function Tontines() {
 
       {/* ── MES CERCLES ─────────────────────────────────────────────────── */}
       {activeTab === 'cercles' && (
-        <div className="flex flex-col px-4 pt-4">
+        <div className="flex flex-col px-[16px] pt-4">
 
-          {/* Summary card */}
+          {/* Summary card (Restructuré) */}
           {!loading && groupsData.length > 0 && (
-            <div
-              className="flex mb-4"
-              style={{
-                background: '#FFFFFF', borderRadius: 16,
-                border: '0.5px solid #EDECEA', padding: 14,
-              }}
-            >
+            <div className="flex mb-4 bg-white rounded-[16px] border-[0.5px] border-[#EDECEA] p-[14px]">
+              
               {/* Col 1 — Cercles actifs */}
-              <div className="flex-1 flex flex-col items-center justify-center text-center"
-                   style={{ borderRight: '0.5px solid #F5F4F0' }}>
-                <span className="text-[17px] font-extrabold text-[#1A1A1A] leading-tight">{activeCount}</span>
-                <span className="text-[10px] font-semibold text-[#A39887] mt-0.5">Cercles actifs</span>
+              <div className="flex flex-col items-center justify-center text-center border-r-[0.5px] border-[#F0EFED] px-[8px] flex-1">
+                <span className="text-[20px] font-[800] text-[#1A1A1A] leading-none">{activeCount}</span>
+                <span className="text-[10px] font-[500] text-[#A39887] mt-[2px]">
+                  {activeCount > 1 ? 'cercles actifs' : 'cercle actif'}
+                </span>
               </div>
 
               {/* Col 2 — Prochaine cagnotte */}
-              <div className="flex-1 flex flex-col items-center justify-center text-center"
-                   style={{ borderRight: '0.5px solid #F5F4F0' }}>
+              <div className="flex flex-col items-center justify-center text-center border-r-[0.5px] border-[#F0EFED] px-[8px] flex-1">
+                <span className="text-[10px] font-[500] text-[#A39887] mb-[4px]">Prochaine cagnotte</span>
                 {nextPayout ? (
                   <>
-                    <span className="text-[12px] font-bold text-[#047857] leading-tight">
-                      {cleanAmount(nextPayout.activeCycle.expected_total)} FCFA
+                    <span className="text-[14px] font-[700] text-[#047857] leading-none whitespace-nowrap">
+                      {formatAmount(nextPayout.activeCycle.expected_total)} FCFA
                     </span>
-                    <span className="text-[10px] text-[#A39887] mt-0.5">
-                      {shortDate(nextPayout.activeCycle.payout_date)}
-                    </span>
+                    {shortDate(nextPayout.activeCycle.payout_date) && (
+                      <span className="text-[10px] font-[600] text-[#1A1A1A] mt-[2px]">
+                        {shortDate(nextPayout.activeCycle.payout_date)}
+                      </span>
+                    )}
                   </>
                 ) : (
-                  <span className="text-[10px] font-semibold text-[#A39887]">—</span>
+                  <span className="text-[14px] font-[700] text-[#C4B8AC]">—</span>
                 )}
-                <span className="text-[10px] font-semibold text-[#A39887] mt-0.5">Prochaine cagnotte</span>
               </div>
 
               {/* Col 3 — Prochain paiement */}
-              <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <div className="flex flex-col items-center justify-center text-center px-[8px] flex-1">
+                <span className="text-[10px] font-[500] text-[#A39887] mb-[4px]">Prochain paiement</span>
                 {nextPayment ? (
                   <>
-                    <span className="text-[12px] font-bold text-[#1A1A1A] leading-tight">
-                      {cleanAmount(nextPayment.contribution_amount)} FCFA
+                    <span className="text-[14px] font-[700] text-[#1A1A1A] leading-none whitespace-nowrap">
+                      {formatAmount(nextPayment.contribution_amount)} FCFA
                     </span>
-                    <span className="text-[10px] text-[#A39887] mt-0.5">
-                      {shortDate(nextPayment.activeCycle.payment_due_date)}
-                    </span>
+                    {shortDate(nextPayment.activeCycle.payment_due_date) && (
+                      <span className="text-[10px] font-[600] text-[#1A1A1A] mt-[2px]">
+                        {shortDate(nextPayment.activeCycle.payment_due_date)}
+                      </span>
+                    )}
                   </>
                 ) : (
-                  <span className="text-[10px] font-semibold text-[#A39887]">—</span>
+                  <span className="text-[14px] font-[700] text-[#C4B8AC]">—</span>
                 )}
-                <span className="text-[10px] font-semibold text-[#A39887] mt-0.5">Prochain paiement</span>
               </div>
+
             </div>
           )}
 
@@ -306,23 +306,16 @@ export function Tontines() {
           ) : groupsData.length === 0 ? (
             /* Empty state */
             <div className="flex flex-col items-center justify-center pt-16 pb-8">
-              <div
-                className="flex items-center justify-center mb-4"
-                style={{ width: 52, height: 52, borderRadius: 16, background: '#F0EFED' }}
-              >
+              <div className="flex items-center justify-center mb-4 w-[52px] h-[52px] rounded-[16px] bg-[#F0EFED]">
                 <Users size={22} strokeWidth={1.5} style={{ color: '#A39887' }} />
               </div>
-              <p className="text-[15px] font-bold text-[#1A1A1A] mb-1">Aucun cercle actif</p>
-              <p className="text-[13px] text-[#A39887] text-center mb-6 max-w-[220px]">
+              <p className="text-[15px] font-[800] text-[#1A1A1A] mb-1">Aucun cercle actif</p>
+              <p className="text-[13px] text-[#A39887] font-[500] text-center mb-6 max-w-[220px]">
                 Créez ou rejoignez un cercle pour commencer à épargner ensemble.
               </p>
               <button
                 onClick={() => navigate('/group/create')}
-                className="flex items-center justify-center gap-2 text-white text-[13px] font-bold transition-transform active:scale-95"
-                style={{
-                  height: 44, paddingLeft: 24, paddingRight: 24,
-                  background: '#047857', borderRadius: 12,
-                }}
+                className="flex items-center justify-center gap-2 text-white text-[14px] font-[700] transition-transform active:scale-95 px-[24px] h-[48px] bg-[#047857] rounded-[14px]"
               >
                 <Plus size={16} strokeWidth={2} />
                 Créer un cercle
@@ -332,17 +325,16 @@ export function Tontines() {
             <div className="flex flex-col">
               {sections.map(({ key, label, items }) => (
                 <div key={key} className="mb-2">
-                  <p
-                    className="text-[10px] font-bold uppercase tracking-widest text-[#A39887] mb-2 mt-2"
-                  >
+                  <p className="text-[10px] font-[700] uppercase tracking-[0.12em] text-[#A39887] mb-3 mt-[20px]">
                     {label}
                   </p>
                   {items.map((group: any, idx: number) => {
                     const s = normalizeStatus(group.status);
                     const badge = statusBadgeClass(s);
                     const count = group.membersCount ?? 1;
+                    const currentCycle = group.current_cycle || 1;
                     const progress = s === 'ACTIVE'
-                      ? Math.min((group.current_cycle / Math.max(group.total_cycles, 1)) * 100, 100)
+                      ? Math.min((currentCycle / Math.max(group.total_cycles, 1)) * 100, 100)
                       : s === 'FORMING'
                         ? Math.min((count / Math.max(group.target_members, 1)) * 100, 100)
                         : 100;
@@ -354,25 +346,19 @@ export function Tontines() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.04 }}
                         onClick={() => navigate(`/group/${group.id}`)}
-                        className="cursor-pointer active:scale-[0.99] transition-transform mb-2"
+                        className="cursor-pointer active:scale-[0.99] transition-transform mb-3 bg-white rounded-[16px] border-[0.5px] p-[14px] overflow-hidden"
                         style={{
-                          background: '#FFFFFF',
-                          borderRadius: 18,
-                          border: '0.5px solid #EDECEA',
+                          borderColor: '#EDECEA',
                           borderLeft: group.isLate ? '2px solid #92400E' : '0.5px solid #EDECEA',
-                          padding: 14,
                         }}
                       >
                         {/* Line 1: name + badge */}
                         <div className="flex items-center justify-between mb-2">
-                          <span
-                            className="text-[14px] font-bold text-[#1A1A1A] truncate"
-                            style={{ maxWidth: '65%' }}
-                          >
+                          <span className="text-[14px] font-[700] text-[#1A1A1A] truncate max-w-[65%]">
                             {group.name}
                           </span>
                           <span
-                            className="text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0"
+                            className="text-[10px] font-[700] px-2 py-0.5 rounded-[6px] shrink-0"
                             style={{ background: badge.bg, color: badge.text }}
                           >
                             {statusLabel(s)}
@@ -381,67 +367,52 @@ export function Tontines() {
 
                         {/* Line 2: 3 meta columns */}
                         <div className="flex items-center mb-3">
-                          <div
-                            className="flex-1 flex flex-col items-start"
-                            style={{ borderRight: '0.5px solid #F0EFED', paddingRight: 10 }}
-                          >
-                            <span className="text-[12px] font-semibold text-[#1A1A1A]">
-                              {cleanAmount(group.contribution_amount)}
+                          <div className="flex-1 flex flex-col items-start border-r-[0.5px] border-[#F0EFED] pr-[10px]">
+                            <span className="text-[12px] font-[700] text-[#1A1A1A]">
+                              {formatAmount(group.contribution_amount)}
                             </span>
-                            <span className="text-[9px] font-medium text-[#A39887]">FCFA / cycle</span>
+                            <span className="text-[9px] font-[500] text-[#A39887]">FCFA / cycle</span>
                           </div>
-                          <div
-                            className="flex-1 flex flex-col items-center"
-                            style={{ borderRight: '0.5px solid #F0EFED', paddingLeft: 10, paddingRight: 10 }}
-                          >
-                            <span className="text-[12px] font-semibold text-[#1A1A1A]">
+                          <div className="flex-1 flex flex-col items-center border-r-[0.5px] border-[#F0EFED] px-[10px]">
+                            <span className="text-[12px] font-[700] text-[#1A1A1A]">
                               {count} / {group.target_members}
                             </span>
-                            <span className="text-[9px] font-medium text-[#A39887]">membres</span>
+                            <span className="text-[9px] font-[500] text-[#A39887]">membres</span>
                           </div>
-                          <div
-                            className="flex-1 flex flex-col items-end"
-                            style={{ paddingLeft: 10 }}
-                          >
-                            <span className="text-[12px] font-semibold text-[#1A1A1A]">
+                          <div className="flex-1 flex flex-col items-end pl-[10px]">
+                            <span className="text-[12px] font-[700] text-[#1A1A1A]">
                               {s === 'ACTIVE' && group.membership?.draw_position
                                 ? `#${group.membership.draw_position}`
                                 : group.membership?.is_admin
                                   ? 'Admin'
                                   : '—'}
                             </span>
-                            <span className="text-[9px] font-medium text-[#A39887]">position</span>
+                            <span className="text-[9px] font-[500] text-[#A39887]">position</span>
                           </div>
                         </div>
 
                         {/* Action block */}
                         {s === 'ACTIVE' && (
-                          <div
-                            className="flex items-center justify-between mb-3"
-                            style={{
-                              background: '#F5F4F0', borderRadius: 10,
-                              padding: '8px 11px',
-                            }}
-                          >
+                          <div className="flex items-center justify-between mb-3 bg-[#F5F4F0] rounded-[10px] px-[11px] py-[8px]">
                             {group.isBeneficiary ? (
                               <>
-                                <span className="text-[11px] font-medium text-[#1A1A1A]">Cagnotte à venir</span>
-                                <span className="text-[12px] font-bold text-[#047857]">
-                                  +{cleanAmount(group.activeCycle?.expected_total ?? 0)} FCFA
+                                <span className="text-[11px] font-[500] text-[#1A1A1A]">Cagnotte à venir</span>
+                                <span className="text-[12px] font-[700] text-[#047857] text-right whitespace-nowrap">
+                                  +{formatAmount(group.activeCycle?.expected_total ?? 0)} FCFA
                                 </span>
                               </>
                             ) : (
                               <>
                                 <div className="flex flex-col">
-                                  <span className="text-[11px] font-medium text-[#1A1A1A]">Cotisation due</span>
+                                  <span className="text-[11px] font-[500] text-[#1A1A1A]">Cotisation due</span>
                                   {group.activeCycle?.payment_due_date && (
-                                    <span className="text-[10px] text-[#A39887]">
+                                    <span className="text-[10px] font-[500] text-[#A39887]">
                                       {shortDate(group.activeCycle.payment_due_date)}
                                     </span>
                                   )}
                                 </div>
-                                <span className="text-[12px] font-bold text-[#1A1A1A]">
-                                  {cleanAmount(group.contribution_amount)} FCFA
+                                <span className="text-[12px] font-[700] text-[#1A1A1A] text-right whitespace-nowrap">
+                                  {formatAmount(group.contribution_amount)} FCFA
                                 </span>
                               </>
                             )}
@@ -449,34 +420,30 @@ export function Tontines() {
                         )}
 
                         {s === 'FORMING' && (
-                          <div
-                            className="flex items-center justify-between mb-3"
-                            style={{
-                              background: '#F5F4F0', borderRadius: 10,
-                              padding: '8px 11px',
-                            }}
-                          >
-                            <span className="text-[11px] font-medium text-[#1A1A1A]">En attente de membres</span>
-                            <span className="text-[11px] font-semibold text-[#A39887]">
+                          <div className="flex items-center justify-between mb-3 bg-[#F5F4F0] rounded-[10px] px-[11px] py-[8px]">
+                            <span className="text-[11px] font-[500] text-[#1A1A1A]">En attente de membres</span>
+                            <span className="text-[11px] font-[600] text-[#A39887]">
                               {group.target_members - count} restants
                             </span>
                           </div>
                         )}
 
-                        {/* Progress bar */}
-                        <div
-                          className="w-full overflow-hidden"
-                          style={{ height: 4, borderRadius: 2, background: '#E8E6E3' }}
-                        >
-                          <div
-                            style={{
-                              height: '100%',
-                              width: `${progress}%`,
-                              borderRadius: 2,
-                              background: s === 'COMPLETED' ? '#A39887' : '#047857',
-                              transition: 'width 0.4s ease',
-                            }}
-                          />
+                        {/* Progress bar — bord à bord avec label */}
+                        <div className="flex items-center gap-[8px] mx-[-14px] px-[14px]">
+                          <div className="flex-1 h-[4px] bg-[#F0EFED] rounded-[2px] overflow-hidden">
+                            <div
+                              className="h-full transition-all duration-400 ease-out"
+                              style={{
+                                width: `${progress}%`,
+                                background: s === 'COMPLETED' ? '#A39887' : '#047857'
+                              }}
+                            />
+                          </div>
+                          {s === 'ACTIVE' && (
+                            <span className="shrink-0 text-[10px] font-[600] text-[#A39887]">
+                              Cycle {currentCycle} / {group.total_cycles || group.target_members}
+                            </span>
+                          )}
                         </div>
                       </motion.div>
                     );
@@ -490,39 +457,26 @@ export function Tontines() {
 
       {/* ── AFIYA POOLS ─────────────────────────────────────────────────── */}
       {activeTab === 'pools' && (
-        <div className="flex flex-col px-4 pt-4">
+        <div className="flex flex-col pt-4">
           {/* Join button */}
           <button
-            className="w-full flex items-center justify-center text-white text-[12px] font-bold mb-6 transition-transform active:scale-95"
-            style={{ height: 36, background: '#047857', borderRadius: 10 }}
+            className="mx-[16px] h-[44px] bg-[#047857] rounded-[14px] flex items-center justify-center text-white text-[14px] font-[700] mb-6 transition-transform active:scale-95"
           >
             Rejoindre un pool
           </button>
 
           {/* Placeholder */}
-          <div className="flex flex-col items-center justify-center pt-12">
-            <div
-              className="flex items-center justify-center mb-4"
-              style={{ width: 52, height: 52, borderRadius: 16, background: '#F0EFED' }}
-            >
+          <div className="flex flex-col items-center justify-center pt-12 px-[16px]">
+            <div className="flex items-center justify-center mb-4 w-[52px] h-[52px] rounded-[16px] bg-[#F0EFED]">
               <Users size={22} strokeWidth={1.5} style={{ color: '#A39887' }} />
             </div>
-            <p className="text-[15px] font-bold text-[#1A1A1A] mb-2">Afiya Pools arrive bientôt</p>
-            <p
-              className="text-[12px] text-[#A39887] text-center mb-4"
-              style={{ maxWidth: 200 }}
-            >
+            <p className="text-[15px] font-[800] text-[#1A1A1A] mb-2">Afiya Pools arrive bientôt</p>
+            <p className="text-[12px] font-[500] text-[#A39887] text-center mb-4 max-w-[200px]">
               Des pools d'épargne collectifs gérés par Afiya, ouverts à tous.
             </p>
-            <span
-              className="text-[11px] font-bold text-[#A39887]"
-              style={{
-                background: '#F5F4F0', borderRadius: 8,
-                padding: '5px 12px',
-              }}
-            >
-              Disponible prochainement
-            </span>
+            <div className="bg-[#F5F4F0] rounded-[8px] px-[12px] py-[5px] inline-block">
+              <span className="text-[11px] font-[700] text-[#A39887]">Disponible prochainement</span>
+            </div>
           </div>
         </div>
       )}
@@ -537,29 +491,22 @@ export function Tontines() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.95 }}
                 transition={{ duration: 0.15 }}
-                className="mb-2"
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: 16,
-                  border: '0.5px solid #EDECEA',
-                  overflow: 'hidden',
-                  minWidth: 180,
-                }}
+                className="mb-2 bg-white rounded-[16px] border-[0.5px] border-[#EDECEA] overflow-hidden min-w-[180px]"
               >
                 <button
                   onClick={() => { setFabOpen(false); navigate('/group/create'); }}
                   className="w-full flex items-center gap-3 px-4 py-3 transition-colors active:bg-[#F5F4F0]"
                 >
-                  <Plus size={16} style={{ color: '#047857' }} strokeWidth={2} />
-                  <span className="text-[13px] font-semibold text-[#1A1A1A]">Créer un cercle</span>
+                  <Plus size={16} className="text-[#047857]" strokeWidth={2} />
+                  <span className="text-[13px] font-[600] text-[#1A1A1A]">Créer un cercle</span>
                 </button>
-                <div style={{ height: '0.5px', background: '#EDECEA' }} />
+                <div className="h-[0.5px] bg-[#EDECEA]" />
                 <button
                   onClick={() => { setFabOpen(false); navigate('/group/join'); }}
                   className="w-full flex items-center gap-3 px-4 py-3 transition-colors active:bg-[#F5F4F0]"
                 >
-                  <LogIn size={16} style={{ color: '#6B6B6B' }} strokeWidth={2} />
-                  <span className="text-[13px] font-semibold text-[#1A1A1A]">Rejoindre un cercle</span>
+                  <LogIn size={16} className="text-[#6B6B6B]" strokeWidth={2} />
+                  <span className="text-[13px] font-[600] text-[#1A1A1A]">Rejoindre un cercle</span>
                 </button>
               </motion.div>
             )}
@@ -567,24 +514,16 @@ export function Tontines() {
 
           <button
             onClick={() => setFabOpen((o: boolean) => !o)}
-            className="flex items-center justify-center transition-transform active:scale-90"
-            style={{
-              width: 48, height: 48,
-              borderRadius: 14,
-              background: '#047857',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="w-[48px] h-[48px] rounded-[14px] bg-[#047857] flex items-center justify-center transition-transform active:scale-90"
           >
             <AnimatePresence mode="wait">
               {fabOpen ? (
                 <motion.span key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
-                  <X size={20} strokeWidth={2.5} style={{ color: '#FFFFFF' }} />
+                  <X size={20} strokeWidth={2.5} className="text-white" />
                 </motion.span>
               ) : (
                 <motion.span key="plus" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
-                  <Plus size={20} strokeWidth={2.5} style={{ color: '#FFFFFF' }} />
+                  <Plus size={20} strokeWidth={2.5} className="text-white" />
                 </motion.span>
               )}
             </AnimatePresence>
