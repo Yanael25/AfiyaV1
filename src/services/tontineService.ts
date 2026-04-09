@@ -136,9 +136,9 @@ export const createTontineGroup = async (groupData: Omit<TontineGroup, 'id' | 'c
 
   await runTransaction(db, async (transaction) => {
     // 1. Check user wallet
-    const userWalletQuery = query(collection(db, 'wallets'), where('owner_id', '==', userId), where('wallet_type', '==', 'USER_MAIN'), limit(1));
+    const userWalletQuery = query(collection(db, 'wallets'), where('owner_id', '==', userId), where('wallet_type', '==', 'USER_CERCLES'), limit(1));
     const userWalletSnap = await getDocs(userWalletQuery);
-    if (userWalletSnap.empty) throw new Error('Portefeuille principal introuvable');
+    if (userWalletSnap.empty) throw new Error('Portefeuille Cercles introuvable');
     const userWalletDoc = userWalletSnap.docs[0];
     const userWalletRef = userWalletDoc.ref;
     const userWallet = userWalletDoc.data();
@@ -448,9 +448,9 @@ export const joinTontineGroup = async (groupId: string, userId: string) => {
 
   const memberId = `${groupId}_${userId}`;
 
-  const userWalletQuery = query(collection(db, 'wallets'), where('owner_id', '==', userId), where('wallet_type', '==', 'USER_MAIN'), limit(1));
+  const userWalletQuery = query(collection(db, 'wallets'), where('owner_id', '==', userId), where('wallet_type', '==', 'USER_CERCLES'), limit(1));
   const userWalletSnap = await getDocs(userWalletQuery);
-  if (userWalletSnap.empty) throw new Error('Portefeuille principal introuvable');
+  if (userWalletSnap.empty) throw new Error('Portefeuille Cercles introuvable');
   const userWalletRef = userWalletSnap.docs[0].ref;
 
   const escrowQuery = query(collection(db, 'wallets'), where('group_id', '==', groupId), where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1));
@@ -589,9 +589,9 @@ export const payDepositDifferential = async (memberId: string, userId: string) =
   const amount = member.deposit_differential || 0;
   if (amount <= 0) throw new Error('Aucun différentiel à payer');
 
-  const userWalletQuery = query(collection(db, 'wallets'), where('owner_id', '==', userId), where('wallet_type', '==', 'USER_MAIN'), limit(1));
+  const userWalletQuery = query(collection(db, 'wallets'), where('owner_id', '==', userId), where('wallet_type', '==', 'USER_CERCLES'), limit(1));
   const userWalletSnap = await getDocs(userWalletQuery);
-  if (userWalletSnap.empty) throw new Error('Portefeuille principal introuvable');
+  if (userWalletSnap.empty) throw new Error('Portefeuille Cercles introuvable');
   const userWalletRef = userWalletSnap.docs[0].ref;
 
   const escrowWalletQuery = query(collection(db, 'wallets'), where('group_id', '==', member.group_id), where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1));

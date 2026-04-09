@@ -25,6 +25,11 @@ import { AdjustDeposit } from './screens/group/AdjustDeposit';
 import { TirageAuSort } from './screens/group/TirageAuSort';
 import { HistoriqueCercles } from './screens/group/HistoriqueCercles';
 import { AdminDashboard } from './screens/admin/AdminDashboard';
+import { Transfer } from './screens/wallet/Transfer';
+import { Receive } from './screens/wallet/Receive';
+import { Recharge } from './screens/wallet/Recharge';
+import { Withdraw } from './screens/wallet/Withdraw';
+import { AllTransactions } from './screens/wallet/AllTransactions';
 import { TabBar } from './components/TabBar';
 
 import { StatusBar } from './components/StatusBar';
@@ -158,6 +163,11 @@ export default function App() {
           <Route path="/group/create" element={<CreateGroup />} />
           <Route path="/group/join" element={<JoinGroup />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/wallet/transfer" element={<Transfer />} />
+          <Route path="/wallet/receive" element={<Receive />} />
+          <Route path="/wallet/recharge" element={<Recharge />} />
+          <Route path="/wallet/withdraw" element={<Withdraw />} />
+          <Route path="/wallet/transactions" element={<AllTransactions />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -222,23 +222,23 @@ export function Home() {
     switch (activeCard) {
       case 0:
         return [
-          { label: 'Transférer', icon: ArrowLeftRight },
-          { label: 'Recevoir', icon: QrCode },
-          { label: 'Recharger', icon: ArrowDownToLine },
-          { label: 'Retirer', icon: ArrowUpFromLine },
+          { label: 'Transférer', icon: ArrowLeftRight, onClick: () => navigate('/wallet/transfer') },
+          { label: 'Recevoir', icon: QrCode, onClick: () => navigate('/wallet/receive') },
+          { label: 'Recharger', icon: ArrowDownToLine, onClick: () => navigate('/wallet/recharge') },
+          { label: 'Retirer', icon: ArrowUpFromLine, onClick: () => navigate('/wallet/withdraw') },
         ];
       case 1:
         return [
-          { label: 'Transférer', icon: ArrowLeftRight },
-          { label: 'Recevoir', icon: QrCode },
-          { label: 'Cotiser', icon: Users },
-          { label: 'Mes cercles', icon: Users },
+          { label: 'Transférer', icon: ArrowLeftRight, onClick: () => navigate('/wallet/transfer') },
+          { label: 'Recevoir', icon: QrCode, onClick: () => navigate('/wallet/receive') },
+          { label: 'Cotiser', icon: Users, onClick: () => navigate('/tontines') },
+          { label: 'Mes cercles', icon: Users, onClick: () => navigate('/tontines') },
         ];
       case 2:
         return [
-          { label: 'Transférer', icon: ArrowLeftRight },
-          { label: 'Recevoir', icon: QrCode },
-          { label: 'Explorer', icon: TrendingUp },
+          { label: 'Transférer', icon: ArrowLeftRight, onClick: () => navigate('/wallet/transfer') },
+          { label: 'Recevoir', icon: QrCode, onClick: () => navigate('/wallet/receive') },
+          { label: 'Explorer', icon: TrendingUp, onClick: () => {} },
         ];
       default: return [];
     }
@@ -358,7 +358,7 @@ export function Home() {
             className={`grid gap-3 ${activeCard === 2 ? 'grid-cols-3' : 'grid-cols-4'}`}
           >
             {getContextualActions().map((action, idx) => (
-              <button key={idx} className="flex flex-col items-center gap-1.5 group active:scale-95 transition-transform">
+              <button key={idx} onClick={action.onClick} className="flex flex-col items-center gap-1.5 group active:scale-95 transition-transform">
                 <div className="w-[48px] h-[48px] rounded-[14px] bg-[#F5F4F0] flex items-center justify-center">
                   <action.icon className="w-[20px] h-[20px] text-[#6B6B6B]" strokeWidth={2} />
                 </div>
@@ -374,7 +374,7 @@ export function Home() {
         <div className="flex justify-between items-baseline mb-[12px]">
           <span className="text-[8px] font-[700] uppercase text-[#A39887] tracking-[0.12em]">TRANSACTIONS RÉCENTES</span>
           {transactions.length > 0 && (
-            <button className="text-[13px] font-[700] text-[#047857] active:opacity-70">Voir tout</button>
+            <button onClick={() => navigate('/wallet/transactions')} className="text-[13px] font-[700] text-[#047857] active:opacity-70">Voir tout</button>
           )}
         </div>
 

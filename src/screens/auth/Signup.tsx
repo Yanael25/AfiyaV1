@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { auth } from '../../lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-
-const db = getFirestore();
+import { runTransaction, doc, Timestamp } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 
 export function Signup() {
   const navigate = useNavigate();
@@ -44,33 +43,62 @@ export function Signup() {
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       const user = userCredential.user;
 
-      // 2. Création du profil Firestore (snake_case obligatoire)
-      await setDoc(doc(db, 'profiles', user.uid), {
-        full_name: `${firstName.trim()} ${lastName.trim()}`,
-        email: email.trim(),
-        score_afiya: 50,
-        tier: 'BRONZE',
-        kyc_status: 'PENDING',
-        created_at: serverTimestamp()
+      await runTransaction(db, async (t) => {
+        // Profil
+        const profileRef = doc(db, 'profiles', user.uid);
+        t.set(profileRef, {
+          id: user.uid,
+          email: email.trim(),
+          full_name: `${firstName.trim()} ${lastName.trim()}`,
+          score_afiya: 50,
+          tier: 'BRONZE',
+          status: 'ACTIVE',
+          deposit_coefficient: 1.0,
+          retention_coefficient: 1.0,
+          kyc_status: 'PENDING',
+          last_activity_at: Timestamp.now(),
+          created_at: Timestamp.now()
+        });
+
+        // Wallet USER_MAIN
+        const mainId = `wallet_main_${user.uid}`;
+        t.set(doc(db, 'wallets', mainId), {
+          id: mainId,
+          owner_id: user.uid,
+          group_id: null,
+          wallet_type: 'USER_MAIN',
+          balance: 0,
+          currency: 'XOF',
+          updated_at: Timestamp.now()
+        });
+
+        // Wallet USER_CERCLES
+        const cerclesId = `wallet_cercles_${user.uid}`;
+        t.set(doc(db, 'wallets', cerclesId), {
+          id: cerclesId,
+          owner_id: user.uid,
+          group_id: null,
+          wallet_type: 'USER_CERCLES',
+          balance: 0,
+          currency: 'XOF',
+          updated_at: Timestamp.now()
+        });
+
+        // Wallet USER_CAPITAL
+        const capitalId = `wallet_capital_${user.uid}`;
+        t.set(doc(db, 'wallets', capitalId), {
+          id: capitalId,
+          owner_id: user.uid,
+          group_id: null,
+          wallet_type: 'USER_CAPITAL',
+          balance: 0,
+          currency: 'XOF',
+          updated_at: Timestamp.now()
+        });
       });
 
-      // 3. Création des 3 wallets avec balance à 0
-      const walletTypes = ['USER_MAIN', 'USER_CERCLES', 'USER_CAPITAL'];
-      
-      // On utilise Promise.all pour exécuter les créations en parallèle
-      await Promise.all(
-        walletTypes.map(type => 
-          setDoc(doc(db, 'wallets', `${user.uid}_${type}`), {
-            user_id: user.uid,
-            wallet_type: type,
-            balance: 0,
-            created_at: serverTimestamp()
-          })
-        )
-      );
-
-      // 4. Navigation vers /home après succès
-      navigate('/home');
+      // Navigation vers /wallet après succès
+      navigate('/wallet');
 
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
