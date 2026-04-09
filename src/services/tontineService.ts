@@ -438,6 +438,13 @@ export const joinTontineGroup = async (groupId: string, userId: string) => {
   const profile = await getDocument<any>('profiles', userId);
   if (!profile) throw new Error('Profil introuvable');
 
+  if (profile.kyc_status !== 'VERIFIED') {
+    throw new Error('Votre KYC doit être approuvé pour rejoindre un cercle');
+  }
+  if (profile.status !== 'ACTIVE') {
+    throw new Error('Votre compte est restreint — vous ne pouvez pas rejoindre un cercle');
+  }
+
   const group = await getDocument<TontineGroup>('tontine_groups', groupId);
   if (!group) throw new Error('Groupe introuvable');
 
@@ -482,6 +489,17 @@ export const joinTontineGroup = async (groupId: string, userId: string) => {
       throw new Error('Vous êtes déjà membre de ce groupe');
     }
 
+    const activeMembersSnap = await getDocs(
+      query(
+        collection(db, 'tontine_members'),
+        where('group_id', '==', groupId),
+        where('status', '==', 'ACTIVE')
+      )
+    );
+    if (activeMembersSnap.size >= group.target_members) {
+      throw new Error('Ce cercle est déjà complet');
+    }
+
     const userWallet = userWalletDoc.data();
     if (!userWallet || userWallet.balance < totalToPay) {
       throw new Error('Solde insuffisant pour rejoindre le groupe');
@@ -517,7 +535,8 @@ export const joinTontineGroup = async (groupId: string, userId: string) => {
       retention_applied: false,
       joined_at: serverTimestamp(),
       received_payout_at: null,
-      has_seen_draw: false
+      has_seen_draw: false,
+      wants_to_continue: null
     });
 
     // 5. Create Transactions

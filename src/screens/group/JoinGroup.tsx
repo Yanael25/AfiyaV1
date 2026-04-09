@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Lock, AlertCircle } from 'lucide-react';
 import { formatXOF, getTierCoeff } from '../../lib/utils';
-import { auth } from '../../lib/firebase';
+import { auth, db } from '../../lib/firebase';
+import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { getUserProfile } from '../../services/userService';
 import { getGroupByCode, joinTontineGroup, getGroupMembers } from '../../services/tontineService';
 
@@ -14,6 +15,7 @@ export function JoinGroup() {
   const [error, setError] = useState<string | null>(null);
   const [groupInfo, setGroupInfo] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [balanceCercles, setBalanceCercles] = useState<number | null>(null);
 
   const cleanAmount = (val: number) => formatXOF(val).replace(/\s?FCFA/gi, '').trim();
 
@@ -31,7 +33,25 @@ export function JoinGroup() {
 
       const profile = await getUserProfile(user.uid);
       setUserProfile(profile);
-      
+
+      if (profile.kyc_status !== 'VERIFIED') {
+        throw new Error('Votre KYC doit être approuvé pour rejoindre un cercle');
+      }
+      if (profile.status !== 'ACTIVE') {
+        throw new Error('Votre compte est restreint');
+      }
+
+      const walletsSnap = await getDocs(
+        query(
+          collection(db, 'wallets'),
+          where('owner_id', '==', user.uid),
+          where('wallet_type', '==', 'USER_CERCLES'),
+          limit(1)
+        )
+      );
+      const cerclesBalance = walletsSnap.empty ? 0 : walletsSnap.docs[0].data().balance;
+      setBalanceCercles(cerclesBalance);
+
       const members = await getGroupMembers(group.id);
       if (members.length >= group.target_members) throw new Error("Ce cercle est déjà complet.");
 
@@ -72,12 +92,15 @@ export function JoinGroup() {
   const tierProps = getTierBadgeProps(userProfile?.tier || 'BRONZE');
   const feePercent = userProfile?.tier === 'BRONZE' ? 3 : userProfile?.tier === 'SILVER' ? 2.5 : userProfile?.tier === 'GOLD' ? 2 : 1.5;
 
+  const totalToPay = (groupInfo?.caution || 0) + (groupInfo?.contribution_amount || 0);
+  const hasInsufficientBalance = balanceCercles !== null && balanceCercles < totalToPay;
+
   return (
     <div className="min-h-screen bg-[#F5F4F0] font-sans pt-[52px] pb-[40px] flex flex-col">
-      
+
       {/* HEADER */}
       <div className="px-6 flex items-center gap-3 mb-6">
-        <button 
+        <button
           onClick={() => step === 2 ? setStep(1) : navigate(-1)}
           className="w-[36px] h-[36px] bg-white rounded-[11px] border-[0.5px] border-[#EDECEA] flex items-center justify-center active:scale-95 transition-transform shrink-0"
         >
@@ -100,10 +123,10 @@ export function JoinGroup() {
           </div>
           <span className="text-[10px] font-[700] mt-[4px] text-[#047857]">Code</span>
         </div>
-        
+
         {/* Connecteur */}
         <div className={`h-[1px] w-[50px] mx-2 -mt-[14px] transition-colors ${step === 2 ? 'bg-[#047857]' : 'bg-[#EDECEA]'}`} />
-        
+
         {/* Step 2 */}
         <div className="flex flex-col items-center">
           <div className={`w-[24px] h-[24px] rounded-full flex items-center justify-center text-[11px] font-[700] transition-colors ${step === 2 ? 'bg-[#047857] text-white' : 'bg-[#F0EFED] text-[#A39887]'}`}>
@@ -129,13 +152,13 @@ export function JoinGroup() {
               <label className="block text-[8px] font-[700] uppercase text-[#A39887] tracking-[0.1em] mb-[8px]">
                 CODE D'INVITATION
               </label>
-              <input 
+              <input
                 type="text"
                 value={code}
-                onChange={(e) => { 
-                  setCode(e.target.value.toUpperCase()); 
-                  setGroupInfo(null); 
-                  setError(null); 
+                onChange={(e) => {
+                  setCode(e.target.value.toUpperCase());
+                  setGroupInfo(null);
+                  setError(null);
                 }}
                 onBlur={handleSearch}
                 placeholder="EX: AFY-1234"
@@ -173,7 +196,7 @@ export function JoinGroup() {
           // --- ÉTAPE 2 ---
           <>
             <div className="flex flex-col gap-4">
-              
+
               {/* Card Cercle */}
               <div className="bg-white rounded-[16px] border-[0.5px] border-[#EDECEA] p-[14px] flex flex-col shadow-sm">
                 <div className="flex justify-between items-center py-[10px] border-b-[0.5px] border-[#F5F4F0]">
@@ -200,7 +223,7 @@ export function JoinGroup() {
 
               {/* Card Situation & Paiement */}
               <div className="bg-white rounded-[16px] border-[0.5px] border-[#EDECEA] p-[14px] flex flex-col shadow-sm">
-                
+
                 <div className="flex justify-between items-center mb-[14px]">
                   <div className={`px-2 py-1 rounded-[6px] text-[10px] font-[700] uppercase tracking-wider ${tierProps.bg} ${tierProps.text} ${tierProps.border}`}>
                     Tier {userProfile?.tier || 'BRONZE'}
@@ -209,7 +232,7 @@ export function JoinGroup() {
                 </div>
 
                 <p className="text-[8px] font-[700] uppercase text-[#A39887] tracking-[0.1em] mb-[12px]">PAIEMENT REQUIS POUR REJOINDRE</p>
-                
+
                 <div className="bg-[#F5F4F0] rounded-[11px] p-[12px] flex flex-col mb-[12px]">
                   <div className="flex justify-between items-center mb-[8px]">
                     <span className="text-[11px] font-[500] text-[#6B6B6B]">Caution (restituée)</span>
@@ -220,11 +243,26 @@ export function JoinGroup() {
                     <span className="text-[11px] font-[700] text-[#1A1A1A]">{cleanAmount(groupInfo?.contribution_amount)} FCFA</span>
                   </div>
                   <div className="w-full h-[1px] bg-[#EDECEA] mb-[10px]" />
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center mb-[10px]">
                     <span className="text-[12px] font-[700] text-[#1A1A1A]">Total à payer</span>
-                    <span className="text-[14px] font-[800] text-[#047857]">{cleanAmount((groupInfo?.caution || 0) + (groupInfo?.contribution_amount || 0))} FCFA</span>
+                    <span className="text-[14px] font-[800] text-[#047857]">{cleanAmount(totalToPay)} FCFA</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[11px] font-[500] text-[#6B6B6B]">Solde disponible (Cercles)</span>
+                    <span className={`text-[11px] font-[700] ${hasInsufficientBalance ? 'text-[#92400E]' : 'text-[#1A1A1A]'}`}>
+                      {balanceCercles !== null ? `${cleanAmount(balanceCercles)} FCFA` : '—'}
+                    </span>
                   </div>
                 </div>
+
+                {hasInsufficientBalance && (
+                  <div className="bg-[#FEF3C7] rounded-[10px] p-[10px] flex items-start gap-[8px] mb-[12px]">
+                    <AlertCircle size={14} className="text-[#92400E] shrink-0 mt-[2px]" strokeWidth={2.5} />
+                    <p className="text-[10px] font-[500] text-[#92400E] leading-snug">
+                      Solde Cercles insuffisant. Transférez des fonds depuis votre compte Principal.
+                    </p>
+                  </div>
+                )}
 
                 <div className="bg-[#F5F4F0] rounded-[10px] p-[10px] flex items-start gap-[8px]">
                   <Lock size={14} className="text-[#047857] shrink-0 mt-[2px]" strokeWidth={2.5} />
@@ -238,7 +276,7 @@ export function JoinGroup() {
 
             <button
               onClick={handleJoin}
-              disabled={loading}
+              disabled={loading || hasInsufficientBalance}
               className="w-full h-[48px] bg-[#047857] text-white rounded-[14px] text-[14px] font-[700] mt-auto active:scale-95 transition-transform disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center"
             >
               {loading ? 'Connexion au cercle...' : 'Rejoindre et payer'}
