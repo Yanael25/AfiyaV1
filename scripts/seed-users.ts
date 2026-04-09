@@ -41,47 +41,74 @@ const USERS_TO_SEED = [
 
 // ─── ÉTAPE 1 : Suppression de tous les comptes existants ─────────────────────
 
+async function purgeCollection(name: string) {
+  const snap = await db.collection(name).get();
+  if (snap.empty) return;
+  // Firestore batch max 500 ops
+  const chunks: FirebaseFirestore.QueryDocumentSnapshot[][] = [];
+  for (let i = 0; i < snap.docs.length; i += 400) {
+    chunks.push(snap.docs.slice(i, i + 400));
+  }
+  for (const chunk of chunks) {
+    const batch = db.batch();
+    for (const doc of chunk) batch.delete(doc.ref);
+    await batch.commit();
+  }
+  console.log(`  ✓ ${snap.size} doc(s) supprimé(s) dans "${name}"`);
+}
+
 async function deleteAllData() {
-  console.log('\n🗑️  Suppression des comptes existants...\n');
+  console.log('\n🗑️  Suppression des comptes Auth existants...\n');
 
   const listResult = await auth.listUsers();
   let count = 0;
 
   for (const userRecord of listResult.users) {
     const uid = userRecord.uid;
-
     try {
-      // Supprimer Auth
       await auth.deleteUser(uid);
       console.log(`  ✓ Auth supprimé : ${uid} (${userRecord.email})`);
-
-      // Supprimer profil
-      await db.collection('profiles').doc(uid).delete();
-      console.log(`  ✓ Profil supprimé`);
-
-      // Supprimer wallets
-      const walletsSnap = await db.collection('wallets').where('owner_id', '==', uid).get();
-      for (const doc of walletsSnap.docs) {
-        await doc.ref.delete();
-      }
-      if (!walletsSnap.empty) console.log(`  ✓ ${walletsSnap.size} wallet(s) supprimé(s)`);
-
-      // Supprimer tontine_members
-      const membersSnap = await db.collection('tontine_members').where('user_id', '==', uid).get();
-      for (const doc of membersSnap.docs) {
-        await doc.ref.delete();
-      }
-      if (!membersSnap.empty) console.log(`  ✓ ${membersSnap.size} member(s) supprimé(s)`);
-
       count++;
-      console.log('');
     } catch (error: any) {
-      console.error(`  ❌ Erreur suppression ${uid}:`, error.message, '\n');
+      console.error(`  ❌ Erreur suppression Auth ${uid}:`, error.message);
     }
   }
 
+  console.log(`\n  🗑️  ${count} compte(s) Auth supprimé(s)\n`);
+
+  // ── Purge totale de toutes les collections ──────────────────────────────────
+  console.log('🗑️  Purge des collections Firestore...\n');
+
+  const COLLECTIONS_TO_PURGE = [
+    'profiles',
+    'wallets',
+    'tontine_groups',
+    'tontine_members',
+    'cycles',
+    'payments',
+    'transactions',
+    'notifications',
+    'messages',
+  ];
+
+  for (const col of COLLECTIONS_TO_PURGE) {
+    await purgeCollection(col);
+  }
+
+  // Restaurer le wallet global_fund_main (ne doit pas être supprimé)
+  await db.collection('wallets').doc('global_fund_main').set({
+    id: 'global_fund_main',
+    owner_id: 'SYSTEM',
+    group_id: null,
+    wallet_type: 'GLOBAL_FUND',
+    balance: 0,
+    currency: 'XOF',
+    updated_at: Timestamp.now(),
+  });
+  console.log('  ✓ Wallet global_fund_main restauré\n');
+
   console.log(`════════════════════════════════════════`);
-  console.log(`  🗑️  ${count} compte(s) supprimé(s)`);
+  console.log(`  ✅ Reset Firestore terminé`);
   console.log(`════════════════════════════════════════\n`);
 }
 

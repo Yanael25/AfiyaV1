@@ -21,7 +21,7 @@ import {
   Cycle,
   Payment,
 } from '../../services/tontineService';
-import { process_contribution_payment } from '../../lib/businessLogic';
+import { process_contribution_payment, leave_group_forming, set_member_vote } from '../../lib/businessLogic';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -75,6 +75,9 @@ export function GroupDetail() {
   const [chatOpen, setChatOpen]         = useState(false);
   const [chatInput, setChatInput]       = useState('');
   const [copied, setCopied]             = useState(false);
+  const [error, setError]               = useState<string | null>(null);
+  const [leaveLoading, setLeaveLoading] = useState(false);
+  const [voteLoading, setVoteLoading]   = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // ── Data subscriptions ──────────────────────────────────────────────────────
@@ -198,6 +201,39 @@ export function GroupDetail() {
     await navigator.clipboard.writeText(group.invitation_code ?? '');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleLeaveGroup = async () => {
+    if (!memberInfo || !auth.currentUser) return;
+    const confirmed = window.confirm(
+      'Êtes-vous sûr de vouloir quitter ce cercle ? Des frais de sortie s\'appliquent.'
+    );
+    if (!confirmed) return;
+    setLeaveLoading(true);
+    try {
+      const result = await leave_group_forming(memberInfo.id, auth.currentUser.uid);
+      if (result.groupCancelled) {
+        navigate('/tontines');
+      } else {
+        navigate('/tontines');
+      }
+    } catch (e: any) {
+      setError(e.message || 'Erreur lors de la sortie du groupe');
+    } finally {
+      setLeaveLoading(false);
+    }
+  };
+
+  const handleVote = async (wantsToContinue: boolean) => {
+    if (!memberInfo || !auth.currentUser) return;
+    setVoteLoading(true);
+    try {
+      await set_member_vote(memberInfo.id, auth.currentUser.uid, wantsToContinue);
+    } catch (e: any) {
+      setError(e.message || 'Erreur lors du vote');
+    } finally {
+      setVoteLoading(false);
+    }
   };
 
   // Cycle timeline items (all cycles 1..total_cycles)
@@ -363,6 +399,95 @@ export function GroupDetail() {
                   </p>
                 </div>
               </div>
+
+              {/* ─── QUITTER LE CERCLE (FORMING uniquement) ─── */}
+              {group.status === 'FORMING' && (
+                <div style={{ background: '#FFFFFF', borderRadius: 16, border: '0.5px solid #EDECEA', padding: 14 }}>
+                  {error && (
+                    <p className="text-[11px] font-semibold text-[#92400E] mb-3">{error}</p>
+                  )}
+                  <button
+                    onClick={handleLeaveGroup}
+                    disabled={leaveLoading}
+                    className="w-full text-[12px] font-bold text-[#92400E] active:scale-95 transition-transform disabled:opacity-50"
+                    style={{ height: 40, borderRadius: 10, background: '#FEF3C7', border: '0.5px solid #F59E0B' }}
+                  >
+                    {leaveLoading ? 'Sortie en cours...' : 'Quitter le cercle'}
+                  </button>
+                  <p className="text-[9px] text-[#A39887] text-center mt-2">
+                    Des frais de sortie s'appliquent (1% + 5% de la cotisation)
+                  </p>
+                </div>
+              )}
+
+              {/* ─── VOTE 48H (WAITING_VOTE uniquement) ─── */}
+              {group.status === 'WAITING_VOTE' && (
+                <div style={{ background: '#FFFFFF', borderRadius: 16, border: '0.5px solid #EDECEA', padding: 14 }}>
+                  <p className="text-[8px] font-bold uppercase tracking-widest text-[#A39887] mb-3">Vote de continuation</p>
+                  <p className="text-[12px] font-semibold text-[#1A1A1A] mb-3">
+                    Le cercle n'est pas complet. Souhaitez-vous continuer avec les membres présents ?
+                  </p>
+
+                  {/* Stats */}
+                  <div className="flex gap-2 mb-3">
+                    <div className="flex-1 text-center" style={{ background: '#D1FAE5', borderRadius: 9, padding: '8px 4px' }}>
+                      <span className="text-[18px] font-extrabold text-[#047857] block">
+                        {membersList.filter((m: any) => m.wants_to_continue === true).length}
+                      </span>
+                      <span className="text-[9px] text-[#047857]">Veulent continuer</span>
+                    </div>
+                    <div className="flex-1 text-center" style={{ background: '#F5F4F0', borderRadius: 9, padding: '8px 4px' }}>
+                      <span className="text-[18px] font-extrabold text-[#6B6B6B] block">
+                        {membersList.filter((m: any) => m.wants_to_continue === undefined || m.wants_to_continue === null).length}
+                      </span>
+                      <span className="text-[9px] text-[#A39887]">N'ont pas répondu</span>
+                    </div>
+                  </div>
+
+                  {/* Deadline */}
+                  {group.vote_deadline && (
+                    <p className="text-[10px] text-[#A39887] mb-3">
+                      Décision avant le <span className="font-bold text-[#1A1A1A]">{sd(group.vote_deadline)}</span>
+                    </p>
+                  )}
+
+                  {/* Vote actuel */}
+                  {memberInfo?.wants_to_continue !== undefined && memberInfo?.wants_to_continue !== null && (
+                    <div className="mb-3" style={{ background: '#F5F4F0', borderRadius: 9, padding: 9 }}>
+                      <p className="text-[10px] text-[#6B6B6B]">
+                        Votre vote actuel :{' '}
+                        <span className="font-bold" style={{ color: memberInfo.wants_to_continue ? '#047857' : '#92400E' }}>
+                          {memberInfo.wants_to_continue ? 'Je veux continuer' : 'Je préfère me retirer'}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+
+                  {error && (
+                    <p className="text-[11px] font-semibold text-[#92400E] mb-3">{error}</p>
+                  )}
+
+                  {/* Boutons */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleVote(true)}
+                      disabled={voteLoading}
+                      className="flex-1 text-[11px] font-bold text-white active:scale-95 transition-transform disabled:opacity-50"
+                      style={{ height: 40, borderRadius: 10, background: '#047857' }}
+                    >
+                      Je veux continuer
+                    </button>
+                    <button
+                      onClick={() => handleVote(false)}
+                      disabled={voteLoading}
+                      className="flex-1 text-[11px] font-bold text-[#92400E] active:scale-95 transition-transform disabled:opacity-50"
+                      style={{ height: 40, borderRadius: 10, background: '#FEF3C7', border: '0.5px solid #F59E0B' }}
+                    >
+                      Je préfère me retirer
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
 

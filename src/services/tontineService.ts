@@ -441,6 +441,19 @@ export const joinTontineGroup = async (groupId: string, userId: string) => {
   const group = await getDocument<TontineGroup>('tontine_groups', groupId);
   if (!group) throw new Error('Groupe introuvable');
 
+  // Vérification deadline
+  if (group.status !== 'FORMING') {
+    throw new Error('Ce cercle n\'est plus en phase de constitution');
+  }
+  if (group.constitution_deadline) {
+    const deadline = group.constitution_deadline.toDate
+      ? group.constitution_deadline.toDate()
+      : new Date(group.constitution_deadline);
+    if (new Date() > deadline) {
+      throw new Error('La date limite de constitution est dépassée');
+    }
+  }
+
   const contributionAmount = group.contribution_amount;
   const depositCoeff = profile.deposit_coefficient || 1.0;
   const initialDeposit = Math.round(contributionAmount * depositCoeff);
@@ -551,8 +564,7 @@ export const joinTontineGroup = async (groupId: string, userId: string) => {
   const activeCount = allMembersSnap.size;
 
   if (activeCount >= group.target_members) {
-    // Déclencher le démarrage automatique après la transaction
-    setTimeout(() => start_tontine_group(groupId), 500);
+    await start_tontine_group(groupId);
   }
 
   return memberId;

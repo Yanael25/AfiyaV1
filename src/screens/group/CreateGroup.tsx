@@ -14,11 +14,16 @@ export function CreateGroup() {
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
   
+  const defaultDeadline = new Date();
+  defaultDeadline.setDate(defaultDeadline.getDate() + 14);
+  const defaultDeadlineStr = defaultDeadline.toISOString().split('T')[0];
+
   const [formData, setFormData] = useState({
     name: '',
     contribution_amount: 50000,
     frequency: 'MONTHLY',
     target_members: 6,
+    constitution_deadline: defaultDeadlineStr,
   });
 
   useEffect(() => {
@@ -60,9 +65,20 @@ export function CreateGroup() {
     
     setLoading(true);
     try {
-      // Date par défaut à J+7 pour constitution automatique dans la V3
-      const deadlineDate = new Date();
-      deadlineDate.setDate(deadlineDate.getDate() + 7);
+      const deadlineDate = new Date(formData.constitution_deadline);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const minDate = new Date(today);
+      minDate.setDate(minDate.getDate() + 3);
+      const maxDate = new Date(today);
+      maxDate.setDate(maxDate.getDate() + 30);
+
+      if (deadlineDate < minDate || deadlineDate > maxDate) {
+        setError('La date limite doit être entre J+3 et J+30');
+        setLoading(false);
+        return;
+      }
 
       const groupId = await createTontineGroup({
         name: formData.name.trim(),
@@ -204,7 +220,7 @@ export function CreateGroup() {
                 <label className="text-[9px] font-[700] uppercase text-[#A39887] tracking-[0.1em] mb-[6px]">
                   NOMBRE DE MEMBRES
                 </label>
-                <input 
+                <input
                   type="number"
                   value={formData.target_members || ''}
                   onChange={e => setFormData({...formData, target_members: Number(e.target.value)})}
@@ -212,6 +228,24 @@ export function CreateGroup() {
                 />
                 <p className="text-[9px] font-[500] text-[#A39887] mt-[4px]">
                   Maximum autorisé · {limits.maxMembers} membres · Tier {userTier}
+                </p>
+              </div>
+
+              {/* Date limite de constitution */}
+              <div className="flex flex-col">
+                <label className="text-[9px] font-[700] uppercase text-[#A39887] tracking-[0.1em] mb-[6px]">
+                  DATE LIMITE DE CONSTITUTION
+                </label>
+                <input
+                  type="date"
+                  value={formData.constitution_deadline}
+                  onChange={e => setFormData({...formData, constitution_deadline: e.target.value})}
+                  min={new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0]}
+                  max={new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]}
+                  className="h-[48px] bg-[#F5F4F0] border border-[#EDECEA] rounded-[13px] px-[14px] text-[14px] font-[600] text-[#1A1A1A] focus:outline-none focus:bg-white focus:border-[#047857] focus:shadow-[0_0_0_3px_rgba(4,120,87,0.08)] transition-all"
+                />
+                <p className="text-[9px] font-[500] text-[#A39887] mt-[4px]">
+                  Entre J+3 et J+30 à partir d'aujourd'hui
                 </p>
               </div>
 

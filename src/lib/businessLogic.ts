@@ -1209,3 +1209,454 @@ export const transfer_main_to_cercles = async (
     return { success: true };
   });
 };
+
+export const leave_group_forming = async (
+  memberId: string,
+  userId: string
+): Promise<{ success: boolean; groupCancelled: boolean }> => {
+
+  // 1. Récupérer le membre
+  const memberRef = doc(db, 'tontine_members', memberId);
+  const memberSnap = await getDoc(memberRef);
+  if (!memberSnap.exists()) throw new Error('Membre introuvable');
+  const member = memberSnap.data();
+
+  // 2. Récupérer le groupe
+  const groupRef = doc(db, 'tontine_groups', member.group_id);
+  const groupSnap = await getDoc(groupRef);
+  if (!groupSnap.exists()) throw new Error('Groupe introuvable');
+  const group = groupSnap.data();
+
+  // 3. Vérifier que le groupe est bien en FORMING
+  if (group.status !== 'FORMING') {
+    throw new Error('Impossible de quitter un groupe qui a déjà démarré');
+  }
+
+  // 4. Récupérer tous les membres actifs du groupe
+  const allMembersSnap = await getDocs(
+    query(collection(db, 'tontine_members'),
+    where('group_id', '==', member.group_id),
+    where('status', '==', 'ACTIVE'))
+  );
+  const activeMembers = allMembersSnap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+  const remainingCount = activeMembers.filter(m => m.id !== memberId).length;
+
+  // 5. Récupérer wallets nécessaires
+  const walletsRef = collection(db, 'wallets');
+
+  const escrowSnap = await getDocs(
+    query(walletsRef, where('group_id', '==', member.group_id),
+    where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1))
+  );
+  if (escrowSnap.empty) throw new Error('Escrow introuvable');
+  const escrowRef = escrowSnap.docs[0].ref;
+
+  const userCerclesSnap = await getDocs(
+    query(walletsRef, where('owner_id', '==', userId),
+    where('wallet_type', '==', 'USER_CERCLES'), limit(1))
+  );
+  if (userCerclesSnap.empty) throw new Error('Wallet Cercles introuvable');
+  const userCerclesRef = userCerclesSnap.docs[0].ref;
+
+  const globalFundRef = await getOrCreateGlobalFund();
+
+  // 6. Calcul des montants
+  // Montant total à rembourser depuis escrow = initial_deposit + contribution_amount
+  const totalInEscrow = member.initial_deposit + group.contribution_amount;
+  // Frais = 1% du remboursé + 5% de la cotisation
+  const fraisTransaction = Math.round(totalInEscrow * 0.01);
+  const fraisCompensation = Math.round(group.contribution_amount * 0.05);
+  const totalFrais = fraisTransaction + fraisCompensation;
+  const montantRembourse = totalInEscrow - totalFrais;
+
+  await runTransaction(db, async (t) => {
+    const escrowDoc = await t.get(escrowRef);
+    const userCerclesDoc = await t.get(userCerclesRef);
+    const globalFundDoc = await t.get(globalFundRef);
+
+    const escrow = escrowDoc.data();
+    const userCercles = userCerclesDoc.data();
+    const globalFund = globalFundDoc.data();
+
+    if (!escrow || escrow.balance < totalInEscrow) {
+      throw new Error('Solde escrow insuffisant');
+    }
+
+    // Débiter escrow
+    t.update(escrowRef, {
+      balance: escrow.balance - totalInEscrow,
+      updated_at: Timestamp.now()
+    });
+
+    // Créditer USER_CERCLES du membre (montant net)
+    t.update(userCerclesRef, {
+      balance: userCercles!.balance + montantRembourse,
+      updated_at: Timestamp.now()
+    });
+
+    // Créditer GLOBAL_FUND (frais)
+    t.update(globalFundRef, {
+      balance: globalFund!.balance + totalFrais,
+      updated_at: Timestamp.now()
+    });
+
+    // Passer le membre en COMPLETED (sortie propre)
+    t.update(memberRef, {
+      status: 'COMPLETED',
+      left_at: Timestamp.now()
+    });
+
+    // Transaction remboursement
+    const txRefund = doc(collection(db, 'transactions'));
+    t.set(txRefund, {
+      id: txRefund.id,
+      type: 'REFUND',
+      amount: montantRembourse,
+      currency: 'XOF',
+      from_wallet_id: escrowSnap.docs[0].id,
+      to_wallet_id: userCerclesSnap.docs[0].id,
+      user_id: userId,
+      group_id: member.group_id,
+      member_id: memberId,
+      status: 'SUCCESS',
+      description: `Remboursement sortie - ${group.name}`,
+      created_at: Timestamp.now()
+    });
+
+    // Transaction frais
+    const txFrais = doc(collection(db, 'transactions'));
+    t.set(txFrais, {
+      id: txFrais.id,
+      type: 'GLOBAL_FUND_CONTRIB',
+      amount: totalFrais,
+      currency: 'XOF',
+      from_wallet_id: escrowSnap.docs[0].id,
+      to_wallet_id: 'global_fund_main',
+      user_id: userId,
+      group_id: member.group_id,
+      member_id: memberId,
+      status: 'SUCCESS',
+      description: `Frais sortie groupe - ${group.name}`,
+      created_at: Timestamp.now()
+    });
+
+    // Transfert admin si nécessaire
+    if (member.is_admin && remainingCount >= 4) {
+      const nextAdmin = activeMembers
+        .filter(m => m.id !== memberId)
+        .sort((a, b) => (b.score_at_join || 0) - (a.score_at_join || 0))[0];
+      if (nextAdmin) {
+        const nextAdminRef = doc(db, 'tontine_members', nextAdmin.id);
+        t.update(nextAdminRef, { is_admin: true });
+        t.update(groupRef, {
+          admin_id: nextAdmin.user_id,
+          updated_at: Timestamp.now()
+        });
+      }
+    }
+  });
+
+  // Si moins de 4 membres restants → annuler le groupe
+  if (remainingCount < 4) {
+    await cancel_group(member.group_id, 'INSUFFICIENT_MEMBERS');
+    return { success: true, groupCancelled: true };
+  }
+
+  return { success: true, groupCancelled: false };
+};
+
+type CancelReason = 'ADMIN_REQUEST' | 'INSUFFICIENT_MEMBERS' | 'DEADLINE_NOT_MET';
+
+export const cancel_group = async (
+  groupId: string,
+  reason: CancelReason
+): Promise<{ success: boolean }> => {
+
+  // 1. Récupérer le groupe
+  const groupRef = doc(db, 'tontine_groups', groupId);
+  const groupSnap = await getDoc(groupRef);
+  if (!groupSnap.exists()) throw new Error('Groupe introuvable');
+  const group = groupSnap.data();
+
+  if (group.status !== 'FORMING' && group.status !== 'WAITING_VOTE') {
+    throw new Error('Impossible d\'annuler un groupe déjà actif ou terminé');
+  }
+
+  // 2. Récupérer tous les membres actifs
+  const membersSnap = await getDocs(
+    query(collection(db, 'tontine_members'),
+    where('group_id', '==', groupId),
+    where('status', '==', 'ACTIVE'))
+  );
+  const members = membersSnap.docs.map(d => ({ ref: d.ref, ...d.data() })) as any[];
+
+  // 3. Récupérer escrow
+  const escrowSnap = await getDocs(
+    query(collection(db, 'wallets'),
+    where('group_id', '==', groupId),
+    where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1))
+  );
+  if (escrowSnap.empty) throw new Error('Escrow introuvable');
+  const escrowRef = escrowSnap.docs[0].ref;
+
+  // 4. Pour chaque membre : récupérer son wallet USER_CERCLES
+  const memberWallets: { memberId: string; userId: string; amount: number; walletRef: any }[] = [];
+
+  for (const member of members) {
+    const walletSnap = await getDocs(
+      query(collection(db, 'wallets'),
+      where('owner_id', '==', member.user_id),
+      where('wallet_type', '==', 'USER_CERCLES'), limit(1))
+    );
+    if (!walletSnap.empty) {
+      const amount = member.initial_deposit + group.contribution_amount;
+      memberWallets.push({
+        memberId: member.id,
+        userId: member.user_id,
+        amount,
+        walletRef: walletSnap.docs[0].ref
+      });
+    }
+  }
+
+  // 5. Tout dans une runTransaction
+  // Note: Firestore limite à 500 opérations par transaction
+  // Pour les groupes de taille normale (max 30 membres) c'est largement suffisant
+  await runTransaction(db, async (t) => {
+    const escrowDoc = await t.get(escrowRef);
+    const escrow = escrowDoc.data();
+
+    // Rembourser chaque membre
+    for (const mw of memberWallets) {
+      const walletDoc = await t.get(mw.walletRef);
+      const wallet = walletDoc.data();
+
+      t.update(mw.walletRef, {
+        balance: wallet!.balance + mw.amount,
+        updated_at: Timestamp.now()
+      });
+
+      // Passer le membre en COMPLETED
+      const memberRef = doc(db, 'tontine_members', mw.memberId);
+      t.update(memberRef, {
+        status: 'COMPLETED',
+        left_at: Timestamp.now()
+      });
+
+      // Transaction REFUND par membre
+      const txRef = doc(collection(db, 'transactions'));
+      t.set(txRef, {
+        id: txRef.id,
+        type: 'REFUND',
+        amount: mw.amount,
+        currency: 'XOF',
+        from_wallet_id: escrowSnap.docs[0].id,
+        to_wallet_id: null,
+        user_id: mw.userId,
+        group_id: groupId,
+        member_id: mw.memberId,
+        status: 'SUCCESS',
+        description: `Remboursement annulation cercle - ${group.name}`,
+        created_at: Timestamp.now()
+      });
+    }
+
+    // Vider l'escrow
+    t.update(escrowRef, {
+      balance: 0,
+      updated_at: Timestamp.now()
+    });
+
+    // Passer le groupe en CANCELLED
+    t.update(groupRef, {
+      status: 'CANCELLED',
+      cancelled_at: Timestamp.now(),
+      cancel_reason: reason,
+      updated_at: Timestamp.now()
+    });
+  });
+
+  return { success: true };
+};
+
+export const trigger_waiting_vote = async (
+  groupId: string
+): Promise<{ success: boolean }> => {
+  const groupRef = doc(db, 'tontine_groups', groupId);
+  const groupSnap = await getDoc(groupRef);
+  if (!groupSnap.exists()) throw new Error('Groupe introuvable');
+  const group = groupSnap.data();
+
+  if (group.status !== 'FORMING') {
+    throw new Error('Le groupe n\'est pas en phase de constitution');
+  }
+
+  // Vérifier qu'il y a au moins 4 membres actifs
+  const membersSnap = await getDocs(
+    query(collection(db, 'tontine_members'),
+    where('group_id', '==', groupId),
+    where('status', '==', 'ACTIVE'))
+  );
+  if (membersSnap.size < 4) {
+    // Pas assez de membres → annulation directe
+    await cancel_group(groupId, 'DEADLINE_NOT_MET');
+    return { success: false };
+  }
+
+  const voteDeadline = new Date();
+  voteDeadline.setHours(voteDeadline.getHours() + 48);
+
+  await runTransaction(db, async (t) => {
+    t.update(groupRef, {
+      status: 'WAITING_VOTE',
+      vote_started_at: Timestamp.now(),
+      vote_deadline: Timestamp.fromDate(voteDeadline),
+      updated_at: Timestamp.now()
+    });
+  });
+
+  return { success: true };
+};
+
+export const set_member_vote = async (
+  memberId: string,
+  userId: string,
+  wantsToContinue: boolean
+): Promise<{ success: boolean }> => {
+  const memberRef = doc(db, 'tontine_members', memberId);
+  const memberSnap = await getDoc(memberRef);
+  if (!memberSnap.exists()) throw new Error('Membre introuvable');
+  const member = memberSnap.data();
+
+  // Vérifier que le groupe est bien en WAITING_VOTE
+  const groupSnap = await getDoc(doc(db, 'tontine_groups', member.group_id));
+  if (!groupSnap.exists()) throw new Error('Groupe introuvable');
+  const group = groupSnap.data();
+
+  if (group.status !== 'WAITING_VOTE') {
+    throw new Error('Le vote n\'est plus actif');
+  }
+
+  // Vérifier que le délai n'est pas dépassé
+  if (group.vote_deadline) {
+    const deadline = group.vote_deadline.toDate ? group.vote_deadline.toDate() : new Date(group.vote_deadline);
+    if (new Date() > deadline) {
+      throw new Error('Le délai de vote est dépassé');
+    }
+  }
+
+  await runTransaction(db, async (t) => {
+    t.update(memberRef, {
+      wants_to_continue: wantsToContinue,
+      voted_at: Timestamp.now()
+    });
+  });
+
+  return { success: true };
+};
+
+export const resolve_waiting_vote = async (
+  groupId: string
+): Promise<{ success: boolean; started: boolean; cancelled: boolean }> => {
+  const groupRef = doc(db, 'tontine_groups', groupId);
+  const groupSnap = await getDoc(groupRef);
+  if (!groupSnap.exists()) throw new Error('Groupe introuvable');
+  const group = groupSnap.data();
+
+  if (group.status !== 'WAITING_VOTE') {
+    throw new Error('Le groupe n\'est pas en attente de vote');
+  }
+
+  // Récupérer tous les membres actifs
+  const membersSnap = await getDocs(
+    query(collection(db, 'tontine_members'),
+    where('group_id', '==', groupId),
+    where('status', '==', 'ACTIVE'))
+  );
+  const members = membersSnap.docs.map(d => ({ id: d.id, ref: d.ref, ...d.data() })) as any[];
+
+  // Séparer OUI et NON/non-répondants
+  // wants_to_continue === true → reste
+  // wants_to_continue === false OU null/undefined → part (sans frais car c'est le groupe qui n'a pas rempli)
+  const staying = members.filter(m => m.wants_to_continue === true);
+  const leaving = members.filter(m => m.wants_to_continue !== true);
+
+  // Si moins de 4 membres veulent rester → annulation totale
+  if (staying.length < 4) {
+    await cancel_group(groupId, 'DEADLINE_NOT_MET');
+    return { success: true, started: false, cancelled: true };
+  }
+
+  // Rembourser ceux qui partent — SANS frais (c'est le groupe qui n'était pas complet)
+  const escrowSnap = await getDocs(
+    query(collection(db, 'wallets'),
+    where('group_id', '==', groupId),
+    where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1))
+  );
+  if (escrowSnap.empty) throw new Error('Escrow introuvable');
+  const escrowRef = escrowSnap.docs[0].ref;
+
+  for (const member of leaving) {
+    const walletSnap = await getDocs(
+      query(collection(db, 'wallets'),
+      where('owner_id', '==', member.user_id),
+      where('wallet_type', '==', 'USER_CERCLES'), limit(1))
+    );
+    if (walletSnap.empty) continue;
+
+    const amount = member.initial_deposit + group.contribution_amount;
+
+    await runTransaction(db, async (t) => {
+      const escrowDoc = await t.get(escrowRef);
+      const walletDoc = await t.get(walletSnap.docs[0].ref);
+      const escrow = escrowDoc.data();
+      const wallet = walletDoc.data();
+
+      t.update(escrowRef, {
+        balance: escrow!.balance - amount,
+        updated_at: Timestamp.now()
+      });
+      t.update(walletSnap.docs[0].ref, {
+        balance: wallet!.balance + amount,
+        updated_at: Timestamp.now()
+      });
+      t.update(member.ref, {
+        status: 'COMPLETED',
+        left_at: Timestamp.now()
+      });
+
+      const txRef = doc(collection(db, 'transactions'));
+      t.set(txRef, {
+        id: txRef.id,
+        type: 'REFUND',
+        amount,
+        currency: 'XOF',
+        from_wallet_id: escrowSnap.docs[0].id,
+        to_wallet_id: walletSnap.docs[0].id,
+        user_id: member.user_id,
+        group_id: groupId,
+        member_id: member.id,
+        status: 'SUCCESS',
+        description: `Remboursement vote - groupe incomplet`,
+        created_at: Timestamp.now()
+      });
+    });
+  }
+
+  // Remettre le groupe en FORMING avec le nouveau nombre de membres cible
+  // puis déclencher le démarrage
+  await runTransaction(db, async (t) => {
+    t.update(groupRef, {
+      status: 'FORMING',
+      target_members: staying.length,
+      total_cycles: staying.length,
+      updated_at: Timestamp.now()
+    });
+  });
+
+  // Démarrer le groupe avec les membres restants
+  await start_tontine_group(groupId);
+
+  return { success: true, started: true, cancelled: false };
+};
+
