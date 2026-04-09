@@ -17,17 +17,32 @@ service cloud.firestore {
     }
 
     function isValidProfile(data) {
-      return data.keys().hasAll(['id', 'email', 'score_afiya', 'tier', 'created_at']) &&
-             data.id is string && data.id.size() > 0 &&
-             data.score_afiya is number && data.score_afiya >= 0 && data.score_afiya <= 100 &&
-             data.tier in ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM'];
+      return data.keys().hasAll([
+        'id', 'email', 'full_name', 'score_afiya', 'tier',
+        'status', 'deposit_coefficient', 'retention_coefficient',
+        'kyc_status', 'last_activity_at', 'created_at'
+      ]) &&
+      data.id is string && data.id.size() > 0 &&
+      data.score_afiya is number && data.score_afiya >= 0 && data.score_afiya <= 100 &&
+      data.tier in ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM'] &&
+      data.status in ['ACTIVE', 'RESTRICTED', 'BANNED', 'PENDING_REVIEW'] &&
+      data.deposit_coefficient is number &&
+      data.retention_coefficient is number &&
+      data.kyc_status in ['APPROVED', 'PENDING', 'REJECTED'];
     }
 
     function isValidWallet(data) {
-      return data.keys().hasAll(['id', 'owner_id', 'wallet_type', 'balance', 'currency']) &&
-             (data.owner_id is string || data.owner_id == null) &&
-             data.balance is number && data.balance >= 0 &&
-             data.wallet_type in ['USER_MAIN', 'USER_CERCLES', 'USER_CAPITAL', 'ESCROW_CONSTITUTION', 'CONTRIBUTION_POOL', 'GROUP_MINI_FUND', 'GLOBAL_FUND'];
+      return data.keys().hasAll([
+        'id', 'owner_id', 'wallet_type', 'balance', 'currency', 'updated_at'
+      ]) &&
+      (data.owner_id is string || data.owner_id == null) &&
+      data.balance is number && data.balance >= 0 &&
+      data.currency == 'XOF' &&
+      data.wallet_type in [
+        'USER_MAIN', 'USER_CERCLES', 'USER_CAPITAL',
+        'ESCROW_CONSTITUTION', 'CONTRIBUTION_POOL',
+        'GROUP_MINI_FUND', 'GLOBAL_FUND'
+      ];
     }
 
     function isValidGroup(data) {
