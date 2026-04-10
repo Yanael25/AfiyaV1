@@ -7,7 +7,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { formatXOF } from '../../lib/utils';
 import { auth, db } from '../../lib/firebase';
-import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, limit, Timestamp } from 'firebase/firestore';
 import { getUserProfile } from '../../services/userService';
 import { subscribeToDocument, subscribeToCollection } from '../../lib/firestore';
 import {
@@ -21,7 +21,7 @@ import {
   Cycle,
   Payment,
 } from '../../services/tontineService';
-import { process_contribution_payment, leave_group_forming, set_member_vote } from '../../lib/businessLogic';
+import { process_contribution_payment, leave_group_forming, set_member_vote, exit_group_active, initiate_swap, confirm_swap, cancel_swap } from '../../lib/businessLogic';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -78,6 +78,11 @@ export function GroupDetail() {
   const [error, setError]               = useState<string | null>(null);
   const [leaveLoading, setLeaveLoading] = useState(false);
   const [voteLoading, setVoteLoading]   = useState(false);
+  const [exitLoading, setExitLoading]   = useState(false);
+  const [swapTarget, setSwapTarget]     = useState<string | null>(null);
+  const [swapBonus, setSwapBonus]       = useState('');
+  const [swapLoading, setSwapLoading]   = useState(false);
+  const [pendingSwap, setPendingSwap]   = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // ── Data subscriptions ──────────────────────────────────────────────────────
@@ -127,6 +132,43 @@ export function GroupDetail() {
 
     return () => { unsubGroup(); unsubMembers(); unsubCycles(); unsubMessages(); unsubMini(); };
   }, [id, navigate]);
+
+  // ── Check expired swaps + load pending swap ─────────────────────────────────
+  useEffect(() => {
+    if (!id || !memberInfo) return;
+
+    const checkExpiredSwaps = async () => {
+      const expiredSnap = await getDocs(
+        query(
+          collection(db, 'swap_requests'),
+          where('group_id', '==', id),
+          where('status', '==', 'PENDING')
+        )
+      );
+      for (const swapDoc of expiredSnap.docs) {
+        const swap = swapDoc.data();
+        const expiresAt = swap.expires_at?.toDate ? swap.expires_at.toDate() : new Date(swap.expires_at);
+        if (new Date() > expiresAt) {
+          await cancel_swap(swapDoc.id, 'EXPIRED');
+        }
+      }
+    };
+
+    const loadPendingSwap = async () => {
+      const swapSnap = await getDocs(
+        query(collection(db, 'swap_requests'),
+        where('group_id', '==', id),
+        where('status', '==', 'PENDING'),
+        where('receiver_member_id', '==', memberInfo.id))
+      );
+      if (!swapSnap.empty) {
+        setPendingSwap({ id: swapSnap.docs[0].id, ...swapSnap.docs[0].data() });
+      }
+    };
+
+    checkExpiredSwaps();
+    loadPendingSwap();
+  }, [id, memberInfo?.id]);
 
   // ── Fetch cycle payment data when active ────────────────────────────────────
   useEffect(() => {
@@ -221,6 +263,55 @@ export function GroupDetail() {
       setError(e.message || 'Erreur lors de la sortie du groupe');
     } finally {
       setLeaveLoading(false);
+    }
+  };
+
+  const handleExitActive = async () => {
+    if (!memberInfo || !auth.currentUser) return;
+    const confirmed = window.confirm(
+      'Quitter ce cercle est irréversible. Votre caution sera saisie et votre score impacté. Confirmer ?'
+    );
+    if (!confirmed) return;
+    setExitLoading(true);
+    try {
+      await exit_group_active(memberInfo.id, auth.currentUser.uid);
+      navigate('/tontines');
+    } catch (e: any) {
+      setError(e.message || 'Erreur lors de la sortie');
+    } finally {
+      setExitLoading(false);
+    }
+  };
+
+  const handleInitiateSwap = async () => {
+    if (!memberInfo || !auth.currentUser || !swapTarget) return;
+    setSwapLoading(true);
+    try {
+      const bonus = parseInt(swapBonus) || 0;
+      await initiate_swap(memberInfo.id, swapTarget, bonus, auth.currentUser.uid);
+      setSwapTarget(null);
+      setSwapBonus('');
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setSwapLoading(false);
+    }
+  };
+
+  const handleRespondSwap = async (accept: boolean) => {
+    if (!pendingSwap || !auth.currentUser) return;
+    setSwapLoading(true);
+    try {
+      if (accept) {
+        await confirm_swap(pendingSwap.id, auth.currentUser.uid);
+      } else {
+        await cancel_swap(pendingSwap.id, 'REFUSED');
+      }
+      setPendingSwap(null);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setSwapLoading(false);
     }
   };
 
@@ -598,6 +689,26 @@ export function GroupDetail() {
                 )}
               </div>
 
+              {/* Bloc Quitter (ACTIVE) */}
+              {memberInfo?.status === 'ACTIVE' && (
+                <div style={{ background: '#FFFFFF', borderRadius: 16, border: '0.5px solid #EDECEA', padding: 14 }}>
+                  {error && (
+                    <p className="text-[11px] font-semibold text-[#92400E] mb-3">{error}</p>
+                  )}
+                  <button
+                    onClick={handleExitActive}
+                    disabled={exitLoading}
+                    className="w-full text-[12px] font-bold text-[#92400E] active:scale-95 transition-transform disabled:opacity-50"
+                    style={{ height: 40, borderRadius: 10, background: '#FEF3C7', border: '0.5px solid #F59E0B' }}
+                  >
+                    {exitLoading ? 'Sortie en cours...' : 'Quitter le cercle'}
+                  </button>
+                  <p className="text-[9px] text-[#A39887] text-center mt-2">
+                    Votre caution sera saisie et votre score impacté
+                  </p>
+                </div>
+              )}
+
               {/* Bloc Cotisation */}
               <div style={{ background: '#FFFFFF', borderRadius: 16, border: '0.5px solid #EDECEA', padding: 14 }}>
                 <div className="flex items-start justify-between mb-3">
@@ -748,19 +859,78 @@ export function GroupDetail() {
 
                   <div className="mb-3" style={{ background: '#F5F4F0', borderRadius: 10, padding: '8px 12px' }}>
                     <p className="text-[11px] font-medium text-[#6B6B6B]">
-                      Position actuelle : #{memberInfo.draw_position} · Bonus max 25% de la cagnotte · Délai de traitement 72h.
+                      Position actuelle : #{memberInfo.draw_position} · Bonus max 25% de la cagnotte · Délai de réponse 72h.
                     </p>
                   </div>
 
-                  <button
-                    className="w-full text-[13px] font-bold active:scale-95 transition-transform"
-                    style={{
-                      height: 44, borderRadius: 13,
-                      background: '#FFFFFF', border: '1.5px solid #047857', color: '#047857',
-                    }}
-                  >
-                    Demander un échange de position
-                  </button>
+                  {/* Demande reçue */}
+                  {pendingSwap ? (
+                    <div>
+                      <div className="mb-3" style={{ background: '#FEF3C7', borderRadius: 10, padding: '10px 12px', border: '0.5px solid #F59E0B' }}>
+                        <p className="text-[11px] font-bold text-[#92400E] mb-1">Demande d'échange reçue</p>
+                        <p className="text-[10px] text-[#6B6B6B]">
+                          Position #{pendingSwap.initiator_position} contre votre #{pendingSwap.receiver_position}
+                          {pendingSwap.bonus_amount > 0 && ` · Bonus proposé : ${ca(pendingSwap.bonus_amount)} FCFA`}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleRespondSwap(true)}
+                          disabled={swapLoading}
+                          className="flex-1 text-[12px] font-bold text-white active:scale-95 transition-transform disabled:opacity-50"
+                          style={{ height: 40, borderRadius: 10, background: '#047857' }}
+                        >
+                          Accepter
+                        </button>
+                        <button
+                          onClick={() => handleRespondSwap(false)}
+                          disabled={swapLoading}
+                          className="flex-1 text-[12px] font-bold text-[#92400E] active:scale-95 transition-transform disabled:opacity-50"
+                          style={{ height: 40, borderRadius: 10, background: '#FEF3C7', border: '0.5px solid #F59E0B' }}
+                        >
+                          Refuser
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      {/* Sélecteur membre cible */}
+                      <select
+                        value={swapTarget ?? ''}
+                        onChange={(e: { target: HTMLSelectElement }) => setSwapTarget(e.target.value || null)}
+                        className="w-full text-[12px] font-medium text-[#1A1A1A] mb-2"
+                        style={{ height: 40, borderRadius: 10, background: '#F5F4F0', border: '0.5px solid #EDECEA', padding: '0 12px' }}
+                      >
+                        <option value="">Choisir un membre à cibler</option>
+                        {sortedByPos
+                          .filter((m: any) => m.user_id !== user.uid && m.status === 'ACTIVE' && m.received_payout_at == null)
+                          .map((m: any) => (
+                            <option key={m.id} value={m.id}>
+                              #{m.draw_position} · {m.name}
+                            </option>
+                          ))}
+                      </select>
+
+                      {/* Bonus optionnel */}
+                      <input
+                        type="number"
+                        value={swapBonus}
+                        onChange={(e: { target: HTMLInputElement }) => setSwapBonus(e.target.value)}
+                        placeholder="Bonus (FCFA) — optionnel"
+                        className="w-full text-[12px] font-medium text-[#1A1A1A] mb-3"
+                        style={{ height: 40, borderRadius: 10, background: '#F5F4F0', border: '0.5px solid #EDECEA', padding: '0 12px' }}
+                      />
+
+                      <button
+                        onClick={handleInitiateSwap}
+                        disabled={swapLoading || !swapTarget}
+                        className="w-full text-[13px] font-bold active:scale-95 transition-transform disabled:opacity-40"
+                        style={{ height: 44, borderRadius: 13, background: '#FFFFFF', border: '1.5px solid #047857', color: '#047857' }}
+                      >
+                        {swapLoading ? 'Envoi...' : 'Proposer un échange'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </>

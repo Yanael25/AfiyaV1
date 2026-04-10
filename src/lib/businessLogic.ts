@@ -106,7 +106,7 @@ export const check_group_deadlines = async () => {
               
               for (const memberDoc of membersSnapshot.docs) {
                 const member = memberDoc.data();
-                const userWalletQuery = query(collection(db, 'wallets'), where('owner_id', '==', member.user_id), where('wallet_type', '==', 'USER_MAIN'), limit(1));
+                const userWalletQuery = query(collection(db, 'wallets'), where('owner_id', '==', member.user_id), where('wallet_type', '==', 'USER_CERCLES'), limit(1));
                 const userWalletSnapshot = await getDocs(userWalletQuery);
                 
                 if (!userWalletSnapshot.empty) {
@@ -541,7 +541,6 @@ export const process_contribution_payment = async (memberId: string, cycleId: st
       });
     }
 
-    const memberRef = doc(db, 'tontine_members', memberId);
     t.update(memberRef, {
       cycles_completed: (member.cycles_completed || 0) + 1,
       updated_at: Timestamp.now()
@@ -859,13 +858,15 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
   if (!memberDocSnap.exists()) throw new Error('Member not found');
   const memberData = memberDocSnap.data();
 
+  const isHitAndRun = memberData.received_payout_at != null;
+
   const groupRef = doc(db, 'tontine_groups', memberData.group_id);
   const groupDocSnap = await getDoc(groupRef);
   if (!groupDocSnap.exists()) throw new Error('Group not found');
   const groupData = groupDocSnap.data();
 
   const walletsRef = collection(db, 'wallets');
-  
+
   const escrowQuery = query(walletsRef, where('group_id', '==', groupData.id), where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1));
   const escrowSnapshot = await getDocs(escrowQuery);
   if (escrowSnapshot.empty) throw new Error('Escrow constitution not found');
@@ -911,12 +912,13 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
     // Couche 1: Caution
     const cautionAmount = member.adjusted_deposit || member.initial_deposit;
     const amountFromCaution = Math.min(cautionAmount, remainingNeeded);
-    
-    t.update(escrowDocRef, { balance: escrow!.balance - amountFromCaution });
+
+    t.update(escrowDocRef, { balance: escrow!.balance - amountFromCaution, updated_at: Timestamp.now() });
     totalToContribPool += amountFromCaution;
-    
+
     const txRef1 = doc(collection(db, 'transactions'));
     t.set(txRef1, {
+      id: txRef1.id,
       type: 'DEPOSIT_SEIZURE',
       amount: amountFromCaution,
       currency: 'XOF',
@@ -926,7 +928,7 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
       group_id: groupDoc.id,
       member_id: memberId,
       status: 'SUCCESS',
-      description: `Saisie caution (Défaut) - Groupe ${group.name}`,
+      description: isHitAndRun ? `Saisie caution (Hit & Run) - Groupe ${group.name}` : `Saisie caution (Défaut) - Groupe ${group.name}`,
       created_at: Timestamp.now()
     });
 
@@ -935,11 +937,12 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
     // Couche 2: Mini-fonds
     if (remainingNeeded > 0) {
       const amountFromMiniFund = Math.min(miniFund!.balance, remainingNeeded);
-      t.update(miniFundDocRef, { balance: miniFund!.balance - amountFromMiniFund });
+      t.update(miniFundDocRef, { balance: miniFund!.balance - amountFromMiniFund, updated_at: Timestamp.now() });
       totalToContribPool += amountFromMiniFund;
-      
+
       const txRef2 = doc(collection(db, 'transactions'));
       t.set(txRef2, {
+        id: txRef2.id,
         type: 'MINI_FUND_CONTRIB',
         amount: amountFromMiniFund,
         currency: 'XOF',
@@ -959,11 +962,12 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
     // Couche 3: Fonds Global
     if (remainingNeeded > 0) {
       const amountFromGlobalFund = Math.min(globalFund!.balance, remainingNeeded);
-      t.update(globalFundDocRef, { balance: globalFund!.balance - amountFromGlobalFund });
+      t.update(globalFundDocRef, { balance: globalFund!.balance - amountFromGlobalFund, updated_at: Timestamp.now() });
       totalToContribPool += amountFromGlobalFund;
-      
+
       const txRef3 = doc(collection(db, 'transactions'));
       t.set(txRef3, {
+        id: txRef3.id,
         type: 'GLOBAL_FUND_USAGE',
         amount: amountFromGlobalFund,
         currency: 'XOF',
@@ -981,7 +985,7 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
     }
 
     // Mise à jour finale du pool de contribution
-    t.update(contribPoolDocRef, { balance: contribPool!.balance + totalToContribPool });
+    t.update(contribPoolDocRef, { balance: contribPool!.balance + totalToContribPool, updated_at: Timestamp.now() });
 
     if (remainingNeeded > 0) {
       throw new Error('Échec critique: Fonds insuffisants pour couvrir le défaut');
@@ -990,6 +994,7 @@ export const handle_member_default = async (memberId: string, cycleId: string) =
     const newStatus = member.status === 'RESTRICTED' ? 'BANNED' : 'RESTRICTED';
     t.update(memberRef, {
       status: newStatus,
+      exit_type: isHitAndRun ? 'HIT_AND_RUN' : 'DEFAULT',
       cycles_defaulted: (member.cycles_defaulted || 0) + 1
     });
 
@@ -1009,16 +1014,20 @@ export const restore_member_account = async (memberId: string) => {
   if (!memberDocSnap.exists()) throw new Error('Member not found');
   const memberData = memberDocSnap.data();
 
+  if (memberData.status !== 'RESTRICTED') {
+    throw new Error('Ce membre n\'est pas en statut RESTRICTED');
+  }
+
   const groupRef = doc(db, 'tontine_groups', memberData.group_id);
   const groupDocSnap = await getDoc(groupRef);
   if (!groupDocSnap.exists()) throw new Error('Group not found');
   const groupData = groupDocSnap.data();
 
   const walletsRef = collection(db, 'wallets');
-  
-  const userWalletQuery = query(walletsRef, where('owner_id', '==', memberData.user_id), where('wallet_type', '==', 'USER_MAIN'), limit(1));
+
+  const userWalletQuery = query(walletsRef, where('owner_id', '==', memberData.user_id), where('wallet_type', '==', 'USER_CERCLES'), limit(1));
   const userWalletSnapshot = await getDocs(userWalletQuery);
-  if (userWalletSnapshot.empty) throw new Error('User main wallet not found');
+  if (userWalletSnapshot.empty) throw new Error('Portefeuille Cercles introuvable');
   const userWalletDocRef = userWalletSnapshot.docs[0].ref;
 
   const escrowQuery = query(walletsRef, where('group_id', '==', groupData.id), where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1));
@@ -1432,9 +1441,9 @@ export const leave_group_forming = async (
       updated_at: Timestamp.now()
     });
 
-    // Passer le membre en COMPLETED (sortie propre)
+    // Passer le membre en EXITED (sortie propre)
     t.update(memberRef, {
-      status: 'COMPLETED',
+      status: 'EXITED',
       left_at: Timestamp.now()
     });
 
@@ -1561,7 +1570,7 @@ export const cancel_group = async (
     // Rembourser chaque membre
     for (const mw of memberWallets) {
       const walletDoc = await t.get(mw.walletRef);
-      const wallet = walletDoc.data();
+      const wallet = walletDoc.data() as any;
 
       t.update(mw.walletRef, {
         balance: wallet!.balance + mw.amount,
@@ -2040,6 +2049,492 @@ export const complete_tontine = async (groupId: string): Promise<{ success: bool
         });
       }
     }
+  }
+
+  return { success: true };
+};
+
+export const exit_group_active = async (
+  memberId: string,
+  userId: string
+): Promise<{ success: boolean }> => {
+
+  // 1. Récupérer membre et groupe
+  const memberRef = doc(db, 'tontine_members', memberId);
+  const memberSnap = await getDoc(memberRef);
+  if (!memberSnap.exists()) throw new Error('Membre introuvable');
+  const member = memberSnap.data();
+
+  const groupRef = doc(db, 'tontine_groups', member.group_id);
+  const groupSnap = await getDoc(groupRef);
+  if (!groupSnap.exists()) throw new Error('Groupe introuvable');
+  const group = groupSnap.data();
+
+  if (group.status !== 'ACTIVE') {
+    throw new Error('Ce groupe n\'est pas actif');
+  }
+
+  if (member.status !== 'ACTIVE') {
+    throw new Error('Vous ne pouvez pas quitter ce groupe dans votre statut actuel');
+  }
+
+  // 2. Récupérer profil pour compteur sorties volontaires
+  const profileRef = doc(db, 'profiles', userId);
+  const profileSnap = await getDoc(profileRef);
+  if (!profileSnap.exists()) throw new Error('Profil introuvable');
+  const profile = profileSnap.data();
+
+  const voluntaryExitsCount = (profile.voluntary_exits_count || 0) + 1;
+
+  // 3. Récupérer wallets
+  const walletsRef = collection(db, 'wallets');
+
+  const escrowSnap = await getDocs(
+    query(walletsRef, where('group_id', '==', member.group_id),
+    where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1))
+  );
+  if (escrowSnap.empty) throw new Error('Escrow introuvable');
+  const escrowRef = escrowSnap.docs[0].ref;
+
+  const contribPoolSnap = await getDocs(
+    query(walletsRef, where('group_id', '==', member.group_id),
+    where('wallet_type', '==', 'CONTRIBUTION_POOL'), limit(1))
+  );
+  if (contribPoolSnap.empty) throw new Error('Pool cotisations introuvable');
+  const contribPoolRef = contribPoolSnap.docs[0].ref;
+
+  // 4. Calcul caution à saisir
+  const cautionAmount = member.adjusted_deposit || member.initial_deposit;
+
+  await runTransaction(db, async (t) => {
+    const escrowDoc = await t.get(escrowRef);
+    const contribPoolDoc = await t.get(contribPoolRef);
+    const escrow = escrowDoc.data();
+    const contribPool = contribPoolDoc.data();
+
+    // Saisir la caution depuis ESCROW → CONTRIBUTION_POOL
+    if (escrow && escrow.balance >= cautionAmount) {
+      t.update(escrowRef, {
+        balance: escrow.balance - cautionAmount,
+        updated_at: Timestamp.now()
+      });
+      t.update(contribPoolRef, {
+        balance: contribPool!.balance + cautionAmount,
+        updated_at: Timestamp.now()
+      });
+    }
+
+    // Passer le membre en EXITED
+    t.update(memberRef, {
+      status: 'EXITED',
+      exit_type: 'VOLUNTARY',
+      exited_at: Timestamp.now(),
+      updated_at: Timestamp.now()
+    });
+
+    // Déterminer restriction sur profil selon compteur
+    let profileUpdate: any = {
+      voluntary_exits_count: voluntaryExitsCount,
+      updated_at: Timestamp.now()
+    };
+
+    if (voluntaryExitsCount === 2) {
+      const restrictedUntil = new Date();
+      restrictedUntil.setDate(restrictedUntil.getDate() + 30);
+      profileUpdate.restricted_until = Timestamp.fromDate(restrictedUntil);
+      profileUpdate.status = 'RESTRICTED';
+    } else if (voluntaryExitsCount >= 3) {
+      const restrictedUntil = new Date();
+      restrictedUntil.setDate(restrictedUntil.getDate() + 90);
+      profileUpdate.restricted_until = Timestamp.fromDate(restrictedUntil);
+      profileUpdate.status = 'RESTRICTED';
+    }
+
+    t.update(profileRef, profileUpdate);
+
+    // Transaction saisie caution
+    const txRef = doc(collection(db, 'transactions'));
+    t.set(txRef, {
+      id: txRef.id,
+      type: 'DEPOSIT_SEIZURE',
+      amount: cautionAmount,
+      currency: 'XOF',
+      from_wallet_id: escrowSnap.docs[0].id,
+      to_wallet_id: contribPoolSnap.docs[0].id,
+      user_id: userId,
+      group_id: member.group_id,
+      member_id: memberId,
+      status: 'SUCCESS',
+      description: `Saisie caution — sortie volontaire - ${group.name}`,
+      created_at: Timestamp.now()
+    });
+
+    // Mettre à jour score
+    await update_score_afiya(userId, 'DEFAULT_DECLARED', t);
+  });
+
+  return { success: true };
+};
+
+export const initiate_swap = async (
+  initiatorMemberId: string,
+  receiverMemberId: string,
+  bonusAmount: number,
+  initiatorUserId: string
+): Promise<{ success: boolean; swapRequestId: string }> => {
+
+  // 1. Récupérer les deux membres
+  const initiatorRef = doc(db, 'tontine_members', initiatorMemberId);
+  const receiverRef = doc(db, 'tontine_members', receiverMemberId);
+
+  const [initiatorSnap, receiverSnap] = await Promise.all([
+    getDoc(initiatorRef),
+    getDoc(receiverRef)
+  ]);
+
+  if (!initiatorSnap.exists()) throw new Error('Membre initiateur introuvable');
+  if (!receiverSnap.exists()) throw new Error('Membre receveur introuvable');
+
+  const initiator = initiatorSnap.data();
+  const receiver = receiverSnap.data();
+
+  // 2. Vérifications éligibilité
+  if (initiator.group_id !== receiver.group_id) {
+    throw new Error('Les deux membres doivent être dans le même groupe');
+  }
+  if (initiator.status !== 'ACTIVE') throw new Error('Votre compte doit être actif');
+  if (receiver.status !== 'ACTIVE') throw new Error('Le membre ciblé doit être actif');
+  if (initiator.received_payout_at != null) throw new Error('Vous avez déjà reçu votre cagnotte');
+  if (receiver.received_payout_at != null) throw new Error('Ce membre a déjà reçu sa cagnotte');
+
+  // 3. Vérifier score >= 60 pour les deux
+  const initiatorProfileSnap = await getDoc(doc(db, 'profiles', initiator.user_id));
+  const receiverProfileSnap = await getDoc(doc(db, 'profiles', receiver.user_id));
+
+  if (!initiatorProfileSnap.exists() || !receiverProfileSnap.exists()) {
+    throw new Error('Profil introuvable');
+  }
+
+  const initiatorProfile = initiatorProfileSnap.data();
+  const receiverProfile = receiverProfileSnap.data();
+
+  if (initiatorProfile.score_afiya < 60) throw new Error('Score minimum 60 requis pour un swap');
+  if (receiverProfile.score_afiya < 60) throw new Error('Le membre ciblé doit avoir un score >= 60');
+
+  // 4. Vérifier qu'il n'y a pas déjà un swap PENDING entre ces deux membres
+  const existingSwapSnap = await getDocs(
+    query(collection(db, 'swap_requests'),
+    where('initiator_member_id', '==', initiatorMemberId),
+    where('receiver_member_id', '==', receiverMemberId),
+    where('status', '==', 'PENDING'),
+    limit(1))
+  );
+  if (!existingSwapSnap.empty) throw new Error('Une demande de swap est déjà en cours');
+
+  // 5. Vérifier bonus <= 25% de la cagnotte totale
+  const groupSnap = await getDoc(doc(db, 'tontine_groups', initiator.group_id));
+  if (!groupSnap.exists()) throw new Error('Groupe introuvable');
+  const group = groupSnap.data();
+
+  const maxBonus = Math.round(group.contribution_amount * group.target_members * 0.25);
+  if (bonusAmount > maxBonus) {
+    throw new Error(`Bonus maximum : ${maxBonus} FCFA (25% de la cagnotte totale)`);
+  }
+
+  // 6. Si bonus > 0 : créer wallet escrow temporaire + débiter USER_CERCLES initiateur
+  let bonusEscrowWalletId: string | null = null;
+
+  const swapRequestRef = doc(collection(db, 'swap_requests'));
+  const swapId = swapRequestRef.id;
+
+  if (bonusAmount > 0) {
+    // Vérifier solde initiateur
+    const initiatorWalletSnap = await getDocs(
+      query(collection(db, 'wallets'),
+      where('owner_id', '==', initiatorUserId),
+      where('wallet_type', '==', 'USER_CERCLES'), limit(1))
+    );
+    if (initiatorWalletSnap.empty) throw new Error('Wallet Cercles introuvable');
+
+    const escrowBonusRef = doc(collection(db, 'wallets'));
+    bonusEscrowWalletId = escrowBonusRef.id;
+
+    await runTransaction(db, async (t) => {
+      const initiatorWalletDoc = await t.get(initiatorWalletSnap.docs[0].ref);
+      const initiatorWallet = initiatorWalletDoc.data();
+
+      if (!initiatorWallet || initiatorWallet.balance < bonusAmount) {
+        throw new Error('Solde Cercles insuffisant pour le bonus');
+      }
+
+      // Débiter USER_CERCLES initiateur
+      t.update(initiatorWalletSnap.docs[0].ref, {
+        balance: initiatorWallet.balance - bonusAmount,
+        updated_at: Timestamp.now()
+      });
+
+      // Créer wallet escrow temporaire pour le bonus
+      t.set(escrowBonusRef, {
+        id: bonusEscrowWalletId,
+        owner_id: initiatorUserId,
+        group_id: initiator.group_id,
+        wallet_type: 'ESCROW_CONSTITUTION',
+        balance: bonusAmount,
+        currency: 'XOF',
+        swap_request_id: swapId,
+        updated_at: Timestamp.now()
+      });
+
+      // Transaction débit bonus
+      const txRef = doc(collection(db, 'transactions'));
+      t.set(txRef, {
+        id: txRef.id,
+        type: 'CAUTION',
+        amount: bonusAmount,
+        currency: 'XOF',
+        from_wallet_id: initiatorWalletSnap.docs[0].id,
+        to_wallet_id: bonusEscrowWalletId,
+        user_id: initiatorUserId,
+        group_id: initiator.group_id,
+        member_id: initiatorMemberId,
+        status: 'SUCCESS',
+        description: `Bonus swap bloqué en escrow - ${group.name}`,
+        created_at: Timestamp.now()
+      });
+
+      // Créer le document swap_request
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 72);
+
+      t.set(swapRequestRef, {
+        id: swapId,
+        group_id: initiator.group_id,
+        initiator_member_id: initiatorMemberId,
+        receiver_member_id: receiverMemberId,
+        initiator_user_id: initiatorUserId,
+        receiver_user_id: receiver.user_id,
+        initiator_position: initiator.draw_position,
+        receiver_position: receiver.draw_position,
+        bonus_amount: bonusAmount,
+        bonus_escrow_wallet_id: bonusEscrowWalletId,
+        status: 'PENDING',
+        initiated_at: Timestamp.now(),
+        expires_at: Timestamp.fromDate(expiresAt),
+        resolved_at: null,
+        created_at: Timestamp.now()
+      });
+    });
+  } else {
+    // Pas de bonus — créer juste la demande
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 72);
+
+    await runTransaction(db, async (t) => {
+      t.set(swapRequestRef, {
+        id: swapId,
+        group_id: initiator.group_id,
+        initiator_member_id: initiatorMemberId,
+        receiver_member_id: receiverMemberId,
+        initiator_user_id: initiatorUserId,
+        receiver_user_id: receiver.user_id,
+        initiator_position: initiator.draw_position,
+        receiver_position: receiver.draw_position,
+        bonus_amount: 0,
+        bonus_escrow_wallet_id: null,
+        status: 'PENDING',
+        initiated_at: Timestamp.now(),
+        expires_at: Timestamp.fromDate(expiresAt),
+        resolved_at: null,
+        created_at: Timestamp.now()
+      });
+    });
+  }
+
+  return { success: true, swapRequestId: swapId };
+};
+
+export const confirm_swap = async (
+  swapRequestId: string,
+  receiverUserId: string
+): Promise<{ success: boolean }> => {
+
+  const swapRef = doc(db, 'swap_requests', swapRequestId);
+  const swapSnap = await getDoc(swapRef);
+  if (!swapSnap.exists()) throw new Error('Demande de swap introuvable');
+  const swap = swapSnap.data();
+
+  if (swap.status !== 'PENDING') throw new Error('Cette demande n\'est plus active');
+  if (swap.receiver_user_id !== receiverUserId) throw new Error('Non autorisé');
+
+  // Vérifier expiration
+  const expiresAt = swap.expires_at.toDate ? swap.expires_at.toDate() : new Date(swap.expires_at);
+  if (new Date() > expiresAt) {
+    await cancel_swap(swapRequestId, 'EXPIRED');
+    throw new Error('Cette demande a expiré');
+  }
+
+  const initiatorRef = doc(db, 'tontine_members', swap.initiator_member_id);
+  const receiverRef = doc(db, 'tontine_members', swap.receiver_member_id);
+
+  // Récupérer wallets si bonus
+  let receiverWalletRef: any = null;
+  let bonusEscrowRef: any = null;
+
+  if (swap.bonus_amount > 0) {
+    const receiverWalletSnap = await getDocs(
+      query(collection(db, 'wallets'),
+      where('owner_id', '==', receiverUserId),
+      where('wallet_type', '==', 'USER_CERCLES'), limit(1))
+    );
+    if (receiverWalletSnap.empty) throw new Error('Wallet Cercles receveur introuvable');
+    receiverWalletRef = receiverWalletSnap.docs[0].ref;
+    bonusEscrowRef = doc(db, 'wallets', swap.bonus_escrow_wallet_id);
+  }
+
+  await runTransaction(db, async (t) => {
+    const initiatorDoc = await t.get(initiatorRef);
+    const receiverDoc = await t.get(receiverRef);
+    const initiator = initiatorDoc.data();
+    const receiver = receiverDoc.data();
+
+    // Récupérer le groupe pour recalcul cautions
+    const groupDoc = await t.get(doc(db, 'tontine_groups', swap.group_id));
+    const group = groupDoc.data()!;
+    const totalMembers = group.total_cycles;
+
+    const calcAdjustedDeposit = (position: number, initialDeposit: number) => {
+      const ratio = position / totalMembers;
+      let factor = 1.0;
+      if (ratio <= 0.30) factor = 2.0;
+      else if (ratio <= 0.60) factor = 1.5;
+      return Math.round(initialDeposit * factor);
+    };
+
+    const newInitiatorAdjusted = calcAdjustedDeposit(swap.receiver_position, initiator!.initial_deposit);
+    const newReceiverAdjusted = calcAdjustedDeposit(swap.initiator_position, receiver!.initial_deposit);
+
+    // Échanger les positions + recalculer cautions
+    t.update(initiatorRef, {
+      draw_position: swap.receiver_position,
+      adjusted_deposit: newInitiatorAdjusted,
+      updated_at: Timestamp.now()
+    });
+    t.update(receiverRef, {
+      draw_position: swap.initiator_position,
+      adjusted_deposit: newReceiverAdjusted,
+      updated_at: Timestamp.now()
+    });
+
+    // Si bonus : transférer escrow → USER_CERCLES receveur
+    if (swap.bonus_amount > 0 && bonusEscrowRef && receiverWalletRef) {
+      await t.get(bonusEscrowRef);
+      const receiverWalletDoc = await t.get(receiverWalletRef);
+      const receiverWallet = receiverWalletDoc.data() as any;
+
+      t.update(bonusEscrowRef, {
+        balance: 0,
+        updated_at: Timestamp.now()
+      });
+      t.update(receiverWalletRef, {
+        balance: receiverWallet!.balance + swap.bonus_amount,
+        updated_at: Timestamp.now()
+      });
+
+      const txRef = doc(collection(db, 'transactions'));
+      t.set(txRef, {
+        id: txRef.id,
+        type: 'TRANSFER',
+        amount: swap.bonus_amount,
+        currency: 'XOF',
+        from_wallet_id: swap.bonus_escrow_wallet_id,
+        to_wallet_id: receiverWalletRef.id,
+        user_id: receiverUserId,
+        group_id: swap.group_id,
+        member_id: swap.receiver_member_id,
+        status: 'SUCCESS',
+        description: `Bonus swap reçu - ${group.name}`,
+        created_at: Timestamp.now()
+      });
+    }
+
+    // Mettre à jour swap_request
+    t.update(swapRef, {
+      status: 'CONFIRMED',
+      resolved_at: Timestamp.now()
+    });
+  });
+
+  return { success: true };
+};
+
+export const cancel_swap = async (
+  swapRequestId: string,
+  reason: 'REFUSED' | 'EXPIRED' | 'CANCELLED'
+): Promise<{ success: boolean }> => {
+
+  const swapRef = doc(db, 'swap_requests', swapRequestId);
+  const swapSnap = await getDoc(swapRef);
+  if (!swapSnap.exists()) throw new Error('Demande de swap introuvable');
+  const swap = swapSnap.data();
+
+  if (swap.status !== 'PENDING') return { success: true }; // Déjà résolu
+
+  // Si bonus en escrow → restituer à l'initiateur
+  if (swap.bonus_amount > 0 && swap.bonus_escrow_wallet_id) {
+    const initiatorWalletSnap = await getDocs(
+      query(collection(db, 'wallets'),
+      where('owner_id', '==', swap.initiator_user_id),
+      where('wallet_type', '==', 'USER_CERCLES'), limit(1))
+    );
+
+    if (!initiatorWalletSnap.empty) {
+      const bonusEscrowRef = doc(db, 'wallets', swap.bonus_escrow_wallet_id);
+
+      await runTransaction(db, async (t) => {
+        await t.get(bonusEscrowRef);
+        const initiatorWalletDoc = await t.get(initiatorWalletSnap.docs[0].ref);
+        const initiatorWallet = initiatorWalletDoc.data() as any;
+
+        // Restituer bonus à l'initiateur
+        t.update(bonusEscrowRef, {
+          balance: 0,
+          updated_at: Timestamp.now()
+        });
+        t.update(initiatorWalletSnap.docs[0].ref, {
+          balance: initiatorWallet!.balance + swap.bonus_amount,
+          updated_at: Timestamp.now()
+        });
+
+        const txRef = doc(collection(db, 'transactions'));
+        t.set(txRef, {
+          id: txRef.id,
+          type: 'REFUND',
+          amount: swap.bonus_amount,
+          currency: 'XOF',
+          from_wallet_id: swap.bonus_escrow_wallet_id,
+          to_wallet_id: initiatorWalletSnap.docs[0].id,
+          user_id: swap.initiator_user_id,
+          group_id: swap.group_id,
+          member_id: swap.initiator_member_id,
+          status: 'SUCCESS',
+          description: `Restitution bonus swap annulé`,
+          created_at: Timestamp.now()
+        });
+
+        // Mettre à jour swap_request
+        t.update(swapRef, {
+          status: reason,
+          resolved_at: Timestamp.now()
+        });
+      });
+    }
+  } else {
+    await runTransaction(db, async (t) => {
+      t.update(swapRef, {
+        status: reason,
+        resolved_at: Timestamp.now()
+      });
+    });
   }
 
   return { success: true };
