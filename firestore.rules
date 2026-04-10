@@ -63,38 +63,72 @@ service cloud.firestore {
       allow create: if isOwner(userId) && isValidProfile(request.resource.data) &&
                     request.resource.data.score_afiya == 50 &&
                     request.resource.data.tier == "BRONZE";
-      allow update: if isOwner(userId) &&
-                    request.resource.data.score_afiya == resource.data.score_afiya &&
-                    request.resource.data.tier == resource.data.tier;
-      allow update: if isAdmin();
+      allow update: if isOwner(userId) || isAdmin();
     }
 
     match /wallets/{walletId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.owner_id) || isAdmin() || resource.data.wallet_type in ['ESCROW_CONSTITUTION', 'CONTRIBUTION_POOL', 'GROUP_MINI_FUND', 'GLOBAL_FUND']);
+      // Lecture : propriétaire du wallet OU membre du groupe concerné OU admin
+      allow read: if isAuthenticated() && (
+        resource.data.owner_id == request.auth.uid ||
+        resource.data.wallet_type == 'GLOBAL_FUND' ||
+        isAdmin() ||
+        (resource.data.group_id != null &&
+         exists(/databases/$(database)/documents/tontine_members/$(resource.data.group_id + '_' + request.auth.uid)))
+      );
       allow create: if isAuthenticated() && isValidWallet(request.resource.data) &&
-                    (isOwner(request.resource.data.owner_id) || request.resource.data.owner_id == null || isAdmin());
-      allow update: if isAuthenticated() && isValidWallet(request.resource.data) &&
-                    (isOwner(resource.data.owner_id) || resource.data.owner_id == null || resource.data.wallet_type == 'GLOBAL_FUND' || isAdmin());
+        (request.resource.data.owner_id == request.auth.uid ||
+         request.resource.data.owner_id == null ||
+         isAdmin());
+      allow update: if isAuthenticated() && (
+        resource.data.owner_id == request.auth.uid ||
+        resource.data.owner_id == null ||
+        resource.data.wallet_type == 'GLOBAL_FUND' ||
+        isAdmin()
+      );
     }
 
     match /tontine_groups/{groupId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidGroup(request.resource.data) &&
-                    request.resource.data.admin_id == request.auth.uid;
-      allow update: if isAuthenticated() &&
-                    (resource.data.admin_id == request.auth.uid || isAdmin() || 
-                     (resource.data.status == 'FORMING' && request.resource.data.status == 'ACTIVE'));
+      allow create: if isAuthenticated() &&
+        isValidGroup(request.resource.data) &&
+        request.resource.data.admin_id == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        resource.data.admin_id == request.auth.uid ||
+        isAdmin() ||
+        (
+          resource.data.status in ['FORMING', 'WAITING_VOTE', 'ACTIVE'] &&
+          exists(/databases/$(database)/documents/tontine_members/$(groupId + '_' + request.auth.uid))
+        )
+      );
+      allow delete: if isAdmin();
     }
 
     match /tontine_members/{memberId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.user_id == request.auth.uid;
-      allow update, delete: if isAuthenticated() && (resource.data.user_id == request.auth.uid || isAdmin() || get(/databases/$(database)/documents/tontine_groups/$(resource.data.group_id)).data.admin_id == request.auth.uid || get(/databases/$(database)/documents/tontine_groups/$(resource.data.group_id)).data.status == 'FORMING' || get(/databases/$(database)/documents/tontine_groups/$(resource.data.group_id)).data.status == 'ACTIVE');
+      allow create: if isAuthenticated() &&
+        request.resource.data.user_id == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        isAdmin() ||
+        // Admin du groupe peut mettre à jour les membres
+        get(/databases/$(database)/documents/tontine_groups/$(resource.data.group_id)).data.admin_id == request.auth.uid ||
+        // Système peut mettre à jour (status, draw_position, etc.)
+        get(/databases/$(database)/documents/tontine_groups/$(resource.data.group_id)).data.status in ['FORMING', 'WAITING_VOTE', 'ACTIVE']
+      );
+      allow delete: if isAdmin();
     }
 
     match /cycles/{cycleId} {
-      allow read: if isAuthenticated();
-      allow create, update: if isAuthenticated() && (isAdmin() || get(/databases/$(database)/documents/tontine_groups/$(request.resource.data.group_id)).data.admin_id == request.auth.uid || get(/databases/$(database)/documents/tontine_groups/$(request.resource.data.group_id)).data.status == 'FORMING' || get(/databases/$(database)/documents/tontine_groups/$(request.resource.data.group_id)).data.status == 'ACTIVE');
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        // Membres du groupe peuvent lire les cycles
+        exists(/databases/$(database)/documents/tontine_members/$(resource.data.group_id + '_' + request.auth.uid))
+      );
+      allow create, update: if isAuthenticated() && (
+        isAdmin() ||
+        get(/databases/$(database)/documents/tontine_groups/$(request.resource.data.group_id)).data.admin_id == request.auth.uid ||
+        get(/databases/$(database)/documents/tontine_groups/$(request.resource.data.group_id)).data.status in ['ACTIVE']
+      );
       allow delete: if isAdmin();
     }
 
@@ -105,15 +139,37 @@ service cloud.firestore {
     }
 
     match /transactions/{transactionId} {
-      allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid || resource.data.user_id == null || isAdmin());
-      allow create: if isAuthenticated() && (request.resource.data.user_id == request.auth.uid || request.resource.data.user_id == null || isAdmin());
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        resource.data.user_id == null ||
+        isAdmin() ||
+        (resource.data.group_id != null &&
+         exists(/databases/$(database)/documents/tontine_members/$(resource.data.group_id + '_' + request.auth.uid)))
+      );
+      allow create: if isAuthenticated() && (
+        request.resource.data.user_id == request.auth.uid ||
+        request.resource.data.user_id == null ||
+        isAdmin()
+      );
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
 
     match /payments/{paymentId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidPayment(request.resource.data);
-      allow update: if isAuthenticated() && isValidPayment(request.resource.data) &&
-                    (get(/databases/$(database)/documents/tontine_members/$(resource.data.member_id)).data.user_id == request.auth.uid || isAdmin());
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        isAdmin() ||
+        exists(/databases/$(database)/documents/tontine_members/$(resource.data.group_id + '_' + request.auth.uid))
+      );
+      allow create: if isAuthenticated() && (
+        request.resource.data.user_id == request.auth.uid ||
+        isAdmin()
+      );
+      allow update: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
     }
 
     match /notifications/{notificationId} {

@@ -319,6 +319,7 @@ export const start_tontine_group = async (groupId: string) => {
     transaction.update(groupRef, {
       status: 'ACTIVE',
       started_at: now,
+      draw_revealed_at: now,
       current_cycle: 1,
       updated_at: now
     });
@@ -381,42 +382,7 @@ export const start_tontine_group = async (groupId: string) => {
       created_at: Timestamp.now()
     });
 
-    const cycleRef = doc(collection(db, 'cycles'));
-    
-    const startDate = new Date();
-    const dueDate = new Date(startDate);
-    if (groupData.frequency === 'WEEKLY') dueDate.setDate(dueDate.getDate() + 7);
-    else if (groupData.frequency === 'MONTHLY') dueDate.setMonth(dueDate.getMonth() + 1);
-    else if (groupData.frequency === 'QUARTERLY') dueDate.setMonth(dueDate.getMonth() + 3);
-
-    const defaultDate = new Date(dueDate);
-    defaultDate.setDate(defaultDate.getDate() + 4);
-
-    transaction.set(cycleRef, {
-      id: cycleRef.id,
-      group_id: groupId,
-      cycle_number: 1,
-      beneficiary_member_id: firstBeneficiaryId,
-      start_date: now,
-      payment_due_date: Timestamp.fromDate(dueDate),
-      default_date: Timestamp.fromDate(defaultDate),
-      expected_total: groupData.contribution_amount * totalMembers,
-      actual_total: null,
-      payout_date: null,
-      status: 'ACTIVE'
-    });
-
     shuffledMembers.forEach(member => {
-      const paymentRef = doc(collection(db, 'payments'));
-      transaction.set(paymentRef, {
-        id: paymentRef.id,
-        cycle_id: cycleRef.id,
-        member_id: member.id,
-        amount: groupData.contribution_amount,
-        status: 'PENDING',
-        paid_at: null
-      });
-
       create_notification(
         member.user_id,
         "Groupe démarré !",
@@ -440,6 +406,10 @@ export const process_contribution_payment = async (memberId: string, cycleId: st
   const groupDocSnap = await getDoc(groupRef);
   if (!groupDocSnap.exists()) throw new Error('Group not found');
   const groupData = groupDocSnap.data();
+
+  if (!['ACTIVE', 'GRACE_PERIOD'].includes(memberData.status)) {
+    throw new Error('Votre compte ne vous permet pas de cotiser actuellement');
+  }
 
   const walletsRef = collection(db, 'wallets');
   
@@ -485,6 +455,13 @@ export const process_contribution_payment = async (memberId: string, cycleId: st
     const globalFundDoc = await t.get(globalFundDocRef);
     const globalFund = globalFundDoc.data();
 
+    if (paymentDocRef) {
+      const existingPayment = await t.get(paymentDocRef);
+      if (existingPayment.exists() && existingPayment.data()?.status === 'SUCCESS') {
+        throw new Error('Cotisation déjà payée pour ce cycle');
+      }
+    }
+
     const amount = group.contribution_amount;
     const miniAmount = Math.round(amount * 0.01);
     const globalAmount = Math.round(amount * 0.03);
@@ -492,13 +469,26 @@ export const process_contribution_payment = async (memberId: string, cycleId: st
 
     if (!userWallet || userWallet.balance < amount) throw new Error("Solde insuffisant");
 
-    t.update(userWalletDocRef, { balance: userWallet.balance - amount });
-    t.update(contribPoolDocRef, { balance: contribPool!.balance + contribAmount });
-    t.update(miniFundDocRef, { balance: miniFund!.balance + miniAmount });
-    t.update(globalFundDocRef, { balance: globalFund!.balance + globalAmount });
+    t.update(userWalletDocRef, {
+      balance: userWallet.balance - amount,
+      updated_at: Timestamp.now()
+    });
+    t.update(contribPoolDocRef, {
+      balance: contribPool!.balance + contribAmount,
+      updated_at: Timestamp.now()
+    });
+    t.update(miniFundDocRef, {
+      balance: miniFund!.balance + miniAmount,
+      updated_at: Timestamp.now()
+    });
+    t.update(globalFundDocRef, {
+      balance: globalFund!.balance + globalAmount,
+      updated_at: Timestamp.now()
+    });
 
     const txRef1 = doc(collection(db, 'transactions'));
     t.set(txRef1, {
+      id: txRef1.id,
       type: 'CONTRIBUTION',
       amount: contribAmount,
       currency: 'XOF',
@@ -514,6 +504,7 @@ export const process_contribution_payment = async (memberId: string, cycleId: st
 
     const txRef2 = doc(collection(db, 'transactions'));
     t.set(txRef2, {
+      id: txRef2.id,
       type: 'MINI_FUND_CONTRIB',
       amount: miniAmount,
       currency: 'XOF',
@@ -529,6 +520,7 @@ export const process_contribution_payment = async (memberId: string, cycleId: st
 
     const txRef3 = doc(collection(db, 'transactions'));
     t.set(txRef3, {
+      id: txRef3.id,
       type: 'GLOBAL_FUND_CONTRIB',
       amount: globalAmount,
       currency: 'XOF',
@@ -549,10 +541,28 @@ export const process_contribution_payment = async (memberId: string, cycleId: st
       });
     }
 
+    const memberRef = doc(db, 'tontine_members', memberId);
+    t.update(memberRef, {
+      cycles_completed: (member.cycles_completed || 0) + 1,
+      updated_at: Timestamp.now()
+    });
+
     await update_score_afiya(member.user_id, 'PAYMENT_SUCCESS', t);
 
     return { success: true };
   });
+
+  const pendingPaymentsSnap = await getDocs(
+    query(
+      collection(db, 'payments'),
+      where('cycle_id', '==', cycleId),
+      where('status', '==', 'PENDING')
+    )
+  );
+
+  if (pendingPaymentsSnap.empty) {
+    await payout_to_beneficiary(cycleId);
+  }
 };
 
 export const payout_to_beneficiary = async (cycleId: string) => {
@@ -1660,3 +1670,109 @@ export const resolve_waiting_vote = async (
   return { success: true, started: true, cancelled: false };
 };
 
+export const resolve_adjust_deposit = async (
+  groupId: string
+): Promise<{ success: boolean }> => {
+
+  const groupRef = doc(db, 'tontine_groups', groupId);
+  const groupSnap = await getDoc(groupRef);
+  if (!groupSnap.exists()) throw new Error('Groupe introuvable');
+  const group = groupSnap.data();
+
+  if (group.status !== 'ACTIVE') {
+    throw new Error('Le groupe n\'est pas actif');
+  }
+
+  // Vérifier que draw_revealed_at existe
+  if (!group.draw_revealed_at) {
+    throw new Error('Le tirage n\'a pas encore eu lieu');
+  }
+
+  // Vérifier que les 48h sont bien écoulées
+  const drawRevealedAt = group.draw_revealed_at.toDate
+    ? group.draw_revealed_at.toDate()
+    : new Date(group.draw_revealed_at);
+  const hoursSinceDraw = (Date.now() - drawRevealedAt.getTime()) / (1000 * 60 * 60);
+  if (hoursSinceDraw < 48) {
+    throw new Error('Les 48h d\'ajustement ne sont pas encore écoulées');
+  }
+
+  // Vérifier qu'aucun cycle n'existe déjà pour ce groupe
+  const existingCycleSnap = await getDocs(
+    query(collection(db, 'cycles'),
+    where('group_id', '==', groupId),
+    where('cycle_number', '==', 1),
+    limit(1))
+  );
+  if (!existingCycleSnap.empty) {
+    throw new Error('Le 1er cycle existe déjà');
+  }
+
+  // Récupérer tous les membres actifs triés par draw_position
+  const membersSnap = await getDocs(
+    query(collection(db, 'tontine_members'),
+    where('group_id', '==', groupId),
+    where('status', '==', 'ACTIVE'))
+  );
+  const members = membersSnap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .sort((a: any, b: any) => a.draw_position - b.draw_position) as any[];
+
+  if (members.length === 0) throw new Error('Aucun membre actif');
+
+  // Bénéficiaire du 1er cycle = membre position 1
+  const firstBeneficiary = members.find((m: any) => m.draw_position === 1);
+  if (!firstBeneficiary) throw new Error('Bénéficiaire position 1 introuvable');
+
+  // Calculer payment_due_date selon fréquence
+  const now = new Date();
+  const dueDate = new Date(now);
+  if (group.frequency === 'WEEKLY') {
+    dueDate.setDate(dueDate.getDate() + 7);
+  } else if (group.frequency === 'MONTHLY') {
+    dueDate.setMonth(dueDate.getMonth() + 1);
+  } else if (group.frequency === 'QUARTERLY') {
+    dueDate.setMonth(dueDate.getMonth() + 3);
+  }
+
+  // default_date = dueDate + 4 jours
+  const defaultDate = new Date(dueDate);
+  defaultDate.setDate(defaultDate.getDate() + 4);
+
+  await runTransaction(db, async (t) => {
+    // Créer le 1er cycle
+    const cycleRef = doc(collection(db, 'cycles'));
+    t.set(cycleRef, {
+      id: cycleRef.id,
+      group_id: groupId,
+      cycle_number: 1,
+      beneficiary_member_id: firstBeneficiary.id,
+      start_date: Timestamp.now(),
+      payment_due_date: Timestamp.fromDate(dueDate),
+      default_date: Timestamp.fromDate(defaultDate),
+      expected_total: group.contribution_amount * members.length,
+      actual_total: null,
+      payout_date: null,
+      status: 'ACTIVE',
+      created_at: Timestamp.now()
+    });
+
+    // Créer un payment PENDING pour chaque membre
+    for (const member of members) {
+      const paymentRef = doc(collection(db, 'payments'));
+      t.set(paymentRef, {
+        id: paymentRef.id,
+        cycle_id: cycleRef.id,
+        member_id: member.id,
+        group_id: groupId,
+        user_id: member.user_id,
+        amount: group.contribution_amount,
+        status: 'PENDING',
+        paid_at: null,
+        created_at: Timestamp.now()
+      });
+    }
+  });
+
+  return { success: true };
+};

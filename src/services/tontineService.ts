@@ -605,9 +605,11 @@ export const repositionMember = async (memberId: string, targetMembers: number) 
     
     transaction.update(memberRef, {
       draw_position: newPosition,
+      adjusted_deposit: txMemberSnap.data().initial_deposit,
       deposit_differential: 0,
       deposit_differential_paid: true,
-      status: 'ACTIVE'
+      current_deposit_balance: txMemberSnap.data().initial_deposit,
+      updated_at: Timestamp.now()
     });
   });
 };
@@ -645,11 +647,19 @@ export const payDepositDifferential = async (memberId: string, userId: string) =
 
     if (!userWallet || userWallet.balance < txAmount) throw new Error('Solde insuffisant');
 
-    transaction.update(userWalletRef, { balance: userWallet.balance - txAmount });
-    transaction.update(escrowWalletRef, { balance: escrowWallet!.balance + txAmount });
+    transaction.update(userWalletRef, {
+      balance: userWallet.balance - txAmount,
+      updated_at: Timestamp.now()
+    });
+    transaction.update(escrowWalletRef, {
+      balance: escrowWallet!.balance + txAmount,
+      updated_at: Timestamp.now()
+    });
     transaction.update(memberRef, {
       deposit_differential_paid: true,
-      status: 'ACTIVE'
+      current_deposit_balance: txMember.adjusted_deposit || txMember.initial_deposit,
+      status: 'ACTIVE',
+      updated_at: Timestamp.now()
     });
 
     const txRef = doc(collection(db, 'transactions'));
