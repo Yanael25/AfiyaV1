@@ -167,7 +167,10 @@ service cloud.firestore {
       );
       allow update: if isAuthenticated() && (
         resource.data.user_id == request.auth.uid ||
-        isAdmin()
+        isAdmin() ||
+        // Système peut marquer un payment SUCCESS via retenue
+        resource.data.group_id != null &&
+        exists(/databases/$(database)/documents/tontine_members/$(resource.data.group_id + '_' + request.auth.uid))
       );
       allow delete: if isAdmin();
     }

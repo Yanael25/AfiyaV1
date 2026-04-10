@@ -581,7 +581,7 @@ export const payout_to_beneficiary = async (cycleId: string) => {
   const totalMembers = membersSnapshot.size;
 
   const walletsRef = collection(db, 'wallets');
-  
+
   const contribPoolQuery = query(walletsRef, where('group_id', '==', cycleData.group_id), where('wallet_type', '==', 'CONTRIBUTION_POOL'), limit(1));
   const contribPoolSnapshot = await getDocs(contribPoolQuery);
   if (contribPoolSnapshot.empty) throw new Error('Contribution pool not found');
@@ -597,7 +597,14 @@ export const payout_to_beneficiary = async (cycleId: string) => {
   if (beneficiaryWalletSnapshot.empty) throw new Error('Beneficiary cercles wallet not found');
   const beneficiaryWalletDocRef = beneficiaryWalletSnapshot.docs[0].ref;
 
-  return await runTransaction(db, async (t) => {
+  const miniFundQuery = query(walletsRef, where('group_id', '==', cycleData.group_id), where('wallet_type', '==', 'GROUP_MINI_FUND'), limit(1));
+  const miniFundSnapshot = await getDocs(miniFundQuery);
+  if (miniFundSnapshot.empty) throw new Error('Group mini fund not found');
+  const miniFundDocRef = miniFundSnapshot.docs[0].ref;
+
+  const globalFundDocRef = await getOrCreateGlobalFund();
+
+  const result = await runTransaction(db, async (t) => {
     const cycleDoc = await t.get(cycleRef);
     if (!cycleDoc.exists()) throw new Error('Cycle not found');
     const cycle = cycleDoc.data();
@@ -622,44 +629,164 @@ export const payout_to_beneficiary = async (cycleId: string) => {
     const beneficiaryWalletDoc = await t.get(beneficiaryWalletDocRef);
     const beneficiaryWallet = beneficiaryWalletDoc.data();
 
+    const miniFundDoc = await t.get(miniFundDocRef);
+    const miniFund = miniFundDoc.data();
+
+    const globalFundDoc = await t.get(globalFundDocRef);
+    const globalFund = globalFundDoc.data();
+
+    // 1. Calculs financiers
     const grossPayout = cycle.expected_total;
+
+    const feePercents: Record<string, number> = {
+      PLATINUM: 0.015, GOLD: 0.02, SILVER: 0.025, BRONZE: 0.03
+    };
+    const fraisGestion = Math.round(grossPayout * (feePercents[beneficiaryProfile.tier] || 0.03));
+
+    const assuranceGroupe = Math.round(grossPayout * 0.01);
+
+    const payoutAvantRetenue = grossPayout - fraisGestion - assuranceGroupe;
+
     const position = beneficiary.draw_position;
+    const posRatio = position / totalMembers;
     let baseTaux = 0;
-    if (position <= 2) baseTaux = 1.0;
-    else if (position <= 5) baseTaux = 0.5;
-    
-    const coeffs: Record<string, number> = { PLATINUM: 0.25, GOLD: 0.5, SILVER: 0.75, BRONZE: 1.0 };
-    const retentionCoeff = coeffs[beneficiaryProfile.tier] || 1.0;
+    if (posRatio <= 0.30) baseTaux = 1.0;
+    else if (posRatio <= 0.60) baseTaux = 0.5;
+
+    const retentionCoeffs: Record<string, number> = {
+      PLATINUM: 0.25, GOLD: 0.5, SILVER: 0.75, BRONZE: 1.0
+    };
+    const retentionCoeff = retentionCoeffs[beneficiaryProfile.tier] || 1.0;
     const retentionAmount = Math.round(group.contribution_amount * baseTaux * retentionCoeff);
-    const netPayout = grossPayout - retentionAmount;
+    const netPayout = payoutAvantRetenue - retentionAmount;
 
-    t.update(contribPoolDocRef, { balance: contribPool!.balance - netPayout });
-    t.update(beneficiaryWalletDocRef, { balance: beneficiaryWallet!.balance + netPayout });
+    // Vérification solde
+    if (!contribPool || contribPool.balance < grossPayout) {
+      throw new Error('Solde CONTRIBUTION_POOL insuffisant pour le payout');
+    }
 
+    // 2. Flux financiers
+    t.update(contribPoolDocRef, {
+      balance: contribPool.balance - grossPayout,
+      updated_at: Timestamp.now()
+    });
+    t.update(beneficiaryWalletDocRef, {
+      balance: beneficiaryWallet!.balance + netPayout,
+      updated_at: Timestamp.now()
+    });
+    t.update(globalFundDocRef, {
+      balance: globalFund!.balance + fraisGestion,
+      updated_at: Timestamp.now()
+    });
+    t.update(miniFundDocRef, {
+      balance: miniFund!.balance + assuranceGroupe,
+      updated_at: Timestamp.now()
+    });
+
+    // 3. Mise à jour membre bénéficiaire
     t.update(beneficiaryRef, {
       retention_amount: retentionAmount,
       retention_applied: retentionAmount > 0,
-      received_payout_at: Timestamp.now()
+      received_payout_at: Timestamp.now(),
+      updated_at: Timestamp.now()
     });
 
+    // 4. Mise à jour cycle
     t.update(cycleRef, {
       status: 'COMPLETED',
-      payout_date: Timestamp.now()
+      payout_date: Timestamp.now(),
+      actual_total: grossPayout
     });
 
+    // 5. Si retenue > 0, marquer le payment du bénéficiaire pour le cycle suivant comme SUCCESS
+    if (retentionAmount > 0) {
+      const nextCycleSnap = await getDocs(
+        query(collection(db, 'cycles'),
+        where('group_id', '==', cycle.group_id),
+        where('cycle_number', '==', cycle.cycle_number + 1),
+        limit(1))
+      );
+      if (!nextCycleSnap.empty) {
+        const nextCycleId = nextCycleSnap.docs[0].id;
+        const nextPaymentSnap = await getDocs(
+          query(collection(db, 'payments'),
+          where('cycle_id', '==', nextCycleId),
+          where('member_id', '==', cycleData.beneficiary_member_id),
+          limit(1))
+        );
+        if (!nextPaymentSnap.empty) {
+          t.update(nextPaymentSnap.docs[0].ref, {
+            status: 'SUCCESS',
+            paid_at: Timestamp.now(),
+            paid_via_retention: true
+          });
+        }
+      }
+    }
+
+    // 6. Transactions Firestore
+    const txPayout = doc(collection(db, 'transactions'));
+    t.set(txPayout, {
+      id: txPayout.id,
+      type: 'PAYOUT',
+      amount: netPayout,
+      currency: 'XOF',
+      from_wallet_id: contribPoolDocRef.id,
+      to_wallet_id: beneficiaryWalletDocRef.id,
+      user_id: beneficiary.user_id,
+      group_id: cycle.group_id,
+      member_id: cycleData.beneficiary_member_id,
+      status: 'SUCCESS',
+      description: `Versement cagnotte cycle ${cycle.cycle_number} - Groupe ${group.name}`,
+      created_at: Timestamp.now()
+    });
+
+    const txFrais = doc(collection(db, 'transactions'));
+    t.set(txFrais, {
+      id: txFrais.id,
+      type: 'GLOBAL_FUND_CONTRIB',
+      amount: fraisGestion,
+      currency: 'XOF',
+      from_wallet_id: contribPoolDocRef.id,
+      to_wallet_id: globalFundDocRef.id,
+      user_id: null,
+      group_id: cycle.group_id,
+      member_id: null,
+      status: 'SUCCESS',
+      description: `Frais de gestion cycle ${cycle.cycle_number} - Groupe ${group.name}`,
+      created_at: Timestamp.now()
+    });
+
+    const txAssurance = doc(collection(db, 'transactions'));
+    t.set(txAssurance, {
+      id: txAssurance.id,
+      type: 'MINI_FUND_CONTRIB',
+      amount: assuranceGroupe,
+      currency: 'XOF',
+      from_wallet_id: contribPoolDocRef.id,
+      to_wallet_id: miniFundDocRef.id,
+      user_id: null,
+      group_id: cycle.group_id,
+      member_id: null,
+      status: 'SUCCESS',
+      description: `Assurance groupe cycle ${cycle.cycle_number} - Groupe ${group.name}`,
+      created_at: Timestamp.now()
+    });
+
+    // Cycle suivant
     const nextCycleNumber = cycle.cycle_number + 1;
-    
+
     if (nextCycleNumber <= group.total_cycles) {
       t.update(groupRef, {
         current_cycle: nextCycleNumber,
         updated_at: Timestamp.now()
       });
 
-      const nextBeneficiary = membersSnapshot.docs.map(d => d.data()).find(m => m.draw_position === nextCycleNumber);
-      
+      const nextBeneficiary = membersSnapshot.docs.map(d => ({ id: d.id, ...d.data() })).find((m: any) => m.draw_position === nextCycleNumber) as any;
+
       if (nextBeneficiary) {
         const nextCycleRef = doc(collection(db, 'cycles'));
-        
+
         const startDate = new Date();
         const dueDate = new Date(startDate);
         if (group.frequency === 'WEEKLY') dueDate.setDate(dueDate.getDate() + 7);
@@ -680,7 +807,8 @@ export const payout_to_beneficiary = async (cycleId: string) => {
           expected_total: group.contribution_amount * totalMembers,
           actual_total: null,
           payout_date: null,
-          status: 'ACTIVE'
+          status: 'ACTIVE',
+          created_at: Timestamp.now()
         });
 
         membersSnapshot.docs.forEach(memberDoc => {
@@ -689,9 +817,12 @@ export const payout_to_beneficiary = async (cycleId: string) => {
             id: paymentRef.id,
             cycle_id: nextCycleRef.id,
             member_id: memberDoc.id,
+            group_id: cycle.group_id,
+            user_id: memberDoc.data().user_id,
             amount: group.contribution_amount,
             status: 'PENDING',
-            paid_at: null
+            paid_at: null,
+            created_at: Timestamp.now()
           });
         });
       }
@@ -701,21 +832,6 @@ export const payout_to_beneficiary = async (cycleId: string) => {
         updated_at: Timestamp.now()
       });
     }
-
-    const txRef = doc(collection(db, 'transactions'));
-    t.set(txRef, {
-      type: 'PAYOUT',
-      amount: netPayout,
-      currency: 'XOF',
-      from_wallet_id: contribPoolDocRef.id,
-      to_wallet_id: beneficiaryWalletDocRef.id,
-      user_id: beneficiary.user_id,
-      group_id: groupDoc.id,
-      member_id: beneficiaryDoc.id,
-      status: 'SUCCESS',
-      description: `Versement cagnotte cycle ${cycle.cycle_number} - Groupe ${group.name}`,
-      created_at: Timestamp.now()
-    });
 
     await update_score_afiya(beneficiary.user_id, 'CYCLE_COMPLETED', t);
 
@@ -727,8 +843,14 @@ export const payout_to_beneficiary = async (cycleId: string) => {
       t
     );
 
-    return { success: true, gross_payout: grossPayout, retention_amount: retentionAmount, net_payout: netPayout };
+    return { success: true, gross_payout: grossPayout, retention_amount: retentionAmount, net_payout: netPayout, next_cycle_number: nextCycleNumber, total_cycles: group.total_cycles, group_id: group.id };
   });
+
+  if (result.next_cycle_number > result.total_cycles) {
+    setTimeout(() => complete_tontine(result.group_id), 500);
+  }
+
+  return result;
 };
 
 export const handle_member_default = async (memberId: string, cycleId: string) => {
@@ -1773,6 +1895,152 @@ export const resolve_adjust_deposit = async (
       });
     }
   });
+
+  return { success: true };
+};
+
+export const complete_tontine = async (groupId: string): Promise<{ success: boolean }> => {
+
+  // 1. Récupérer tous les membres actifs
+  const membersSnap = await getDocs(
+    query(collection(db, 'tontine_members'),
+    where('group_id', '==', groupId),
+    where('status', '==', 'ACTIVE'))
+  );
+  const members = membersSnap.docs.map(d => ({ id: d.id, ref: d.ref, ...d.data() })) as any[];
+
+  // 2. Récupérer escrow et mini-fonds
+  const walletsRef = collection(db, 'wallets');
+
+  const escrowSnap = await getDocs(
+    query(walletsRef, where('group_id', '==', groupId),
+    where('wallet_type', '==', 'ESCROW_CONSTITUTION'), limit(1))
+  );
+  if (escrowSnap.empty) throw new Error('Escrow introuvable');
+  const escrowRef = escrowSnap.docs[0].ref;
+
+  const miniFundSnap = await getDocs(
+    query(walletsRef, where('group_id', '==', groupId),
+    where('wallet_type', '==', 'GROUP_MINI_FUND'), limit(1))
+  );
+  if (miniFundSnap.empty) throw new Error('Mini-fonds introuvable');
+  const miniFundRef = miniFundSnap.docs[0].ref;
+
+  // 3. Récupérer le groupe
+  const groupRef = doc(db, 'tontine_groups', groupId);
+  const groupSnap = await getDoc(groupRef);
+  if (!groupSnap.exists()) throw new Error('Groupe introuvable');
+  const group = groupSnap.data();
+
+  // 4. Restitution cautions — pour chaque membre
+  for (const member of members) {
+    const cautionAmount = member.adjusted_deposit || member.initial_deposit;
+
+    const walletSnap = await getDocs(
+      query(walletsRef, where('owner_id', '==', member.user_id),
+      where('wallet_type', '==', 'USER_CERCLES'), limit(1))
+    );
+    if (walletSnap.empty) continue;
+
+    await runTransaction(db, async (t) => {
+      const escrowDoc = await t.get(escrowRef);
+      const walletDoc = await t.get(walletSnap.docs[0].ref);
+      const escrow = escrowDoc.data();
+      const wallet = walletDoc.data();
+
+      t.update(escrowRef, {
+        balance: escrow!.balance - cautionAmount,
+        updated_at: Timestamp.now()
+      });
+      t.update(walletSnap.docs[0].ref, {
+        balance: wallet!.balance + cautionAmount,
+        updated_at: Timestamp.now()
+      });
+      t.update(member.ref, {
+        status: 'COMPLETED',
+        updated_at: Timestamp.now()
+      });
+
+      const txRef = doc(collection(db, 'transactions'));
+      t.set(txRef, {
+        id: txRef.id,
+        type: 'CAUTION_REFUND',
+        amount: cautionAmount,
+        currency: 'XOF',
+        from_wallet_id: escrowSnap.docs[0].id,
+        to_wallet_id: walletSnap.docs[0].id,
+        user_id: member.user_id,
+        group_id: groupId,
+        member_id: member.id,
+        status: 'SUCCESS',
+        description: `Restitution caution fin de tontine - ${group.name}`,
+        created_at: Timestamp.now()
+      });
+
+      // Score +8 pts fin de cycle
+      await update_score_afiya(member.user_id, 'CYCLE_COMPLETED', t);
+    });
+  }
+
+  // 5. Distribution mini-fonds aux membres sans incident
+  const eligibleMembers = members.filter(
+    m => m.cycles_defaulted === 0 && m.cycles_with_delay === 0
+  );
+
+  if (eligibleMembers.length > 0) {
+    const miniFundDoc = await getDoc(miniFundRef);
+    const miniFundBalance = miniFundDoc.data()?.balance || 0;
+
+    if (miniFundBalance > 0) {
+      const baseShare = Math.floor(miniFundBalance / eligibleMembers.length);
+
+      for (let i = 0; i < eligibleMembers.length; i++) {
+        const member = eligibleMembers[i];
+        // Dernier membre reçoit le reste
+        const share = i === eligibleMembers.length - 1
+          ? miniFundBalance - (baseShare * (eligibleMembers.length - 1))
+          : baseShare;
+
+        const walletSnap = await getDocs(
+          query(walletsRef, where('owner_id', '==', member.user_id),
+          where('wallet_type', '==', 'USER_CERCLES'), limit(1))
+        );
+        if (walletSnap.empty) continue;
+
+        await runTransaction(db, async (t) => {
+          const miniFundDoc2 = await t.get(miniFundRef);
+          const walletDoc = await t.get(walletSnap.docs[0].ref);
+          const miniFund = miniFundDoc2.data();
+          const wallet = walletDoc.data();
+
+          t.update(miniFundRef, {
+            balance: miniFund!.balance - share,
+            updated_at: Timestamp.now()
+          });
+          t.update(walletSnap.docs[0].ref, {
+            balance: wallet!.balance + share,
+            updated_at: Timestamp.now()
+          });
+
+          const txRef = doc(collection(db, 'transactions'));
+          t.set(txRef, {
+            id: txRef.id,
+            type: 'REFUND',
+            amount: share,
+            currency: 'XOF',
+            from_wallet_id: miniFundSnap.docs[0].id,
+            to_wallet_id: walletSnap.docs[0].id,
+            user_id: member.user_id,
+            group_id: groupId,
+            member_id: member.id,
+            status: 'SUCCESS',
+            description: `Distribution mini-fonds fin de tontine - ${group.name}`,
+            created_at: Timestamp.now()
+          });
+        });
+      }
+    }
+  }
 
   return { success: true };
 };
