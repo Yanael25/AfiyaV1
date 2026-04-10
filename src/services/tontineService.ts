@@ -126,6 +126,10 @@ export const createTontineGroup = async (groupData: Omit<TontineGroup, 'id' | 'c
   const profile = await getDocument<any>('profiles', userId);
   if (!profile) throw new Error('Profil introuvable');
 
+  if (profile.status === 'BANNED') {
+    throw new Error('Votre compte est banni — accès aux tontines définitivement bloqué');
+  }
+
   const groupRef = doc(collection(db, 'tontine_groups'));
   const id = groupRef.id;
   
@@ -437,6 +441,10 @@ export const getGroupByCode = async (code: string): Promise<TontineGroup | null>
 export const joinTontineGroup = async (groupId: string, userId: string) => {
   const profile = await getDocument<any>('profiles', userId);
   if (!profile) throw new Error('Profil introuvable');
+
+  if (profile.status === 'BANNED') {
+    throw new Error('Votre compte est banni — accès aux tontines définitivement bloqué');
+  }
 
   if (profile.kyc_status !== 'VERIFIED') {
     throw new Error('Votre KYC doit être approuvé pour rejoindre un cercle');

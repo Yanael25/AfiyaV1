@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { collection, query, where, getDocs, addDoc, doc, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from './lib/firebase';
+import { apply_score_decay } from './lib/businessLogic';
 import { Splash } from './screens/auth/Splash';
 import { Welcome } from './screens/auth/Welcome';
 import { Login } from './screens/auth/Login';
@@ -99,6 +100,9 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) return;
+
+      // Appliquer la décroissance du score à chaque connexion
+      apply_score_decay(user.uid).catch(console.error);
 
       // Only attempt initialization if the user is the primary admin
       if (user.email !== "jespere20000@gmail.com") return;

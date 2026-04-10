@@ -14,69 +14,66 @@ import {
   updateDoc
 } from 'firebase/firestore';
 
-export const update_score_afiya = async (userId: string, eventType: string, transaction?: any) => {
+export const update_score_afiya = async (
+  userId: string,
+  event: 'PAYMENT_SUCCESS' | 'PAYMENT_LATE' | 'CYCLE_COMPLETED' | 'DEFAULT_DECLARED' |
+         'GLOBAL_FUND_USED' | 'ACCOUNT_RESTORED' | 'MEMBER_INVITED' | 'VOLUNTARY_EXIT',
+  t: any
+): Promise<void> => {
+
   const profileRef = doc(db, 'profiles', userId);
-  
-  const executeUpdate = async (t: any) => {
-    const profileDoc = await t.get(profileRef);
-    if (!profileDoc.exists()) throw new Error('Profile not found');
-    const profile = profileDoc.data();
-    
-    let score = profile.score_afiya;
-    if (profile.last_activity_at) {
-      const lastActivity = profile.last_activity_at.toDate();
-      const weeksInactive = (Date.now() - lastActivity.getTime()) / (7 * 24 * 60 * 60 * 1000);
-      if (weeksInactive > 0) {
-        score = Math.max(0, score - Math.round(score * 0.005 * weeksInactive));
-      }
-    }
+  const profileDoc = await t.get(profileRef);
+  if (!profileDoc.exists()) return;
+  const profile = profileDoc.data();
 
-    const SCORE_DELTAS: Record<string, number> = {
-      'PAYMENT_SUCCESS': 3,
-      'PAYMENT_GRACE': 0.5,
-      'CYCLE_COMPLETED': 8,
-      'MEMBER_INVITED_COMPLETE': 5,
-      'PAYMENT_LATE': -2,
-      'DEFAULT_DECLARED': -25,
-      'GLOBAL_FUND_USED': -50,
-      'TRUST_VOTE_POSITIVE': 2,
-      'ACCOUNT_RESTORED': 5,
-    };
+  // Ignorer si banni
+  if (profile.status === 'BANNED') return;
 
-    const delta = SCORE_DELTAS[eventType] || 0;
-    const newScore = Math.min(100, Math.max(0, Math.round(score + delta)));
-    
-    const newTier = newScore >= 90 ? 'PLATINUM' : newScore >= 75 ? 'GOLD' : newScore >= 60 ? 'SILVER' : 'BRONZE';
-    const coeffs: Record<string, number> = { PLATINUM: 0.25, GOLD: 0.5, SILVER: 0.75, BRONZE: 1.0 };
-    
-    t.update(profileRef, {
-      score_afiya: newScore,
-      tier: newTier,
-      deposit_coefficient: coeffs[newTier],
-      retention_coefficient: coeffs[newTier],
-      last_activity_at: Timestamp.now()
-    });
+  const currentScore = profile.score_afiya || 50;
 
-    const eventRef = doc(collection(db, 'events'));
-    t.set(eventRef, {
-      event_type: 'SCORE_UPDATED',
-      user_id: userId,
-      group_id: null,
-      member_id: null,
-      previous_state: String(profile.score_afiya),
-      new_state: String(newScore),
-      event_data: JSON.stringify({ original_event: eventType, score_delta: delta }),
-      created_at: Timestamp.now()
-    });
-
-    return newScore;
+  // Table des événements
+  const eventDeltas: Record<string, number> = {
+    PAYMENT_SUCCESS:   +3,
+    PAYMENT_LATE:       0,
+    CYCLE_COMPLETED:   +8,
+    DEFAULT_DECLARED: -25,
+    GLOBAL_FUND_USED: -50,
+    ACCOUNT_RESTORED:  +5,
+    MEMBER_INVITED:    +5,
+    VOLUNTARY_EXIT:   -25,
   };
 
-  if (transaction) {
-    return await executeUpdate(transaction);
-  } else {
-    return await runTransaction(db, executeUpdate);
+  const delta = eventDeltas[event] ?? 0;
+  const rawScore = currentScore + delta;
+
+  // Plancher 0, plafond 100
+  const newScore = Math.max(0, Math.min(100, rawScore));
+
+  // Recalculer tier et coefficients
+  const newTier = newScore >= 90 ? 'PLATINUM'
+    : newScore >= 75 ? 'GOLD'
+    : newScore >= 60 ? 'SILVER'
+    : 'BRONZE';
+
+  const coeffs: Record<string, number> = {
+    PLATINUM: 0.25, GOLD: 0.5, SILVER: 0.75, BRONZE: 1.0
+  };
+  const newCoeff = coeffs[newTier];
+
+  // Si 2ème défaut → bannissement
+  let statusUpdate: any = {};
+  if (event === 'GLOBAL_FUND_USED') {
+    statusUpdate = { status: 'BANNED' };
   }
+
+  t.update(profileRef, {
+    score_afiya: newScore,
+    tier: newTier,
+    deposit_coefficient: newCoeff,
+    retention_coefficient: newCoeff,
+    last_activity_at: Timestamp.now(),
+    ...statusUpdate
+  });
 };
 
 export const check_group_deadlines = async () => {
@@ -401,6 +398,12 @@ export const process_contribution_payment = async (memberId: string, cycleId: st
   const memberDocSnap = await getDoc(memberRef);
   if (!memberDocSnap.exists()) throw new Error('Member not found');
   const memberData = memberDocSnap.data();
+
+  // Récupérer profil pour vérifier bannissement
+  const profileSnap = await getDoc(doc(db, 'profiles', memberData.user_id));
+  if (profileSnap.exists() && profileSnap.data()?.status === 'BANNED') {
+    throw new Error('Votre compte est banni — accès aux tontines définitivement bloqué');
+  }
 
   const groupRef = doc(db, 'tontine_groups', memberData.group_id);
   const groupDocSnap = await getDoc(groupRef);
@@ -2218,6 +2221,13 @@ export const initiate_swap = async (
   const initiatorProfile = initiatorProfileSnap.data();
   const receiverProfile = receiverProfileSnap.data();
 
+  if (initiatorProfile.status === 'BANNED') {
+    throw new Error('Votre compte est banni');
+  }
+  if (receiverProfile.status === 'BANNED') {
+    throw new Error('Ce membre est banni');
+  }
+
   if (initiatorProfile.score_afiya < 60) throw new Error('Score minimum 60 requis pour un swap');
   if (receiverProfile.score_afiya < 60) throw new Error('Le membre ciblé doit avoir un score >= 60');
 
@@ -2538,4 +2548,58 @@ export const cancel_swap = async (
   }
 
   return { success: true };
+};
+
+export const apply_score_decay = async (userId: string): Promise<void> => {
+  const profileRef = doc(db, 'profiles', userId);
+  const profileSnap = await getDoc(profileRef);
+  if (!profileSnap.exists()) return;
+  const profile = profileSnap.data();
+
+  // Ignorer si banni
+  if (profile.status === 'BANNED') return;
+
+  // Calculer le nombre de semaines d'inactivité
+  if (!profile.last_activity_at) return;
+
+  const lastActivity = profile.last_activity_at.toDate
+    ? profile.last_activity_at.toDate()
+    : new Date(profile.last_activity_at);
+
+  const now = new Date();
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  const weeksInactive = Math.floor((now.getTime() - lastActivity.getTime()) / msPerWeek);
+
+  if (weeksInactive <= 0) return; // Pas d'inactivité
+
+  // Appliquer décroissance 0.5% par semaine
+  let newScore = profile.score_afiya || 50;
+  for (let i = 0; i < weeksInactive; i++) {
+    newScore = newScore * (1 - 0.005);
+  }
+  newScore = Math.max(0, Math.round(newScore));
+
+  // Recalculer tier
+  const newTier = newScore >= 90 ? 'PLATINUM'
+    : newScore >= 75 ? 'GOLD'
+    : newScore >= 60 ? 'SILVER'
+    : 'BRONZE';
+
+  const coeffs: Record<string, number> = {
+    PLATINUM: 0.25, GOLD: 0.5, SILVER: 0.75, BRONZE: 1.0
+  };
+  const newCoeff = coeffs[newTier];
+
+  // Mettre à jour seulement si le score a changé
+  if (newScore !== profile.score_afiya || newTier !== profile.tier) {
+    await runTransaction(db, async (t) => {
+      t.update(profileRef, {
+        score_afiya: newScore,
+        tier: newTier,
+        deposit_coefficient: newCoeff,
+        retention_coefficient: newCoeff,
+        // Ne pas mettre à jour last_activity_at ici — la décroissance n'est pas une activité
+      });
+    });
+  }
 };
